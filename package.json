@@ -1,0 +1,27 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "**Fluxion** is a structured Finite Volume Method (FVM) solver developed for **SG2212 Computational Fluid Dynamics**. It provides a rigorous, from-scratch implementation of numerical algorithms for solving the Navier-Stokes equations on staggered grids.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dhruvhaldar/fluxion.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dhruvhaldar/fluxion/issues"
+  },
+  "homepage": "https://github.com/dhruvhaldar/fluxion#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
