@@ -19,7 +19,7 @@ This repository addresses the maximal syllabus requirements by implementing the 
 ## 🚀 Installation
 
 ```bash
-git clone https://github.com/your-username/fluxion.git
+git clone https://github.com/dhruvhaldar/fluxion.git
 cd fluxion
 pip install -r requirements.txt
 ```
@@ -106,6 +106,12 @@ def test_laplacian_quadratic():
 ### End-to-End (E2E) Tests
 
 Located in `tests/e2e/`. These run full physics problems to check conservation laws.
+
+### Web Interface Testing
+
+Playwright tests verify the web interface representation of the artifacts and simulation results.
+
+![Web Interface Screenshot](assets/playwright_screenshot.png)
 
 *Example: `tests/e2e/test_lid_driven.py`*
 

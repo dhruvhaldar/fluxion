@@ -29,7 +29,7 @@ def index():
         <h2>Convection Scheme Comparison</h2>
         <img src="/assets/scheme_comparison.png" alt="Scheme Comparison" />
 
-        <p>For code and documentation, visit the <a href="https://github.com/your-username/fluxion">GitHub Repository</a>.</p>
+        <p>For code and documentation, visit the <a href="https://github.com/dhruvhaldar/fluxion">GitHub Repository</a>.</p>
     </body>
     </html>
     """
