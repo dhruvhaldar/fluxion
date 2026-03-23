@@ -11,16 +11,23 @@ class LinearSolver:
         denom = 2 * (1/dx2 + 1/dy2)
 
         p_new = p.copy()
+        p_old = p.copy()
+
+        # Pre-calculate factors to avoid repeated division in the loop
+        mult_x = 1.0 / (dx2 * denom)
+        mult_y = 1.0 / (dy2 * denom)
+        rhs_scaled = rhs[1:-1, 1:-1] / denom
 
         for it in range(max_iter):
-            p_old = p_new.copy()
+            # Swap references instead of allocating a new array
+            p_old, p_new = p_new, p_old
 
             # Interior Update
             p_new[1:-1, 1:-1] = (
-                (p_old[2:, 1:-1] + p_old[:-2, 1:-1]) / dx2 +
-                (p_old[1:-1, 2:] + p_old[1:-1, :-2]) / dy2 -
-                rhs[1:-1, 1:-1]
-            ) / denom
+                (p_old[2:, 1:-1] + p_old[:-2, 1:-1]) * mult_x +
+                (p_old[1:-1, 2:] + p_old[1:-1, :-2]) * mult_y -
+                rhs_scaled
+            )
 
             # Boundary Conditions (Homogeneous Neumann)
             p_new[0, :] = p_new[1, :]
@@ -57,32 +64,35 @@ class LinearSolver:
         mask_red = (i_idx + j_idx) % 2 == 0
         mask_black = (i_idx + j_idx) % 2 == 1
 
+        # Pre-calculate factors for inside loop
+        mult_x = omega / (dx2 * denom)
+        mult_y = omega / (dy2 * denom)
+        rhs_scaled = omega * rhs[1:-1, 1:-1] / denom
+
         for it in range(max_iter):
             p_old = p_new.copy()
 
             # 1. Update Red Points
             # Compute neighbors using current state
-            neighbors = (
-                (p_new[2:, 1:-1] + p_new[:-2, 1:-1]) / dx2 +
-                (p_new[1:-1, 2:] + p_new[1:-1, :-2]) / dy2 -
-                rhs[1:-1, 1:-1]
+            p_gs_red = (
+                (p_new[2:, 1:-1] + p_new[:-2, 1:-1]) * mult_x +
+                (p_new[1:-1, 2:] + p_new[1:-1, :-2]) * mult_y -
+                rhs_scaled
             )
-            p_gs = neighbors / denom
 
             # Update only Red points
-            p_new[1:-1, 1:-1][mask_red] = (1 - omega) * p_new[1:-1, 1:-1][mask_red] + omega * p_gs[mask_red]
+            p_new[1:-1, 1:-1][mask_red] = (1 - omega) * p_new[1:-1, 1:-1][mask_red] + p_gs_red[mask_red]
 
             # 2. Update Black Points
             # Recompute neighbors (Red points have changed)
-            neighbors = (
-                (p_new[2:, 1:-1] + p_new[:-2, 1:-1]) / dx2 +
-                (p_new[1:-1, 2:] + p_new[1:-1, :-2]) / dy2 -
-                rhs[1:-1, 1:-1]
+            p_gs_black = (
+                (p_new[2:, 1:-1] + p_new[:-2, 1:-1]) * mult_x +
+                (p_new[1:-1, 2:] + p_new[1:-1, :-2]) * mult_y -
+                rhs_scaled
             )
-            p_gs = neighbors / denom
 
             # Update only Black points
-            p_new[1:-1, 1:-1][mask_black] = (1 - omega) * p_new[1:-1, 1:-1][mask_black] + omega * p_gs[mask_black]
+            p_new[1:-1, 1:-1][mask_black] = (1 - omega) * p_new[1:-1, 1:-1][mask_black] + p_gs_black[mask_black]
 
             # Boundary Conditions
             p_new[0, :] = p_new[1, :]
