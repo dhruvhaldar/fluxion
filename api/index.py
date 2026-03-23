@@ -7,8 +7,10 @@ app = Flask(__name__)
 def index():
     return """
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Fluxion CFD</title>
         <style>
             body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
@@ -16,20 +18,22 @@ def index():
         </style>
     </head>
     <body>
-        <h1>Fluxion</h1>
-        <p>A structured Finite Volume Method (FVM) solver for SG2212 Computational Fluid Dynamics.</p>
-        <p>This page demonstrates the generated artifacts from the solver.</p>
+        <main>
+            <h1>Fluxion</h1>
+            <p>A structured Finite Volume Method (FVM) solver for SG2212 Computational Fluid Dynamics.</p>
+            <p>This page demonstrates the generated artifacts from the solver.</p>
 
-        <h2>Lid Driven Cavity Streamlines (Re=100)</h2>
-        <img src="/assets/lid_driven_streamlines.png" alt="Lid Driven Cavity Streamlines" />
+            <h2>Lid Driven Cavity Streamlines (Re=100)</h2>
+            <img src="/assets/lid_driven_streamlines.png" alt="Lid Driven Cavity Streamlines" />
 
-        <h2>Grid Convergence Study</h2>
-        <img src="/assets/grid_convergence.png" alt="Grid Convergence" />
+            <h2>Grid Convergence Study</h2>
+            <img src="/assets/grid_convergence.png" alt="Grid Convergence" />
 
-        <h2>Convection Scheme Comparison</h2>
-        <img src="/assets/scheme_comparison.png" alt="Scheme Comparison" />
+            <h2>Convection Scheme Comparison</h2>
+            <img src="/assets/scheme_comparison.png" alt="Scheme Comparison" />
 
-        <p>For code and documentation, visit the <a href="https://github.com/dhruvhaldar/fluxion">GitHub Repository</a>.</p>
+            <p>For code and documentation, visit the <a href="https://github.com/dhruvhaldar/fluxion">GitHub Repository</a>.</p>
+        </main>
     </body>
     </html>
     """
