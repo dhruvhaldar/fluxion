@@ -18,6 +18,8 @@ class LinearSolver:
         mult_y = 1.0 / (dy2 * denom)
         rhs_scaled = rhs[1:-1, 1:-1] / denom
 
+        check_interval = 50
+
         for it in range(max_iter):
             # Swap references instead of allocating a new array
             p_old, p_new = p_new, p_old
@@ -35,8 +37,14 @@ class LinearSolver:
             p_new[:, 0] = p_new[:, 1]
             p_new[:, -1] = p_new[:, -2]
 
-            if np.max(np.abs(p_new - p_old)) < tol:
-                return p_new, it
+            # Only calculate max diff every check_interval to avoid expensive array operations
+            if it % check_interval == 0 and it > 0:
+                if np.max(np.abs(p_new - p_old)) < tol:
+                    return p_new, it
+
+        # Final check if loop finishes
+        if np.max(np.abs(p_new - p_old)) < tol:
+            return p_new, max_iter - 1
 
         return p_new, max_iter
 
@@ -53,13 +61,6 @@ class LinearSolver:
         nx, ny = grid.nx, grid.ny
 
         # Checkerboard masks for interior (1:-1, 1:-1)
-        # Note: We need masks relative to the full array to map back correctly,
-        # or relative to the slice.
-        # Let's use masks for the slice to avoid index confusion.
-        # Slice shape: (nx-2, ny-2)
-        # Global indices: i from 1 to nx-2, j from 1 to ny-2.
-        # (i+j) parity determines color.
-
         i_idx, j_idx = np.meshgrid(np.arange(1, nx-1), np.arange(1, ny-1), indexing='ij')
         mask_red = (i_idx + j_idx) % 2 == 0
         mask_black = (i_idx + j_idx) % 2 == 1
@@ -69,19 +70,25 @@ class LinearSolver:
         mult_y = omega / (dy2 * denom)
         rhs_scaled = omega * rhs[1:-1, 1:-1] / denom
 
+        p_slice = p_new[1:-1, 1:-1]
+
+        check_interval = 50
+        p_old = p_new.copy()
+
         for it in range(max_iter):
-            p_old = p_new.copy()
+            # Capture the previous iteration's state right before the check iteration
+            if it > 0 and it % check_interval == 0:
+                np.copyto(p_old, p_new)
 
             # 1. Update Red Points
-            # Compute neighbors using current state
             p_gs_red = (
                 (p_new[2:, 1:-1] + p_new[:-2, 1:-1]) * mult_x +
                 (p_new[1:-1, 2:] + p_new[1:-1, :-2]) * mult_y -
                 rhs_scaled
             )
 
-            # Update only Red points
-            p_new[1:-1, 1:-1][mask_red] = (1 - omega) * p_new[1:-1, 1:-1][mask_red] + p_gs_red[mask_red]
+            # Update only Red points in-place using np.putmask for performance
+            np.putmask(p_slice, mask_red, (1 - omega) * p_slice + p_gs_red)
 
             # 2. Update Black Points
             # Recompute neighbors (Red points have changed)
@@ -91,8 +98,8 @@ class LinearSolver:
                 rhs_scaled
             )
 
-            # Update only Black points
-            p_new[1:-1, 1:-1][mask_black] = (1 - omega) * p_new[1:-1, 1:-1][mask_black] + p_gs_black[mask_black]
+            # Update only Black points in-place
+            np.putmask(p_slice, mask_black, (1 - omega) * p_slice + p_gs_black)
 
             # Boundary Conditions
             p_new[0, :] = p_new[1, :]
@@ -100,7 +107,14 @@ class LinearSolver:
             p_new[:, 0] = p_new[:, 1]
             p_new[:, -1] = p_new[:, -2]
 
-            if np.max(np.abs(p_new - p_old)) < tol:
-                return p_new, it
+            # Only calculate max diff every check_interval to avoid expensive array operations
+            # We captured p_old at the START of this iteration, so p_new - p_old is exactly the diff
+            # of this one iteration.
+            if it > 0 and it % check_interval == 0:
+                if np.max(np.abs(p_new - p_old)) < tol:
+                    return p_new, it
 
+        # Final check if loop finishes
+        # Check against previous iteration which wasn't saved, so we just return.
+        # It's an edge case, we can assume it hit max_iter without converging.
         return p_new, max_iter
