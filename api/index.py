@@ -3,6 +3,14 @@ import os
 
 app = Flask(__name__)
 
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self';"
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
+
 @app.route('/')
 def index():
     return """
@@ -40,6 +48,11 @@ def index():
 
 @app.route('/assets/<path:path>')
 def send_assets(path):
+    # Prevent directory traversal attacks
+    # werkzeug's send_from_directory does this securely, but explicitly checking is good defense in depth
+    if '..' in path or path.startswith('/') or '%' in path:
+        return "Bad Request", 400
+
     # Determine the absolute path to the assets directory
     # Assumes api/index.py is one level deeper than root
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
