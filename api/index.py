@@ -25,12 +25,34 @@ def index():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Fluxion CFD</title>
         <style>
-            body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #333; }
-            img { max-width: 100%; height: auto; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-            h1, h2 { color: #1a202c; }
-            a { color: #3182ce; text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
-            a:hover { border-bottom-color: #3182ce; }
-            a:focus-visible { outline: 3px solid #63b3ed; outline-offset: 2px; border-radius: 2px; }
+            :root {
+                --bg-color: #ffffff;
+                --text-color: #333333;
+                --heading-color: #1a202c;
+                --link-color: #3182ce;
+                --link-hover-border: #3182ce;
+                --link-focus-outline: #63b3ed;
+                --img-border: #e2e8f0;
+                --img-shadow: rgba(0,0,0,0.1);
+            }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --bg-color: #1a202c;
+                    --text-color: #e2e8f0;
+                    --heading-color: #f7fafc;
+                    --link-color: #63b3ed;
+                    --link-hover-border: #63b3ed;
+                    --link-focus-outline: #90cdf4;
+                    --img-border: #4a5568;
+                    --img-shadow: rgba(0,0,0,0.5);
+                }
+            }
+            body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
+            img { max-width: 100%; height: auto; border: 1px solid var(--img-border); border-radius: 4px; margin-bottom: 24px; box-shadow: 0 1px 3px var(--img-shadow); transition: border-color 0.3s, box-shadow 0.3s; }
+            h1, h2 { color: var(--heading-color); transition: color 0.3s; }
+            a { color: var(--link-color); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.3s; }
+            a:hover { border-bottom-color: var(--link-hover-border); }
+            a:focus-visible { outline: 3px solid var(--link-focus-outline); outline-offset: 2px; border-radius: 2px; }
         </style>
     </head>
     <body>

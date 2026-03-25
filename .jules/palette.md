@@ -1,3 +1,7 @@
 ## 2026-03-24 - Adding Accessible Focus States and Link Formatting
 **Learning:** Native `<a>` tags require clear visual feedback for keyboard users using `:focus-visible` to ensure a11y compliance. Additionally, improving base typography ensures better readability for all users, and opening external links in a new tab requires both security attributes (`rel="noopener noreferrer"`) and an explanatory `aria-label` to warn screen reader users.
 **Action:** Always add explicit `:focus-visible` styling (like `outline`) when styling interactive elements natively to provide clear keyboard focus indicators, enhance generic body copy with explicit `line-height`, `color`, and `system-ui` fonts for clarity, and always provide an explanatory `aria-label` when utilizing `target="_blank"`.
+
+## 2026-03-25 - CSS Native Dark Mode with Transitions
+**Learning:** Light-sensitive users and those preferring dark environments benefit immensely from native dark mode support. Implementing it using CSS variables (`--var-name`) and the `@media (prefers-color-scheme: dark)` query allows for a smooth, JavaScript-free implementation that is inherently accessible. Adding `transition: background-color 0.3s, color 0.3s;` on the `body` provides a much gentler UX when toggling between themes at the OS level.
+**Action:** Always consider `prefers-color-scheme: dark` for web interfaces. Centralizing color definitions in `:root` variables makes it trivial to override them for dark mode, creating a robust, easily maintainable micro-UX improvement.
