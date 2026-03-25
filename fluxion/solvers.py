@@ -88,7 +88,10 @@ class LinearSolver:
             )
 
             # Update only Red points in-place using np.putmask for performance
-            np.putmask(p_slice, mask_red, (1 - omega) * p_slice + p_gs_red)
+            # Add (1 - omega) * p_slice in-place to avoid implicit temporary whole-array creation
+            if omega != 1.0:
+                p_gs_red += (1 - omega) * p_slice
+            np.putmask(p_slice, mask_red, p_gs_red)
 
             # 2. Update Black Points
             # Recompute neighbors (Red points have changed)
@@ -99,7 +102,9 @@ class LinearSolver:
             )
 
             # Update only Black points in-place
-            np.putmask(p_slice, mask_black, (1 - omega) * p_slice + p_gs_black)
+            if omega != 1.0:
+                p_gs_black += (1 - omega) * p_slice
+            np.putmask(p_slice, mask_black, p_gs_black)
 
             # Boundary Conditions
             p_new[0, :] = p_new[1, :]
