@@ -1,4 +1,5 @@
 from flask import Flask, send_from_directory
+from werkzeug.utils import secure_filename
 import os
 
 app = Flask(__name__)
@@ -9,6 +10,9 @@ def add_security_headers(response):
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self';"
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Security Enhancement: Prevent leaking referrer information cross-origin and disable sensitive browser features
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
     return response
 
 @app.route('/')
@@ -57,12 +61,17 @@ def send_assets(path):
     if '..' in path or path.startswith('/') or '%' in path:
         return "Bad Request", 400
 
+    # Sanitize the filename to prevent traversal via modified path segments
+    filename = secure_filename(path)
+
     # Determine the absolute path to the assets directory
     # Assumes api/index.py is one level deeper than root
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     assets_dir = os.path.join(base_dir, 'assets')
-    return send_from_directory(assets_dir, path)
+    return send_from_directory(assets_dir, filename)
 
 # For local testing
 if __name__ == '__main__':
-    app.run(debug=True)
+    # SECURE: Do not run with debug=True in production, as it exposes the Werkzeug debugger.
+    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() in ["true", "1", "t"]
+    app.run(debug=debug_mode)
