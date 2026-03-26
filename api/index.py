@@ -13,9 +13,12 @@ def add_security_headers(response):
     # Security Enhancement: Prevent leaking referrer information cross-origin and disable sensitive browser features
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    # Security Enhancement: Prevent cross-origin resource embedding/reading
+    response.headers['Cross-Origin-Resource-Policy'] = 'same-origin'
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
     return response
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     return """
     <!DOCTYPE html>
@@ -76,7 +79,7 @@ def index():
     </html>
     """
 
-@app.route('/assets/<path:path>')
+@app.route('/assets/<path:path>', methods=['GET'])
 def send_assets(path):
     # Prevent directory traversal attacks
     # werkzeug's send_from_directory does this securely, but explicitly checking is good defense in depth
