@@ -81,11 +81,15 @@ class LinearSolver:
                 np.copyto(p_old, p_new)
 
             # 1. Update Red Points
-            p_gs_red = (
-                (p_new[2:, 1:-1] + p_new[:-2, 1:-1]) * mult_x +
-                (p_new[1:-1, 2:] + p_new[1:-1, :-2]) * mult_y -
-                rhs_scaled
-            )
+            # ⚡ Bolt: Use in-place operators to avoid implicit temporary whole-array creation
+            p_gs_red = p_new[2:, 1:-1] + p_new[:-2, 1:-1]
+            p_gs_red *= mult_x
+
+            tmp_y = p_new[1:-1, 2:] + p_new[1:-1, :-2]
+            tmp_y *= mult_y
+
+            p_gs_red += tmp_y
+            p_gs_red -= rhs_scaled
 
             # Update only Red points in-place using np.putmask for performance
             # Add (1 - omega) * p_slice in-place to avoid implicit temporary whole-array creation
@@ -95,11 +99,14 @@ class LinearSolver:
 
             # 2. Update Black Points
             # Recompute neighbors (Red points have changed)
-            p_gs_black = (
-                (p_new[2:, 1:-1] + p_new[:-2, 1:-1]) * mult_x +
-                (p_new[1:-1, 2:] + p_new[1:-1, :-2]) * mult_y -
-                rhs_scaled
-            )
+            p_gs_black = p_new[2:, 1:-1] + p_new[:-2, 1:-1]
+            p_gs_black *= mult_x
+
+            tmp_y = p_new[1:-1, 2:] + p_new[1:-1, :-2]
+            tmp_y *= mult_y
+
+            p_gs_black += tmp_y
+            p_gs_black -= rhs_scaled
 
             # Update only Black points in-place
             if omega != 1.0:
