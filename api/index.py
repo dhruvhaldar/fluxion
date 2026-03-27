@@ -28,9 +28,11 @@ def index():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Fluxion CFD</title>
         <style>
+
             :root {
                 --bg-color: #ffffff;
                 --text-color: #333333;
+                --text-muted: #666666;
                 --heading-color: #1a202c;
                 --link-color: #3182ce;
                 --link-hover-border: #3182ce;
@@ -42,6 +44,7 @@ def index():
                 :root {
                     --bg-color: #1a202c;
                     --text-color: #e2e8f0;
+                    --text-muted: #a0aec0;
                     --heading-color: #f7fafc;
                     --link-color: #63b3ed;
                     --link-hover-border: #63b3ed;
@@ -51,7 +54,9 @@ def index():
                 }
             }
             body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
-            img { max-width: 100%; height: auto; border: 1px solid var(--img-border); border-radius: 4px; margin-bottom: 24px; box-shadow: 0 1px 3px var(--img-shadow); transition: border-color 0.3s, box-shadow 0.3s; }
+            figure { margin: 0 0 24px 0; padding: 0; }
+            img { max-width: 100%; height: auto; border: 1px solid var(--img-border); border-radius: 4px; display: block; box-shadow: 0 1px 3px var(--img-shadow); transition: border-color 0.3s, box-shadow 0.3s; }
+            figcaption { margin-top: 8px; font-size: 0.9em; color: var(--text-muted); text-align: center; font-style: italic; }
             h1, h2 { color: var(--heading-color); transition: color 0.3s; }
             a { color: var(--link-color); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.3s; }
             a:hover { border-bottom-color: var(--link-hover-border); }
@@ -65,13 +70,22 @@ def index():
             <p>This page demonstrates the generated artifacts from the solver.</p>
 
             <h2>Lid Driven Cavity Streamlines (Re=100)</h2>
-            <img src="/assets/lid_driven_streamlines.png" alt="Lid Driven Cavity Streamlines" />
+            <figure>
+                <img src="/assets/lid_driven_streamlines.png" alt="Streamlines and velocity magnitude contours for Re=100. The primary vortex is centered at (0.6, 0.5), matching benchmark data." />
+                <figcaption>Figure 1: Streamlines and velocity magnitude contours for Re=100</figcaption>
+            </figure>
 
             <h2>Grid Convergence Study</h2>
-            <img src="/assets/grid_convergence.png" alt="Grid Convergence" />
+            <figure>
+                <img src="/assets/grid_convergence.png" alt="Log-Log plot of L2-Error Norm vs. Grid Spacing (dx). The slope of the line is approximately 2.0, confirming the solver is Second-Order Accurate in space." />
+                <figcaption>Figure 2: Grid Convergence Study demonstrating second-order spatial accuracy</figcaption>
+            </figure>
 
             <h2>Convection Scheme Comparison</h2>
-            <img src="/assets/scheme_comparison.png" alt="Scheme Comparison" />
+            <figure>
+                <img src="/assets/scheme_comparison.png" alt="Convection of a step profile comparing Upwind, Central Difference, and QUICK schemes. Upwind shows diffusion, Central shows dispersion." />
+                <figcaption>Figure 3: Comparison of Convection Schemes (Upwind, Central, QUICK)</figcaption>
+            </figure>
 
             <p>For code and documentation, visit the <a href="https://github.com/dhruvhaldar/fluxion" target="_blank" rel="noopener noreferrer" aria-label="GitHub Repository (opens in a new tab)">GitHub Repository</a>.</p>
         </main>

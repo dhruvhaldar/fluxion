@@ -5,3 +5,6 @@
 ## 2026-03-25 - CSS Native Dark Mode with Transitions
 **Learning:** Light-sensitive users and those preferring dark environments benefit immensely from native dark mode support. Implementing it using CSS variables (`--var-name`) and the `@media (prefers-color-scheme: dark)` query allows for a smooth, JavaScript-free implementation that is inherently accessible. Adding `transition: background-color 0.3s, color 0.3s;` on the `body` provides a much gentler UX when toggling between themes at the OS level.
 **Action:** Always consider `prefers-color-scheme: dark` for web interfaces. Centralizing color definitions in `:root` variables makes it trivial to override them for dark mode, creating a robust, easily maintainable micro-UX improvement.
+## 2026-03-26 - Semantic and Descriptive Images for Scientific Visualizations
+**Learning:** Raw `<img>` tags in scientific plots often lack context or misrepresent complex data to screen reader users when their `alt` text only repeats the title.
+**Action:** When displaying data visualizations or scientific artifacts, wrap them in `<figure>` and `<figcaption>` elements for semantic structure. Furthermore, ensure the `alt` text describes the *content* and *finding* of the plot (e.g., "Log-log plot showing slope of 2.0"), rather than just its title, to ensure robust accessibility.
