@@ -61,10 +61,14 @@ def index():
             a { color: var(--link-color); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.3s; }
             a:hover { border-bottom-color: var(--link-hover-border); }
             a:focus-visible { outline: 3px solid var(--link-focus-outline); outline-offset: 2px; border-radius: 2px; }
+            .skip-link { position: absolute; top: -40px; left: 0; background: var(--bg-color); color: var(--link-color); padding: 8px; z-index: 100; transition: top 0.2s; font-weight: bold; border-bottom: none; border-right: 1px solid var(--img-border); border-bottom: 1px solid var(--img-border); border-bottom-right-radius: 4px; }
+            .skip-link:focus { top: 0; outline: none; border-bottom: 1px solid var(--link-focus-outline); border-right: 1px solid var(--link-focus-outline); }
+            .skip-link:focus-visible { outline: 3px solid var(--link-focus-outline); outline-offset: 0px; }
         </style>
     </head>
     <body>
-        <main>
+        <a href="#main" class="skip-link">Skip to main content</a>
+        <main id="main">
             <h1>Fluxion</h1>
             <p>A structured Finite Volume Method (FVM) solver for SG2212 Computational Fluid Dynamics.</p>
             <p>This page demonstrates the generated artifacts from the solver.</p>
