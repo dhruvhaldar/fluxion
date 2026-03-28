@@ -68,7 +68,7 @@ def index():
     </head>
     <body>
         <a href="#main" class="skip-link">Skip to main content</a>
-        <main id="main">
+        <main id="main" tabindex="-1">
             <h1>Fluxion</h1>
             <p>A structured Finite Volume Method (FVM) solver for SG2212 Computational Fluid Dynamics.</p>
             <p>This page demonstrates the generated artifacts from the solver.</p>
