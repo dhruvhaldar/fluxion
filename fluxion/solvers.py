@@ -18,18 +18,27 @@ class LinearSolver:
         mult_y = 1.0 / (dy2 * denom)
         rhs_scaled = rhs[1:-1, 1:-1] / denom
 
+        # ⚡ Bolt: Pre-allocate a temporary array to avoid implicit array creations in the loop
+        tmp_y = np.zeros_like(rhs_scaled)
+
         check_interval = 50
 
         for it in range(max_iter):
             # Swap references instead of allocating a new array
             p_old, p_new = p_new, p_old
 
-            # Interior Update
-            p_new[1:-1, 1:-1] = (
-                (p_old[2:, 1:-1] + p_old[:-2, 1:-1]) * mult_x +
-                (p_old[1:-1, 2:] + p_old[1:-1, :-2]) * mult_y -
-                rhs_scaled
-            )
+            # ⚡ Bolt: Fully in-place interior update to eliminate implicit temporary arrays
+            # X-direction directly into p_new
+            np.add(p_old[2:, 1:-1], p_old[:-2, 1:-1], out=p_new[1:-1, 1:-1])
+            np.multiply(p_new[1:-1, 1:-1], mult_x, out=p_new[1:-1, 1:-1])
+
+            # Y-direction into tmp_y
+            np.add(p_old[1:-1, 2:], p_old[1:-1, :-2], out=tmp_y)
+            np.multiply(tmp_y, mult_y, out=tmp_y)
+
+            # Combine
+            np.add(p_new[1:-1, 1:-1], tmp_y, out=p_new[1:-1, 1:-1])
+            np.subtract(p_new[1:-1, 1:-1], rhs_scaled, out=p_new[1:-1, 1:-1])
 
             # Boundary Conditions (Homogeneous Neumann)
             p_new[0, :] = p_new[1, :]
