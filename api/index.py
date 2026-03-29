@@ -107,6 +107,15 @@ def send_assets(path):
     # Sanitize the filename to prevent traversal via modified path segments
     filename = secure_filename(path)
 
+    # Security Enhancement: Only allow serving known safe media extensions
+    allowed_extensions = {
+        '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico',
+        '.css', '.js', '.woff', '.woff2', '.ttf', '.eot'
+    }
+    _, ext = os.path.splitext(filename)
+    if ext.lower() not in allowed_extensions:
+        return "Unsupported Media Type", 415
+
     # Determine the absolute path to the assets directory
     # Assumes api/index.py is one level deeper than root
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
