@@ -34,9 +34,9 @@ def index():
                 --text-color: #333333;
                 --text-muted: #666666;
                 --heading-color: #1a202c;
-                --link-color: #3182ce;
-                --link-hover-border: #3182ce;
-                --link-focus-outline: #63b3ed;
+                --link-color: #2b6cb0;
+                --link-hover-border: #2b6cb0;
+                --link-focus-outline: #3182ce;
                 --img-border: #e2e8f0;
                 --img-shadow: rgba(0,0,0,0.1);
             }
