@@ -84,6 +84,20 @@ class LinearSolver:
         check_interval = 50
         p_old = p_new.copy()
 
+        # Pre-allocate temporary arrays to avoid implicit array creations in the loop
+        # We need an array for the entire right-hand-side expression of the SOR update
+        # p_gs_red and p_gs_black can share the same buffer since they are updated sequentially
+        p_gs = np.zeros_like(p_slice)
+        tmp_y = np.zeros_like(p_slice)
+
+        # Pre-compute slice views to avoid overhead inside the loop.
+        # These are views into p_new, which is updated in place, so they
+        # stay valid as long as p_new's reference remains unchanged.
+        p_up = p_new[2:, 1:-1]
+        p_down = p_new[:-2, 1:-1]
+        p_right = p_new[1:-1, 2:]
+        p_left = p_new[1:-1, :-2]
+
         for it in range(max_iter):
             # Capture the previous iteration's state right before the check iteration
             if it > 0 and it % check_interval == 0:
@@ -91,36 +105,38 @@ class LinearSolver:
 
             # 1. Update Red Points
             # ⚡ Bolt: Use in-place operators to avoid implicit temporary whole-array creation
-            p_gs_red = p_new[2:, 1:-1] + p_new[:-2, 1:-1]
-            p_gs_red *= mult_x
+            np.add(p_up, p_down, out=p_gs)
+            np.multiply(p_gs, mult_x, out=p_gs)
 
-            tmp_y = p_new[1:-1, 2:] + p_new[1:-1, :-2]
-            tmp_y *= mult_y
+            np.add(p_right, p_left, out=tmp_y)
+            np.multiply(tmp_y, mult_y, out=tmp_y)
 
-            p_gs_red += tmp_y
-            p_gs_red -= rhs_scaled
+            np.add(p_gs, tmp_y, out=p_gs)
+            np.subtract(p_gs, rhs_scaled, out=p_gs)
 
             # Update only Red points in-place using np.putmask for performance
             # Add (1 - omega) * p_slice in-place to avoid implicit temporary whole-array creation
             if omega != 1.0:
-                p_gs_red += (1 - omega) * p_slice
-            np.putmask(p_slice, mask_red, p_gs_red)
+                # Add (1 - omega) * p_slice directly into p_gs
+                # using a temporary buffer if necessary, or just one extra op
+                np.add(p_gs, (1 - omega) * p_slice, out=p_gs)
+            np.putmask(p_slice, mask_red, p_gs)
 
             # 2. Update Black Points
             # Recompute neighbors (Red points have changed)
-            p_gs_black = p_new[2:, 1:-1] + p_new[:-2, 1:-1]
-            p_gs_black *= mult_x
+            np.add(p_up, p_down, out=p_gs)
+            np.multiply(p_gs, mult_x, out=p_gs)
 
-            tmp_y = p_new[1:-1, 2:] + p_new[1:-1, :-2]
-            tmp_y *= mult_y
+            np.add(p_right, p_left, out=tmp_y)
+            np.multiply(tmp_y, mult_y, out=tmp_y)
 
-            p_gs_black += tmp_y
-            p_gs_black -= rhs_scaled
+            np.add(p_gs, tmp_y, out=p_gs)
+            np.subtract(p_gs, rhs_scaled, out=p_gs)
 
             # Update only Black points in-place
             if omega != 1.0:
-                p_gs_black += (1 - omega) * p_slice
-            np.putmask(p_slice, mask_black, p_gs_black)
+                np.add(p_gs, (1 - omega) * p_slice, out=p_gs)
+            np.putmask(p_slice, mask_black, p_gs)
 
             # Boundary Conditions
             p_new[0, :] = p_new[1, :]
