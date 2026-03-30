@@ -63,6 +63,7 @@ def index():
             .skip-link { position: absolute; top: -40px; left: 0; background: var(--bg-color); color: var(--link-color); padding: 8px; z-index: 100; transition: top 0.2s; font-weight: bold; border-bottom: none; border-right: 1px solid var(--img-border); border-bottom: 1px solid var(--img-border); border-bottom-right-radius: 4px; }
             .skip-link:focus { top: 0; outline: none; border-bottom: 1px solid var(--link-focus-outline); border-right: 1px solid var(--link-focus-outline); }
             .skip-link:focus-visible { outline: 3px solid var(--link-focus-outline); outline-offset: 0px; }
+            main:focus { outline: none; }
         </style>
     </head>
     <body>
@@ -90,7 +91,7 @@ def index():
                 <figcaption>Figure 3: Comparison of Convection Schemes (Upwind, Central, QUICK)</figcaption>
             </figure>
 
-            <p>For code and documentation, visit the <a href="https://github.com/dhruvhaldar/fluxion" target="_blank" rel="noopener noreferrer" aria-label="GitHub Repository (opens in a new tab)">GitHub Repository</a>.</p>
+            <p>For code and documentation, visit the <a href="https://github.com/dhruvhaldar/fluxion" target="_blank" rel="noopener noreferrer" aria-label="GitHub Repository (opens in a new tab)">GitHub Repository <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:4px; margin-bottom:2px;" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>.</p>
         </main>
     </body>
     </html>
