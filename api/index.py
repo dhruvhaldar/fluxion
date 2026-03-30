@@ -1,5 +1,4 @@
 from flask import Flask, send_from_directory
-from werkzeug.utils import secure_filename
 import os
 
 app = Flask(__name__)
@@ -100,27 +99,31 @@ def index():
 @app.route('/assets/<path:path>', methods=['GET'])
 def send_assets(path):
     # Prevent directory traversal attacks
-    # werkzeug's send_from_directory does this securely, but explicitly checking is good defense in depth
+    # explicitly checking is good defense in depth
     if '..' in path or path.startswith('/') or '%' in path:
         return "Bad Request", 400
-
-    # Sanitize the filename to prevent traversal via modified path segments
-    filename = secure_filename(path)
 
     # Security Enhancement: Only allow serving known safe media extensions
     allowed_extensions = {
         '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico',
         '.css', '.js', '.woff', '.woff2', '.ttf', '.eot'
     }
-    _, ext = os.path.splitext(filename)
+    _, ext = os.path.splitext(path)
     if ext.lower() not in allowed_extensions:
         return "Unsupported Media Type", 415
 
     # Determine the absolute path to the assets directory
     # Assumes api/index.py is one level deeper than root
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    assets_dir = os.path.join(base_dir, 'assets')
-    return send_from_directory(assets_dir, filename)
+    assets_dir = os.path.abspath(os.path.join(base_dir, 'assets'))
+
+    # Security Enhancement: Ensure resolved path stays within the intended assets directory
+    # This acts as a robust defense against any bypass of previous string checks
+    requested_path = os.path.abspath(os.path.join(assets_dir, path))
+    if not requested_path.startswith(assets_dir + os.sep):
+        return "Bad Request", 400
+
+    return send_from_directory(assets_dir, path)
 
 # For local testing
 if __name__ == '__main__':
