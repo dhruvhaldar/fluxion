@@ -10,8 +10,8 @@ class LinearSolver:
         dx2, dy2 = dx**2, dy**2
         denom = 2 * (1/dx2 + 1/dy2)
 
-        p_new = p.copy()
-        p_old = p.copy()
+        p1 = p.copy()
+        p2 = p.copy()
 
         # Pre-calculate factors to avoid repeated division in the loop
         mult_x = 1.0 / (dx2 * denom)
@@ -21,24 +21,49 @@ class LinearSolver:
         # ⚡ Bolt: Pre-allocate a temporary array to avoid implicit array creations in the loop
         tmp_y = np.zeros_like(rhs_scaled)
 
+        # ⚡ Bolt: Pre-compute slice views outside loops to eliminate slicing overhead.
+        # These views remain valid as the arrays are updated in place.
+        p1_up = p1[2:, 1:-1]
+        p1_down = p1[:-2, 1:-1]
+        p1_right = p1[1:-1, 2:]
+        p1_left = p1[1:-1, :-2]
+        p1_center = p1[1:-1, 1:-1]
+
+        p2_up = p2[2:, 1:-1]
+        p2_down = p2[:-2, 1:-1]
+        p2_right = p2[1:-1, 2:]
+        p2_left = p2[1:-1, :-2]
+        p2_center = p2[1:-1, 1:-1]
+
         check_interval = 50
 
+        p_old, p_new = p1, p2
+        p_old_up, p_old_down, p_old_right, p_old_left = p1_up, p1_down, p1_right, p1_left
+        p_new_center = p2_center
+
         for it in range(max_iter):
-            # Swap references instead of allocating a new array
-            p_old, p_new = p_new, p_old
+            # ⚡ Bolt: Swap references of pre-computed slice views
+            if it % 2 == 0:
+                p_old, p_new = p1, p2
+                p_old_up, p_old_down, p_old_right, p_old_left = p1_up, p1_down, p1_right, p1_left
+                p_new_center = p2_center
+            else:
+                p_old, p_new = p2, p1
+                p_old_up, p_old_down, p_old_right, p_old_left = p2_up, p2_down, p2_right, p2_left
+                p_new_center = p1_center
 
             # ⚡ Bolt: Fully in-place interior update to eliminate implicit temporary arrays
-            # X-direction directly into p_new
-            np.add(p_old[2:, 1:-1], p_old[:-2, 1:-1], out=p_new[1:-1, 1:-1])
-            np.multiply(p_new[1:-1, 1:-1], mult_x, out=p_new[1:-1, 1:-1])
+            # X-direction directly into p_new_center
+            np.add(p_old_up, p_old_down, out=p_new_center)
+            np.multiply(p_new_center, mult_x, out=p_new_center)
 
             # Y-direction into tmp_y
-            np.add(p_old[1:-1, 2:], p_old[1:-1, :-2], out=tmp_y)
+            np.add(p_old_right, p_old_left, out=tmp_y)
             np.multiply(tmp_y, mult_y, out=tmp_y)
 
             # Combine
-            np.add(p_new[1:-1, 1:-1], tmp_y, out=p_new[1:-1, 1:-1])
-            np.subtract(p_new[1:-1, 1:-1], rhs_scaled, out=p_new[1:-1, 1:-1])
+            np.add(p_new_center, tmp_y, out=p_new_center)
+            np.subtract(p_new_center, rhs_scaled, out=p_new_center)
 
             # Boundary Conditions (Homogeneous Neumann)
             p_new[0, :] = p_new[1, :]

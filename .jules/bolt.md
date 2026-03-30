@@ -9,3 +9,7 @@
 ## 2026-03-26 - Replacing Boolean Indexing with np.where in FVM
 **Learning:** In FVM convection schemes like Upwind and QUICK, advanced boolean indexing (`val[mask] = phi_L[mask]`) creates multiple implicit array copies under the hood. Replacing these with `np.where(mask, phi_L, phi_R)` provides a ~3-5x performance improvement, because `np.where` processes the arrays fully in C and avoids the temporary array creations associated with boolean indexing.
 **Action:** When conditionally filling arrays based on a boolean mask, prefer `np.where()` over boolean array indexing (`arr[mask] = val`), particularly in tight numerical functions called frequently like convection term calculations.
+
+## 2026-03-30 - Swapping solvers vs. Optimizing internal loops
+**Learning:** In the Navier-Stokes FVM solver, swapping the iterative Jacobi solver for the Pressure Poisson Equation (PPE) with the Red-Black SOR solver caused accuracy degradations (failing mass conservation tests). Identical iteration counts and tolerances do not yield identical internal convergence quality for different algorithms handling Neumann boundaries. However, pre-computing slice views (e.g. `p[2:, 1:-1]`) and alternating their references entirely eliminates internal loop overhead safely.
+**Action:** When optimizing PDE iterative solvers, prefer algorithmic-safe loop optimizations (like view reference swapping) over swapping entire numerical algorithms unless the new algorithm's exact error and boundary behaviors are thoroughly validated against the physics tests.
