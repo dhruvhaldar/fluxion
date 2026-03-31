@@ -8,3 +8,7 @@
 ## 2026-03-26 - Semantic and Descriptive Images for Scientific Visualizations
 **Learning:** Raw `<img>` tags in scientific plots often lack context or misrepresent complex data to screen reader users when their `alt` text only repeats the title.
 **Action:** When displaying data visualizations or scientific artifacts, wrap them in `<figure>` and `<figcaption>` elements for semantic structure. Furthermore, ensure the `alt` text describes the *content* and *finding* of the plot (e.g., "Log-log plot showing slope of 2.0"), rather than just its title, to ensure robust accessibility.
+
+## 2026-03-31 - Link Accessibility
+**Learning:** When link color contrast against surrounding body text falls below the WCAG requirement of 3:1, relying solely on color to distinguish links from text creates an accessibility barrier for users with low vision or color blindness (failing WCAG 1.4.1 Use of Color).
+**Action:** Always provide a persistent, non-color visual identifier (such as `text-decoration: underline` or a visible `border-bottom`) for inline links to ensure they are perceivable regardless of color perception.
