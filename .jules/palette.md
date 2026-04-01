@@ -12,3 +12,7 @@
 ## 2026-03-31 - Link Accessibility
 **Learning:** When link color contrast against surrounding body text falls below the WCAG requirement of 3:1, relying solely on color to distinguish links from text creates an accessibility barrier for users with low vision or color blindness (failing WCAG 1.4.1 Use of Color).
 **Action:** Always provide a persistent, non-color visual identifier (such as `text-decoration: underline` or a visible `border-bottom`) for inline links to ensure they are perceivable regardless of color perception.
+
+## 2026-04-01 - Native Dark Mode Scrollbars and Distinct Hover States
+**Learning:** Even when implementing a custom CSS dark theme via `@media (prefers-color-scheme: dark)`, browser-native UI elements like scrollbars will remain blindingly bright white unless `color-scheme: light dark;` is explicitly defined on the `:root`. Furthermore, link hover states must be visually distinct from their default states (e.g., changing colors or adding thickness rather than remaining identical) to provide interactive feedback to sighted users.
+**Action:** Always include `color-scheme: light dark;` in the `:root` to ensure holistic theme consistency. When designing custom link colors, explicitly verify that the `:hover` color value differs noticeably from the default color value.
