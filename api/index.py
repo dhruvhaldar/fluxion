@@ -37,12 +37,13 @@ def index():
         <style>
 
             :root {
+                color-scheme: light dark;
                 --bg-color: #ffffff;
                 --text-color: #333333;
-                --text-muted: #666666;
+                --text-muted: #595959;
                 --heading-color: #1a202c;
                 --link-color: #2b6cb0;
-                --link-hover-border: #2b6cb0;
+                --link-hover-color: #1e40af;
                 --link-focus-outline: #3182ce;
                 --img-border: #e2e8f0;
                 --img-shadow: rgba(0,0,0,0.1);
@@ -54,7 +55,7 @@ def index():
                     --text-muted: #a0aec0;
                     --heading-color: #f7fafc;
                     --link-color: #63b3ed;
-                    --link-hover-border: #63b3ed;
+                    --link-hover-color: #90cdf4;
                     --link-focus-outline: #90cdf4;
                     --img-border: #4a5568;
                     --img-shadow: rgba(0,0,0,0.5);
@@ -66,7 +67,7 @@ def index():
             figcaption { margin-top: 8px; font-size: 0.9em; color: var(--text-muted); text-align: center; font-style: italic; }
             h1, h2 { color: var(--heading-color); transition: color 0.3s; }
             a { color: var(--link-color); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--link-color); transition: text-decoration-color 0.2s, color 0.3s; }
-            a:hover { color: var(--link-hover-border); text-decoration-color: var(--link-hover-border); }
+            a:hover { color: var(--link-hover-color); text-decoration-color: var(--link-hover-color); text-decoration-thickness: 2px; }
             a:focus-visible { outline: 3px solid var(--link-focus-outline); outline-offset: 2px; border-radius: 2px; }
             .skip-link { text-decoration: none; position: absolute; top: -40px; left: 0; background: var(--bg-color); color: var(--link-color); padding: 8px; z-index: 100; transition: top 0.2s; font-weight: bold; border-bottom: none; border-right: 1px solid var(--img-border); border-bottom: 1px solid var(--img-border); border-bottom-right-radius: 4px; }
             .skip-link:focus { top: 0; outline: none; border-bottom: 1px solid var(--link-focus-outline); border-right: 1px solid var(--link-focus-outline); }
