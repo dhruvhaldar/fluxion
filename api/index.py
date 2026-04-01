@@ -1,6 +1,12 @@
 from flask import Flask, send_from_directory
 import os
 
+
+import werkzeug.serving
+# Security Enhancement: Prevent Werkzeug from disclosing server version
+werkzeug.serving.WSGIRequestHandler.server_version = ""
+werkzeug.serving.WSGIRequestHandler.sys_version = ""
+
 app = Flask(__name__)
 
 @app.after_request
@@ -16,6 +22,7 @@ def add_security_headers(response):
     # Security Enhancement: Prevent cross-origin resource embedding/reading
     response.headers['Cross-Origin-Resource-Policy'] = 'same-origin'
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+    response.headers.pop('Server', None)
     return response
 
 @app.route('/', methods=['GET'])
