@@ -65,10 +65,10 @@ def index():
             img { max-width: 100%; height: auto; border: 1px solid var(--img-border); border-radius: 4px; display: block; box-shadow: 0 1px 3px var(--img-shadow); transition: border-color 0.3s, box-shadow 0.3s; }
             figcaption { margin-top: 8px; font-size: 0.9em; color: var(--text-muted); text-align: center; font-style: italic; }
             h1, h2 { color: var(--heading-color); transition: color 0.3s; }
-            a { color: var(--link-color); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s, color 0.3s; }
-            a:hover { border-bottom-color: var(--link-hover-border); }
+            a { color: var(--link-color); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--link-color); transition: text-decoration-color 0.2s, color 0.3s; }
+            a:hover { color: var(--link-hover-border); text-decoration-color: var(--link-hover-border); }
             a:focus-visible { outline: 3px solid var(--link-focus-outline); outline-offset: 2px; border-radius: 2px; }
-            .skip-link { position: absolute; top: -40px; left: 0; background: var(--bg-color); color: var(--link-color); padding: 8px; z-index: 100; transition: top 0.2s; font-weight: bold; border-bottom: none; border-right: 1px solid var(--img-border); border-bottom: 1px solid var(--img-border); border-bottom-right-radius: 4px; }
+            .skip-link { text-decoration: none; position: absolute; top: -40px; left: 0; background: var(--bg-color); color: var(--link-color); padding: 8px; z-index: 100; transition: top 0.2s; font-weight: bold; border-bottom: none; border-right: 1px solid var(--img-border); border-bottom: 1px solid var(--img-border); border-bottom-right-radius: 4px; }
             .skip-link:focus { top: 0; outline: none; border-bottom: 1px solid var(--link-focus-outline); border-right: 1px solid var(--link-focus-outline); }
             .skip-link:focus-visible { outline: 3px solid var(--link-focus-outline); outline-offset: 0px; }
             main:focus { outline: none; }
