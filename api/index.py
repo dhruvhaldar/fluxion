@@ -9,6 +9,9 @@ werkzeug.serving.WSGIRequestHandler.sys_version = ""
 
 app = Flask(__name__)
 
+# Security Enhancement: Restrict max content length to mitigate DoS (Denial of Service) via large payloads
+app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+
 @app.after_request
 def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
