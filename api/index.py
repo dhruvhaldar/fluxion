@@ -1,8 +1,8 @@
-from flask import Flask, send_from_directory
 import os
-
-
+from flask import Flask, send_from_directory
 import werkzeug.serving
+from werkzeug.exceptions import HTTPException
+
 # Security Enhancement: Prevent Werkzeug from disclosing server version
 werkzeug.serving.WSGIRequestHandler.server_version = ""
 werkzeug.serving.WSGIRequestHandler.sys_version = ""
@@ -11,6 +11,18 @@ app = Flask(__name__)
 
 # Security Enhancement: Restrict max content length to mitigate DoS (Denial of Service) via large payloads
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+
+# Security Enhancement: Global error handler to prevent leaking stack traces or internal information
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    # Pass through standard HTTP errors (like 404, 400)
+    if isinstance(e, HTTPException):
+        return e
+
+    # Log the actual unexpected error internally with traceback for debugging
+    app.logger.error(f"Unexpected error: {e}", exc_info=True)
+    # Return a generic, safe error message to the client
+    return "An internal server error occurred.", 500
 
 @app.after_request
 def add_security_headers(response):
