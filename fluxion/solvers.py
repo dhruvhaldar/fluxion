@@ -26,6 +26,7 @@ class LinearSolver:
 
         # ⚡ Bolt: Pre-allocate a temporary array to avoid implicit array creations in the loop
         tmp_y = np.zeros_like(rhs_scaled)
+        tmp_diff = np.zeros_like(p)
 
         # ⚡ Bolt: Pre-compute slice views outside loops to eliminate slicing overhead.
         # These views remain valid as the arrays are updated in place.
@@ -41,11 +42,26 @@ class LinearSolver:
         p2_left = p2[1:-1, :-2]
         p2_center = p2[1:-1, 1:-1]
 
+        # Pre-compute boundary views to avoid slicing overhead in loop
+        p1_bc_top, p1_bc_top_in = p1[0, :], p1[1, :]
+        p1_bc_bot, p1_bc_bot_in = p1[-1, :], p1[-2, :]
+        p1_bc_left, p1_bc_left_in = p1[:, 0], p1[:, 1]
+        p1_bc_right, p1_bc_right_in = p1[:, -1], p1[:, -2]
+
+        p2_bc_top, p2_bc_top_in = p2[0, :], p2[1, :]
+        p2_bc_bot, p2_bc_bot_in = p2[-1, :], p2[-2, :]
+        p2_bc_left, p2_bc_left_in = p2[:, 0], p2[:, 1]
+        p2_bc_right, p2_bc_right_in = p2[:, -1], p2[:, -2]
+
         check_interval = 50
 
         p_old, p_new = p1, p2
         p_old_up, p_old_down, p_old_right, p_old_left = p1_up, p1_down, p1_right, p1_left
         p_new_center = p2_center
+        p_new_bc_top, p_new_bc_top_in = p2_bc_top, p2_bc_top_in
+        p_new_bc_bot, p_new_bc_bot_in = p2_bc_bot, p2_bc_bot_in
+        p_new_bc_left, p_new_bc_left_in = p2_bc_left, p2_bc_left_in
+        p_new_bc_right, p_new_bc_right_in = p2_bc_right, p2_bc_right_in
 
         for it in range(max_iter):
             # ⚡ Bolt: Swap references of pre-computed slice views
@@ -53,10 +69,18 @@ class LinearSolver:
                 p_old, p_new = p1, p2
                 p_old_up, p_old_down, p_old_right, p_old_left = p1_up, p1_down, p1_right, p1_left
                 p_new_center = p2_center
+                p_new_bc_top, p_new_bc_top_in = p2_bc_top, p2_bc_top_in
+                p_new_bc_bot, p_new_bc_bot_in = p2_bc_bot, p2_bc_bot_in
+                p_new_bc_left, p_new_bc_left_in = p2_bc_left, p2_bc_left_in
+                p_new_bc_right, p_new_bc_right_in = p2_bc_right, p2_bc_right_in
             else:
                 p_old, p_new = p2, p1
                 p_old_up, p_old_down, p_old_right, p_old_left = p2_up, p2_down, p2_right, p2_left
                 p_new_center = p1_center
+                p_new_bc_top, p_new_bc_top_in = p1_bc_top, p1_bc_top_in
+                p_new_bc_bot, p_new_bc_bot_in = p1_bc_bot, p1_bc_bot_in
+                p_new_bc_left, p_new_bc_left_in = p1_bc_left, p1_bc_left_in
+                p_new_bc_right, p_new_bc_right_in = p1_bc_right, p1_bc_right_in
 
             # ⚡ Bolt: Fully in-place interior update to eliminate implicit temporary arrays
             # Factoring out mult_x reduces the number of operations per iteration by combining terms.
@@ -69,18 +93,22 @@ class LinearSolver:
             np.multiply(tmp_y, mult_x, out=p_new_center)
 
             # Boundary Conditions (Homogeneous Neumann)
-            p_new[0, :] = p_new[1, :]
-            p_new[-1, :] = p_new[-2, :]
-            p_new[:, 0] = p_new[:, 1]
-            p_new[:, -1] = p_new[:, -2]
+            np.copyto(p_new_bc_top, p_new_bc_top_in)
+            np.copyto(p_new_bc_bot, p_new_bc_bot_in)
+            np.copyto(p_new_bc_left, p_new_bc_left_in)
+            np.copyto(p_new_bc_right, p_new_bc_right_in)
 
             # Only calculate max diff every check_interval to avoid expensive array operations
             if it % check_interval == 0 and it > 0:
-                if np.max(np.abs(p_new - p_old)) < tol:
+                np.subtract(p_new, p_old, out=tmp_diff)
+                np.abs(tmp_diff, out=tmp_diff)
+                if np.max(tmp_diff) < tol:
                     return p_new, it
 
         # Final check if loop finishes
-        if np.max(np.abs(p_new - p_old)) < tol:
+        np.subtract(p_new, p_old, out=tmp_diff)
+        np.abs(tmp_diff, out=tmp_diff)
+        if np.max(tmp_diff) < tol:
             return p_new, max_iter - 1
 
         return p_new, max_iter
@@ -121,6 +149,7 @@ class LinearSolver:
         # p_gs_red and p_gs_black can share the same buffer since they are updated sequentially
         p_gs = np.zeros_like(p_slice)
         tmp_y = np.zeros_like(p_slice)
+        tmp_diff = np.zeros_like(p_new)
 
         # Pre-compute slice views to avoid overhead inside the loop.
         # These are views into p_new, which is updated in place, so they
@@ -129,6 +158,12 @@ class LinearSolver:
         p_down = p_new[:-2, 1:-1]
         p_right = p_new[1:-1, 2:]
         p_left = p_new[1:-1, :-2]
+
+        # Pre-compute boundary views to avoid slicing overhead in loop
+        p_new_bc_top, p_new_bc_top_in = p_new[0, :], p_new[1, :]
+        p_new_bc_bot, p_new_bc_bot_in = p_new[-1, :], p_new[-2, :]
+        p_new_bc_left, p_new_bc_left_in = p_new[:, 0], p_new[:, 1]
+        p_new_bc_right, p_new_bc_right_in = p_new[:, -1], p_new[:, -2]
 
         for it in range(max_iter):
             # Capture the previous iteration's state right before the check iteration
@@ -149,9 +184,9 @@ class LinearSolver:
             # Update only Red points in-place using np.putmask for performance
             # Add (1 - omega) * p_slice in-place to avoid implicit temporary whole-array creation
             if omega != 1.0:
-                # Add (1 - omega) * p_slice directly into p_gs
-                # using a temporary buffer if necessary, or just one extra op
-                np.add(p_gs, (1 - omega) * p_slice, out=p_gs)
+                # Use a temporary buffer to avoid implicit array creation
+                np.multiply(p_slice, 1 - omega, out=tmp_y)
+                np.add(p_gs, tmp_y, out=p_gs)
             np.putmask(p_slice, mask_red, p_gs)
 
             # 2. Update Black Points
@@ -166,20 +201,23 @@ class LinearSolver:
 
             # Update only Black points in-place
             if omega != 1.0:
-                np.add(p_gs, (1 - omega) * p_slice, out=p_gs)
+                np.multiply(p_slice, 1 - omega, out=tmp_y)
+                np.add(p_gs, tmp_y, out=p_gs)
             np.putmask(p_slice, mask_black, p_gs)
 
             # Boundary Conditions
-            p_new[0, :] = p_new[1, :]
-            p_new[-1, :] = p_new[-2, :]
-            p_new[:, 0] = p_new[:, 1]
-            p_new[:, -1] = p_new[:, -2]
+            np.copyto(p_new_bc_top, p_new_bc_top_in)
+            np.copyto(p_new_bc_bot, p_new_bc_bot_in)
+            np.copyto(p_new_bc_left, p_new_bc_left_in)
+            np.copyto(p_new_bc_right, p_new_bc_right_in)
 
             # Only calculate max diff every check_interval to avoid expensive array operations
             # We captured p_old at the START of this iteration, so p_new - p_old is exactly the diff
             # of this one iteration.
             if it > 0 and it % check_interval == 0:
-                if np.max(np.abs(p_new - p_old)) < tol:
+                np.subtract(p_new, p_old, out=tmp_diff)
+                np.abs(tmp_diff, out=tmp_diff)
+                if np.max(tmp_diff) < tol:
                     return p_new, it
 
         # Final check if loop finishes
