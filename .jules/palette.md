@@ -16,3 +16,7 @@
 ## 2026-04-01 - Native Dark Mode Scrollbars and Distinct Hover States
 **Learning:** Even when implementing a custom CSS dark theme via `@media (prefers-color-scheme: dark)`, browser-native UI elements like scrollbars will remain blindingly bright white unless `color-scheme: light dark;` is explicitly defined on the `:root`. Furthermore, link hover states must be visually distinct from their default states (e.g., changing colors or adding thickness rather than remaining identical) to provide interactive feedback to sighted users.
 **Action:** Always include `color-scheme: light dark;` in the `:root` to ensure holistic theme consistency. When designing custom link colors, explicitly verify that the `:hover` color value differs noticeably from the default color value.
+
+## 2026-04-03 - Dark Mode Image Glare and Focusable Visualizations
+**Learning:** Pure white scientific images or visualizations cause significant eye strain when viewed in dark mode. Dimming them using `filter: brightness()` preserves contrast while reducing glare. However, dimming can reduce legibility of fine details, so users need a way to view the full, unadulterated image.
+**Action:** When displaying bright images in dark mode, apply `filter: brightness(0.85) contrast(1.1);`. Always wrap these images in focusable anchor tags (`<a target="_blank">`) to allow users to view the full resolution, and use `:hover` and `:focus-visible` on the wrapper to restore `brightness(1)` for accessibility parity and detail inspection.
