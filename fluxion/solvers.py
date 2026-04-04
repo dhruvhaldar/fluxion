@@ -27,6 +27,9 @@ class LinearSolver:
         # ⚡ Bolt: Pre-allocate a temporary array to avoid implicit array creations in the loop
         tmp_y = np.zeros_like(rhs_scaled)
 
+        # ⚡ Bolt: Pre-allocate a full temporary array for convergence checks to avoid implicit allocations
+        tmp_full = np.zeros_like(p)
+
         # ⚡ Bolt: Pre-compute slice views outside loops to eliminate slicing overhead.
         # These views remain valid as the arrays are updated in place.
         p1_up = p1[2:, 1:-1]
@@ -76,11 +79,16 @@ class LinearSolver:
 
             # Only calculate max diff every check_interval to avoid expensive array operations
             if it % check_interval == 0 and it > 0:
-                if np.max(np.abs(p_new - p_old)) < tol:
+                # ⚡ Bolt: Use pre-allocated tmp_full to avoid implicit temporary arrays in convergence check
+                np.subtract(p_new, p_old, out=tmp_full)
+                np.abs(tmp_full, out=tmp_full)
+                if np.max(tmp_full) < tol:
                     return p_new, it
 
         # Final check if loop finishes
-        if np.max(np.abs(p_new - p_old)) < tol:
+        np.subtract(p_new, p_old, out=tmp_full)
+        np.abs(tmp_full, out=tmp_full)
+        if np.max(tmp_full) < tol:
             return p_new, max_iter - 1
 
         return p_new, max_iter
@@ -121,6 +129,7 @@ class LinearSolver:
         # p_gs_red and p_gs_black can share the same buffer since they are updated sequentially
         p_gs = np.zeros_like(p_slice)
         tmp_y = np.zeros_like(p_slice)
+        tmp_full = np.zeros_like(p)
 
         # Pre-compute slice views to avoid overhead inside the loop.
         # These are views into p_new, which is updated in place, so they
@@ -149,9 +158,9 @@ class LinearSolver:
             # Update only Red points in-place using np.putmask for performance
             # Add (1 - omega) * p_slice in-place to avoid implicit temporary whole-array creation
             if omega != 1.0:
-                # Add (1 - omega) * p_slice directly into p_gs
-                # using a temporary buffer if necessary, or just one extra op
-                np.add(p_gs, (1 - omega) * p_slice, out=p_gs)
+                # ⚡ Bolt: Use tmp_y to avoid implicit temporary array from (1 - omega) * p_slice
+                np.multiply(p_slice, 1 - omega, out=tmp_y)
+                np.add(p_gs, tmp_y, out=p_gs)
             np.putmask(p_slice, mask_red, p_gs)
 
             # 2. Update Black Points
@@ -166,7 +175,8 @@ class LinearSolver:
 
             # Update only Black points in-place
             if omega != 1.0:
-                np.add(p_gs, (1 - omega) * p_slice, out=p_gs)
+                np.multiply(p_slice, 1 - omega, out=tmp_y)
+                np.add(p_gs, tmp_y, out=p_gs)
             np.putmask(p_slice, mask_black, p_gs)
 
             # Boundary Conditions
@@ -179,7 +189,9 @@ class LinearSolver:
             # We captured p_old at the START of this iteration, so p_new - p_old is exactly the diff
             # of this one iteration.
             if it > 0 and it % check_interval == 0:
-                if np.max(np.abs(p_new - p_old)) < tol:
+                np.subtract(p_new, p_old, out=tmp_full)
+                np.abs(tmp_full, out=tmp_full)
+                if np.max(tmp_full) < tol:
                     return p_new, it
 
         # Final check if loop finishes
