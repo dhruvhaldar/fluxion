@@ -17,3 +17,11 @@
 ## 2026-03-31 - Factoring equations to reduce numpy ufuncs
 **Learning:** In tight iterative FVM solvers using numpy arrays (like Jacobi or SOR), each numpy operation (e.g. `np.add`, `np.multiply`) requires a full array traversal which is memory-bandwidth bound. While using in-place operations (`out=`) avoids allocating new memory, the sheer number of array traversals is still a bottleneck.
 **Action:** Mathematically factor out common multipliers in finite-difference stencils to reduce the total number of numpy operations per iteration. For example, factoring out `mult_x` from the X and Y diffusion terms reduces the operation count from 6 ops to 5 ops per iteration, yielding a ~30-40% speedup in solver time, especially on square grids where the aspect ratio multiplier evaluates to 1.0 and can be conditionally skipped.
+
+## 2026-04-05 - In-Place Augmented Assignments vs Separate Ufunc Calls
+**Learning:** In NumPy, combining an initial `np.add(..., out=buffer)` with subsequent in-place augmented assignments (`+=`, `-=`, `*=`) on that buffer is noticeably faster than making sequential explicit `np.add`/`np.subtract` calls with the `out=` parameter. This avoids the Python wrapper overhead associated with calling multiple NumPy functions in a hot loop while still achieving the exact same memory-efficient in-place C-level operations.
+**Action:** In inner iteration loops (like Jacobi or SOR), use augmented assignments for accumulating terms into an existing pre-allocated array buffer instead of spelling out explicit `np.add`/`np.subtract` statements.
+
+## 2026-04-05 - Skipping Slices for Boundary Condition Assignments
+**Learning:** When assigning one entire row/column of a 2D NumPy array to another (e.g., for boundary conditions), writing `arr[0] = arr[1]` is slightly faster (~15%) than writing `arr[0, :] = arr[1, :]`. The latter incurs the overhead of creating and processing Python slice objects, which adds up when executed millions of times.
+**Action:** Omit unnecessary slice `:` notations when assigning entire outer dimensions in hot iterative loops.
