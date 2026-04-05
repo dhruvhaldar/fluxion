@@ -1,6 +1,7 @@
 from flask import Flask, send_from_directory
 import os
-
+import logging
+from werkzeug.exceptions import HTTPException
 
 import werkzeug.serving
 # Security Enhancement: Prevent Werkzeug from disclosing server version
@@ -27,6 +28,17 @@ def add_security_headers(response):
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
     response.headers.pop('Server', None)
     return response
+
+# Security Enhancement: Global exception handler to prevent leaking stack traces
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Pass through standard HTTP errors (like 404, 400, etc.)
+    if isinstance(e, HTTPException):
+        return e
+    # Log unexpected errors internally
+    logging.error("Unhandled Exception: %s", str(e), exc_info=True)
+    # Return generic 500 error to the client
+    return "Internal Server Error", 500
 
 @app.route('/', methods=['GET'])
 def index():
