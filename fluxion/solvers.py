@@ -69,8 +69,10 @@ class LinearSolver:
             np.multiply(tmp_y, mult_x, out=p_new_center)
 
             # Boundary Conditions (Homogeneous Neumann)
-            p_new[0, :] = p_new[1, :]
-            p_new[-1, :] = p_new[-2, :]
+            # ⚡ Bolt: Direct row assignments are slightly faster than slice assignments
+            # for 2D numpy arrays in tight loops.
+            p_new[0] = p_new[1]
+            p_new[-1] = p_new[-2]
             p_new[:, 0] = p_new[:, 1]
             p_new[:, -1] = p_new[:, -2]
 
@@ -170,8 +172,10 @@ class LinearSolver:
             np.putmask(p_slice, mask_black, p_gs)
 
             # Boundary Conditions
-            p_new[0, :] = p_new[1, :]
-            p_new[-1, :] = p_new[-2, :]
+            # ⚡ Bolt: Direct row assignments are slightly faster than slice assignments
+            # for 2D numpy arrays in tight loops.
+            p_new[0] = p_new[1]
+            p_new[-1] = p_new[-2]
             p_new[:, 0] = p_new[:, 1]
             p_new[:, -1] = p_new[:, -2]
 
