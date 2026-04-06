@@ -20,3 +20,7 @@
 ## 2026-04-02 - Image Accessibility in Dark Mode
 **Learning:** Pure white scientific images can cause eye strain when viewed in dark mode. Furthermore, embedding them directly restricts users from viewing them in full resolution and navigating to them via keyboard.
 **Action:** When displaying pure white scientific images or visualizations in dark mode, apply a dimming filter (`filter: brightness(0.85)`) to reduce eye strain. Always wrap these images in focusable anchor tags for full-resolution access, and use `:hover`/`:focus-visible` states to restore full brightness (`filter: brightness(1)`) for detailed inspection and accessibility parity.
+
+## 2026-04-03 - Interactive Linked Images
+**Learning:** While filtering image brightness on hover provides a good dark-mode interaction, users in light-mode (or default) environments may not realize embedded scientific visualization images are clickable links to view them in full resolution.
+**Action:** To ensure clear interactivity for linked images (such as scientific visualizations) across all color schemes, apply universal visual feedback for `:hover` and `:focus-visible` states directly to the image element (e.g., modifying `border-color` and `box-shadow` on `a:hover img` and `a:focus-visible img`).
