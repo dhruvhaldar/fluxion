@@ -3,11 +3,20 @@ import os
 
 
 import werkzeug.serving
+from werkzeug.exceptions import HTTPException
 # Security Enhancement: Prevent Werkzeug from disclosing server version
 werkzeug.serving.WSGIRequestHandler.server_version = ""
 werkzeug.serving.WSGIRequestHandler.sys_version = ""
 
 app = Flask(__name__)
+
+# Security Enhancement: Prevent leaking stack traces or sensitive internal state on unexpected errors
+@app.errorhandler(Exception)
+def handle_exception(e):
+    if isinstance(e, HTTPException):
+        return e
+    app.logger.error("Unexpected error", exc_info=True)
+    return "Internal Server Error", 500
 
 # Security Enhancement: Restrict max content length to mitigate DoS (Denial of Service) via large payloads
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
