@@ -72,10 +72,12 @@ def index():
                     --img-border: #4a5568;
                     --img-shadow: rgba(0,0,0,0.5);
                 }
+                img { filter: brightness(0.85); }
+                a:focus-visible img, a:hover img { filter: brightness(1); }
             }
             body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
             figure { margin: 0 0 24px 0; padding: 0; }
-            img { max-width: 100%; height: auto; border: 1px solid var(--img-border); border-radius: 4px; display: block; box-shadow: 0 1px 3px var(--img-shadow); transition: border-color 0.3s, box-shadow 0.3s; }
+            img { max-width: 100%; height: auto; border: 1px solid var(--img-border); border-radius: 4px; display: block; box-shadow: 0 1px 3px var(--img-shadow); transition: border-color 0.3s, box-shadow 0.3s, filter 0.3s; }
             figcaption { margin-top: 8px; font-size: 0.9em; color: var(--text-muted); text-align: center; font-style: italic; }
             h1, h2 { color: var(--heading-color); transition: color 0.3s; }
             a { color: var(--link-color); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--link-color); transition: text-decoration-color 0.2s, color 0.3s; }
@@ -96,19 +98,28 @@ def index():
 
             <h2>Lid Driven Cavity Streamlines (Re=100)</h2>
             <figure>
-                <img src="/assets/lid_driven_streamlines.png" alt="Streamlines and velocity magnitude contours for Re=100. The primary vortex is centered at (0.6, 0.5), matching benchmark data." />
+                <a href="/assets/lid_driven_streamlines.png" target="_blank" rel="noopener noreferrer">
+                    <img src="/assets/lid_driven_streamlines.png" alt="Streamlines and velocity magnitude contours for Re=100. The primary vortex is centered at (0.6, 0.5), matching benchmark data." />
+                    <span style="border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;">(opens in a new tab)</span>
+                </a>
                 <figcaption>Figure 1: Streamlines and velocity magnitude contours for Re=100</figcaption>
             </figure>
 
             <h2>Grid Convergence Study</h2>
             <figure>
-                <img src="/assets/grid_convergence.png" alt="Log-Log plot of L2-Error Norm vs. Grid Spacing (dx). The slope of the line is approximately 2.0, confirming the solver is Second-Order Accurate in space." />
+                <a href="/assets/grid_convergence.png" target="_blank" rel="noopener noreferrer">
+                    <img src="/assets/grid_convergence.png" alt="Log-Log plot of L2-Error Norm vs. Grid Spacing (dx). The slope of the line is approximately 2.0, confirming the solver is Second-Order Accurate in space." />
+                    <span style="border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;">(opens in a new tab)</span>
+                </a>
                 <figcaption>Figure 2: Grid Convergence Study demonstrating second-order spatial accuracy</figcaption>
             </figure>
 
             <h2>Convection Scheme Comparison</h2>
             <figure>
-                <img src="/assets/scheme_comparison.png" alt="Convection of a step profile comparing Upwind, Central Difference, and QUICK schemes. Upwind shows diffusion, Central shows dispersion." />
+                <a href="/assets/scheme_comparison.png" target="_blank" rel="noopener noreferrer">
+                    <img src="/assets/scheme_comparison.png" alt="Convection of a step profile comparing Upwind, Central Difference, and QUICK schemes. Upwind shows diffusion, Central shows dispersion." />
+                    <span style="border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;">(opens in a new tab)</span>
+                </a>
                 <figcaption>Figure 3: Comparison of Convection Schemes (Upwind, Central, QUICK)</figcaption>
             </figure>
 
