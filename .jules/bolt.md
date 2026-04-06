@@ -17,3 +17,7 @@
 ## 2026-03-31 - Factoring equations to reduce numpy ufuncs
 **Learning:** In tight iterative FVM solvers using numpy arrays (like Jacobi or SOR), each numpy operation (e.g. `np.add`, `np.multiply`) requires a full array traversal which is memory-bandwidth bound. While using in-place operations (`out=`) avoids allocating new memory, the sheer number of array traversals is still a bottleneck.
 **Action:** Mathematically factor out common multipliers in finite-difference stencils to reduce the total number of numpy operations per iteration. For example, factoring out `mult_x` from the X and Y diffusion terms reduces the operation count from 6 ops to 5 ops per iteration, yielding a ~30-40% speedup in solver time, especially on square grids where the aspect ratio multiplier evaluates to 1.0 and can be conditionally skipped.
+
+## 2024-04-01 - Avoiding Implicit Temporaries in Convergence Checks
+**Learning:** In tight iterative loops (such as convergence checks like `np.max(np.abs(p_new - p_old))` in Jacobi/SOR solvers), evaluating the check creates multiple whole-grid temporary arrays internally (`p_new - p_old`, and the `abs()` of that). This causes high memory bandwidth overhead even when executed periodically (e.g., every 50 steps).
+**Action:** Pre-allocate a full-sized array buffer outside the loop (e.g. `tmp_full = np.zeros_like(p)`) and use in-place ufuncs (`np.subtract(p_new, p_old, out=tmp_full)`, `np.abs(tmp_full, out=tmp_full)`) to compute convergence metrics to eliminate implicit allocations.
