@@ -24,3 +24,7 @@
 ## 2026-04-03 - Interactive Linked Images
 **Learning:** While filtering image brightness on hover provides a good dark-mode interaction, users in light-mode (or default) environments may not realize embedded scientific visualization images are clickable links to view them in full resolution.
 **Action:** To ensure clear interactivity for linked images (such as scientific visualizations) across all color schemes, apply universal visual feedback for `:hover` and `:focus-visible` states directly to the image element (e.g., modifying `border-color` and `box-shadow` on `a:hover img` and `a:focus-visible img`).
+
+## 2026-04-04 - Image Link Cursors and Focus Wrappers
+**Learning:** When images are wrapped in anchor tags to allow users to view full-resolution versions, the default `cursor: pointer` is less descriptive than `cursor: zoom-in`, which explicitly communicates the action. Furthermore, because anchor tags are `display: inline` by default, keyboard focus rings (`:focus-visible`) on anchors wrapping block-level images often render awkwardly (e.g., zero height or misaligned).
+**Action:** Always apply `cursor: zoom-in` to links that expand images. Ensure image-wrapping anchor tags are explicitly set to `display: block` (or `inline-block`) with a matching `border-radius` so that native keyboard focus rings properly encompass the entire image.
