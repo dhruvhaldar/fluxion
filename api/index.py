@@ -91,6 +91,7 @@ def index():
             }
             body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
             figure { margin: 0 0 24px 0; padding: 0; }
+            figure a { display: block; border-radius: 4px; cursor: zoom-in; text-decoration: none; }
             img { max-width: 100%; height: auto; border: 1px solid var(--img-border); border-radius: 4px; display: block; box-shadow: 0 1px 3px var(--img-shadow); transition: border-color 0.3s, box-shadow 0.3s, filter 0.3s; }
             a:hover img { border-color: var(--link-hover-color); box-shadow: 0 4px 6px var(--img-shadow); }
             a:focus-visible img { border-color: var(--link-focus-outline); box-shadow: 0 4px 6px var(--img-shadow); }
@@ -115,7 +116,7 @@ def index():
             <h2>Lid Driven Cavity Streamlines (Re=100)</h2>
             <figure>
                 <a href="/assets/lid_driven_streamlines.png" target="_blank" rel="noopener noreferrer">
-                    <img src="/assets/lid_driven_streamlines.png" alt="Streamlines and velocity magnitude contours for Re=100. The primary vortex is centered at (0.6, 0.5), matching benchmark data." />
+                    <img src="/assets/lid_driven_streamlines.png" width="800" height="600" alt="Streamlines and velocity magnitude contours for Re=100. The primary vortex is centered at (0.6, 0.5), matching benchmark data." />
                     <span style="border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;">(opens in a new tab)</span>
                 </a>
                 <figcaption>Figure 1: Streamlines and velocity magnitude contours for Re=100</figcaption>
@@ -124,7 +125,7 @@ def index():
             <h2>Grid Convergence Study</h2>
             <figure>
                 <a href="/assets/grid_convergence.png" target="_blank" rel="noopener noreferrer">
-                    <img src="/assets/grid_convergence.png" alt="Log-Log plot of L2-Error Norm vs. Grid Spacing (dx). The slope of the line is approximately 2.0, confirming the solver is Second-Order Accurate in space." />
+                    <img src="/assets/grid_convergence.png" width="800" height="600" alt="Log-Log plot of L2-Error Norm vs. Grid Spacing (dx). The slope of the line is approximately 2.0, confirming the solver is Second-Order Accurate in space." />
                     <span style="border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;">(opens in a new tab)</span>
                 </a>
                 <figcaption>Figure 2: Grid Convergence Study demonstrating second-order spatial accuracy</figcaption>
@@ -133,7 +134,7 @@ def index():
             <h2>Convection Scheme Comparison</h2>
             <figure>
                 <a href="/assets/scheme_comparison.png" target="_blank" rel="noopener noreferrer">
-                    <img src="/assets/scheme_comparison.png" alt="Convection of a step profile comparing Upwind, Central Difference, and QUICK schemes. Upwind shows diffusion, Central shows dispersion." />
+                    <img src="/assets/scheme_comparison.png" width="1000" height="600" alt="Convection of a step profile comparing Upwind, Central Difference, and QUICK schemes. Upwind shows diffusion, Central shows dispersion." />
                     <span style="border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;">(opens in a new tab)</span>
                 </a>
                 <figcaption>Figure 3: Comparison of Convection Schemes (Upwind, Central, QUICK)</figcaption>
