@@ -28,3 +28,7 @@
 ## 2026-04-04 - Image Link Cursors and Focus Wrappers
 **Learning:** When images are wrapped in anchor tags to allow users to view full-resolution versions, the default `cursor: pointer` is less descriptive than `cursor: zoom-in`, which explicitly communicates the action. Furthermore, because anchor tags are `display: inline` by default, keyboard focus rings (`:focus-visible`) on anchors wrapping block-level images often render awkwardly (e.g., zero height or misaligned).
 **Action:** Always apply `cursor: zoom-in` to links that expand images. Ensure image-wrapping anchor tags are explicitly set to `display: block` (or `inline-block`) with a matching `border-radius` so that native keyboard focus rings properly encompass the entire image.
+
+## 2026-04-08 - Accessible External Links and Visible Text
+**Learning:** Using `aria-label` on links that contain visible text is an anti-pattern. An `aria-label` entirely replaces the visible text for screen reader users and can break voice dictation software (like Dragon) because the accessible name no longer matches the visible text on the screen.
+**Action:** When adding supplemental information to links with visible text (such as "opens in a new tab" for `target="_blank"`), avoid `aria-label`. Instead, use a visually hidden `<span>` (e.g., using a `.sr-only` utility class) immediately following the visible text inside the anchor tag.
