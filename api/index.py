@@ -4,7 +4,6 @@ import logging
 from werkzeug.exceptions import HTTPException
 
 import werkzeug.serving
-from werkzeug.exceptions import HTTPException
 # Security Enhancement: Prevent Werkzeug from disclosing server version
 werkzeug.serving.WSGIRequestHandler.server_version = ""
 werkzeug.serving.WSGIRequestHandler.sys_version = ""
@@ -22,7 +21,7 @@ def handle_exception(e):
 # Security Enhancement: Restrict max content length to mitigate DoS (Denial of Service) via large payloads
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
 
-# Security Enhancement: Global Exception Handler to fail securely
+# Security Enhancement: Prevent leaking stack traces or sensitive internal state on unexpected errors
 @app.errorhandler(Exception)
 def handle_exception(e):
     # Pass through standard HTTP errors
@@ -30,7 +29,7 @@ def handle_exception(e):
         return e
 
     # Log the unexpected error internally securely
-    logging.error("Unhandled Exception: %s", str(e), exc_info=True)
+    app.logger.error("Unexpected error", exc_info=True)
 
     # Return generic 500 without leaking stack trace or internal state
     return "Internal Server Error", 500
@@ -148,6 +147,10 @@ def index():
 
 @app.route('/assets/<path:path>', methods=['GET'])
 def send_assets(path):
+    # Security Enhancement: Restrict input length to mitigate DoS attacks
+    if len(path) > 256:
+        return "URI Too Long", 414
+
     # Prevent directory traversal attacks
     # explicitly checking is good defense in depth
     if '..' in path or path.startswith('/') or '%' in path:
