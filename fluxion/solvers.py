@@ -63,12 +63,13 @@ class LinearSolver:
 
             # ⚡ Bolt: Fully in-place interior update to eliminate implicit temporary arrays
             # Factoring out mult_x reduces the number of operations per iteration by combining terms.
+            # Using augmented assignments minimizes Python wrapper overhead for subsequent ops.
             np.add(p_old_right, p_old_left, out=tmp_y)
             if mult_y_over_x != 1.0:
-                np.multiply(tmp_y, mult_y_over_x, out=tmp_y)
-            np.add(tmp_y, p_old_up, out=tmp_y)
-            np.add(tmp_y, p_old_down, out=tmp_y)
-            np.subtract(tmp_y, rhs_eff, out=tmp_y)
+                tmp_y *= mult_y_over_x
+            tmp_y += p_old_up
+            tmp_y += p_old_down
+            tmp_y -= rhs_eff
             np.multiply(tmp_y, mult_x, out=p_new_center)
 
             # Boundary Conditions (Homogeneous Neumann)
@@ -148,37 +149,37 @@ class LinearSolver:
 
             # 1. Update Red Points
             # ⚡ Bolt: Use factored in-place operators to avoid implicit temporary whole-array creation
-            # and minimize numpy ufunc overhead.
+            # and minimize numpy ufunc overhead by using augmented assignments.
             np.add(p_right, p_left, out=p_gs)
             if mult_y_over_x != 1.0:
-                np.multiply(p_gs, mult_y_over_x, out=p_gs)
-            np.add(p_gs, p_up, out=p_gs)
-            np.add(p_gs, p_down, out=p_gs)
-            np.subtract(p_gs, rhs_eff, out=p_gs)
-            np.multiply(p_gs, mult_x, out=p_gs)
+                p_gs *= mult_y_over_x
+            p_gs += p_up
+            p_gs += p_down
+            p_gs -= rhs_eff
+            p_gs *= mult_x
 
             # Update only Red points in-place using np.putmask for performance
             # Add (1 - omega) * p_slice in-place to avoid implicit temporary whole-array creation
             if omega != 1.0:
                 # ⚡ Bolt: Use tmp_y to avoid implicit temporary array from (1 - omega) * p_slice
                 np.multiply(p_slice, 1 - omega, out=tmp_y)
-                np.add(p_gs, tmp_y, out=p_gs)
+                p_gs += tmp_y
             np.putmask(p_slice, mask_red, p_gs)
 
             # 2. Update Black Points
             # Recompute neighbors (Red points have changed)
             np.add(p_right, p_left, out=p_gs)
             if mult_y_over_x != 1.0:
-                np.multiply(p_gs, mult_y_over_x, out=p_gs)
-            np.add(p_gs, p_up, out=p_gs)
-            np.add(p_gs, p_down, out=p_gs)
-            np.subtract(p_gs, rhs_eff, out=p_gs)
-            np.multiply(p_gs, mult_x, out=p_gs)
+                p_gs *= mult_y_over_x
+            p_gs += p_up
+            p_gs += p_down
+            p_gs -= rhs_eff
+            p_gs *= mult_x
 
             # Update only Black points in-place
             if omega != 1.0:
                 np.multiply(p_slice, 1 - omega, out=tmp_y)
-                np.add(p_gs, tmp_y, out=p_gs)
+                p_gs += tmp_y
             np.putmask(p_slice, mask_black, p_gs)
 
             # Boundary Conditions
