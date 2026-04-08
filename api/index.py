@@ -103,6 +103,7 @@ def index():
             .skip-link:focus { top: 0; outline: none; border-bottom: 1px solid var(--link-focus-outline); border-right: 1px solid var(--link-focus-outline); }
             .skip-link:focus-visible { outline: 3px solid var(--link-focus-outline); outline-offset: 0px; }
             main:focus { outline: none; }
+            .sr-only { border: 0; clip: rect(0 0 0 0); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; }
         </style>
     </head>
     <body>
@@ -116,7 +117,7 @@ def index():
             <figure>
                 <a href="/assets/lid_driven_streamlines.png" target="_blank" rel="noopener noreferrer">
                     <img src="/assets/lid_driven_streamlines.png" width="800" height="600" alt="Streamlines and velocity magnitude contours for Re=100. The primary vortex is centered at (0.6, 0.5), matching benchmark data." />
-                    <span style="border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;">(opens in a new tab)</span>
+                    <span class="sr-only">(opens in a new tab)</span>
                 </a>
                 <figcaption>Figure 1: Streamlines and velocity magnitude contours for Re=100</figcaption>
             </figure>
@@ -125,7 +126,7 @@ def index():
             <figure>
                 <a href="/assets/grid_convergence.png" target="_blank" rel="noopener noreferrer">
                     <img src="/assets/grid_convergence.png" width="800" height="600" alt="Log-Log plot of L2-Error Norm vs. Grid Spacing (dx). The slope of the line is approximately 2.0, confirming the solver is Second-Order Accurate in space." />
-                    <span style="border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;">(opens in a new tab)</span>
+                    <span class="sr-only">(opens in a new tab)</span>
                 </a>
                 <figcaption>Figure 2: Grid Convergence Study demonstrating second-order spatial accuracy</figcaption>
             </figure>
@@ -134,12 +135,12 @@ def index():
             <figure>
                 <a href="/assets/scheme_comparison.png" target="_blank" rel="noopener noreferrer">
                     <img src="/assets/scheme_comparison.png" width="1000" height="600" alt="Convection of a step profile comparing Upwind, Central Difference, and QUICK schemes. Upwind shows diffusion, Central shows dispersion." />
-                    <span style="border:0;clip:rect(0 0 0 0);height:1px;margin:-1px;overflow:hidden;padding:0;position:absolute;width:1px;">(opens in a new tab)</span>
+                    <span class="sr-only">(opens in a new tab)</span>
                 </a>
                 <figcaption>Figure 3: Comparison of Convection Schemes (Upwind, Central, QUICK)</figcaption>
             </figure>
 
-            <p>For code and documentation, visit the <a href="https://github.com/dhruvhaldar/fluxion" target="_blank" rel="noopener noreferrer" aria-label="GitHub Repository (opens in a new tab)">GitHub Repository <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:4px; margin-bottom:2px;" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>.</p>
+            <p>For code and documentation, visit the <a href="https://github.com/dhruvhaldar/fluxion" target="_blank" rel="noopener noreferrer">GitHub Repository <span class="sr-only">(opens in a new tab)</span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:4px; margin-bottom:2px;" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>.</p>
         </main>
     </body>
     </html>
