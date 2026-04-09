@@ -6,3 +6,7 @@
 **Vulnerability:** Leftover temporary debugging scripts (e.g., `test_error_handler.py`, `test_app.py`) were left in the project root after validating a security fix.
 **Learning:** These arbitrary, unmaintained scripts pollute the codebase, add confusion for future developers, and might be accidentally committed, violating coding standard boundaries. Proper verification should use existing or new unit test files (e.g., within the `tests/` directory) rather than root-level scratchpads.
 **Prevention:** Always delete any temporary diagnostic files (`rm temp_script.py`) created during validation before finalizing work, or explicitly build tests within the designated test suite structure.
+## 2026-04-09 - [Inline Style CSP Bypass]
+**Vulnerability:** The application was using an `unsafe-inline` directive in its `style-src` Content Security Policy to allow inline `<style>` and `style=""` attributes to function.
+**Learning:** `unsafe-inline` entirely defeats the purpose of CSP for styles, allowing malicious scripts to inject arbitrary styles that can lead to data exfiltration or UI redressing. An effective CSP must omit `unsafe-inline`.
+**Prevention:** Always extract all inline styles (both `<style>` blocks and `style=""` attributes) into an external CSS file, load it via `<link>`, and use a strict `style-src 'self'` CSP directive.
