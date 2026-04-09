@@ -21,25 +21,13 @@ def handle_exception(e):
 # Security Enhancement: Restrict max content length to mitigate DoS (Denial of Service) via large payloads
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
 
-# Security Enhancement: Prevent leaking stack traces or sensitive internal state on unexpected errors
-@app.errorhandler(Exception)
-def handle_exception(e):
-    # Pass through standard HTTP errors
-    if isinstance(e, HTTPException):
-        return e
-
-    # Log the unexpected error internally securely
-    app.logger.error("Unexpected error", exc_info=True)
-
-    # Return generic 500 without leaking stack trace or internal state
-    return "Internal Server Error", 500
 
 @app.after_request
 def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
     # Security Enhancement: Restrict Content-Security-Policy to block base-uri injection, form submissions, frame embedding, and plugin execution
-    response.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests;"
+    response.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests;"
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     # Security Enhancement: Prevent leaking referrer information cross-origin and disable sensitive browser features
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
@@ -59,52 +47,7 @@ def index():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Fluxion CFD</title>
-        <style>
-
-            :root {
-                color-scheme: light dark;
-                --bg-color: #ffffff;
-                --text-color: #333333;
-                --text-muted: #595959;
-                --heading-color: #1a202c;
-                --link-color: #2b6cb0;
-                --link-hover-color: #1e40af;
-                --link-focus-outline: #3182ce;
-                --img-border: #e2e8f0;
-                --img-shadow: rgba(0,0,0,0.1);
-            }
-            @media (prefers-color-scheme: dark) {
-                :root {
-                    --bg-color: #1a202c;
-                    --text-color: #e2e8f0;
-                    --text-muted: #a0aec0;
-                    --heading-color: #f7fafc;
-                    --link-color: #63b3ed;
-                    --link-hover-color: #90cdf4;
-                    --link-focus-outline: #90cdf4;
-                    --img-border: #4a5568;
-                    --img-shadow: rgba(0,0,0,0.5);
-                }
-                img { filter: brightness(0.85); }
-                a:focus-visible img, a:hover img { filter: brightness(1); }
-            }
-            body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
-            figure { margin: 0 0 24px 0; padding: 0; }
-            figure a { display: block; border-radius: 4px; cursor: zoom-in; text-decoration: none; }
-            img { max-width: 100%; height: auto; border: 1px solid var(--img-border); border-radius: 4px; display: block; box-shadow: 0 1px 3px var(--img-shadow); transition: border-color 0.3s, box-shadow 0.3s, filter 0.3s; }
-            a:hover img { border-color: var(--link-hover-color); box-shadow: 0 4px 6px var(--img-shadow); }
-            a:focus-visible img { border-color: var(--link-focus-outline); box-shadow: 0 4px 6px var(--img-shadow); }
-            figcaption { margin-top: 8px; font-size: 0.9em; color: var(--text-muted); text-align: center; font-style: italic; }
-            h1, h2 { color: var(--heading-color); transition: color 0.3s; }
-            a { color: var(--link-color); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--link-color); transition: text-decoration-color 0.2s, color 0.3s; }
-            a:hover { color: var(--link-hover-color); text-decoration-color: var(--link-hover-color); text-decoration-thickness: 2px; }
-            a:focus-visible { outline: 3px solid var(--link-focus-outline); outline-offset: 2px; border-radius: 2px; }
-            .skip-link { text-decoration: none; position: absolute; top: -40px; left: 0; background: var(--bg-color); color: var(--link-color); padding: 8px; z-index: 100; transition: top 0.2s; font-weight: bold; border-bottom: none; border-right: 1px solid var(--img-border); border-bottom: 1px solid var(--img-border); border-bottom-right-radius: 4px; }
-            .skip-link:focus { top: 0; outline: none; border-bottom: 1px solid var(--link-focus-outline); border-right: 1px solid var(--link-focus-outline); }
-            .skip-link:focus-visible { outline: 3px solid var(--link-focus-outline); outline-offset: 0px; }
-            main:focus { outline: none; }
-            .sr-only { border: 0; clip: rect(0 0 0 0); height: 1px; margin: -1px; overflow: hidden; padding: 0; position: absolute; width: 1px; }
-        </style>
+        <link rel="stylesheet" href="/assets/style.css">
     </head>
     <body>
         <a href="#main" class="skip-link">Skip to main content</a>
@@ -140,7 +83,7 @@ def index():
                 <figcaption>Figure 3: Comparison of Convection Schemes (Upwind, Central, QUICK)</figcaption>
             </figure>
 
-            <p>For code and documentation, visit the <a href="https://github.com/dhruvhaldar/fluxion" target="_blank" rel="noopener noreferrer">GitHub Repository <span class="sr-only">(opens in a new tab)</span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:4px; margin-bottom:2px;" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>.</p>
+            <p>For code and documentation, visit the <a href="https://github.com/dhruvhaldar/fluxion" target="_blank" rel="noopener noreferrer">GitHub Repository <span class="sr-only">(opens in a new tab)</span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="external-link-icon" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>.</p>
         </main>
     </body>
     </html>
