@@ -32,3 +32,8 @@
 ## 2026-04-08 - Accessible External Links and Visible Text
 **Learning:** Using `aria-label` on links that contain visible text is an anti-pattern. An `aria-label` entirely replaces the visible text for screen reader users and can break voice dictation software (like Dragon) because the accessible name no longer matches the visible text on the screen.
 **Action:** When adding supplemental information to links with visible text (such as "opens in a new tab" for `target="_blank"`), avoid `aria-label`. Instead, use a visually hidden `<span>` (e.g., using a `.sr-only` utility class) immediately following the visible text inside the anchor tag.
+
+
+## 2026-04-09 - Native Tooltips for Image Links
+**Learning:** For interfaces displaying scientific visualization images wrapped in `<a>` tags with `target="_blank"`, relying on `cursor: zoom-in` CSS alone isn't sufficient for all users to understand the interaction. Adding a native HTML `title` attribute directly to the `<a>` element provides a reliable, accessible tooltip describing the interaction ("Click to view full size") without requiring any custom CSS or complex JS tooltip libraries.
+**Action:** Always add native `title` attributes to links wrapping full-resolution images to explicitly communicate the expected interaction to the user, especially when constrained from using custom CSS.
