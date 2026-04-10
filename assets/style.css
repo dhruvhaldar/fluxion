@@ -25,6 +25,7 @@
     img { filter: brightness(0.85); }
     a:focus-visible img, a:hover img { filter: brightness(1); }
 }
+html { scroll-behavior: smooth; }
 body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
 figure { margin: 0 0 24px 0; padding: 0; }
 figure a { display: block; border-radius: 4px; cursor: zoom-in; text-decoration: none; }
@@ -47,4 +48,11 @@ main:focus { outline: none; }
     vertical-align: middle;
     margin-left: 4px;
     margin-bottom: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
 }
