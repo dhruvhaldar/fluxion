@@ -10,3 +10,8 @@
 **Vulnerability:** The application was using an `unsafe-inline` directive in its `style-src` Content Security Policy to allow inline `<style>` and `style=""` attributes to function.
 **Learning:** `unsafe-inline` entirely defeats the purpose of CSP for styles, allowing malicious scripts to inject arbitrary styles that can lead to data exfiltration or UI redressing. An effective CSP must omit `unsafe-inline`.
 **Prevention:** Always extract all inline styles (both `<style>` blocks and `style=""` attributes) into an external CSS file, load it via `<link>`, and use a strict `style-src 'self'` CSP directive.
+
+## 2026-04-10 - [Path Traversal Bypass via URL Encoding / Unexpected Characters]
+**Vulnerability:** The `/assets/<path:path>` endpoint relied solely on simple string checks (`'..' in path` or `path.startswith('/')`) and an allowed extensions check to prevent directory traversal. However, this could be bypassed by URL-encoded payloads like `..%2f` or newline characters `%0A` which could confuse downstream functions or parsers.
+**Learning:** Basic string matching is often insufficient for sanitizing user-supplied paths, as attackers can use various encodings or special characters (like null bytes or newlines) to evade these checks before the path is ultimately resolved by the OS.
+**Prevention:** In addition to strict boundary checking (`os.path.abspath` with `startswith()`), implement a strict allowlist regex validation (e.g., `re.match(r'^[a-zA-Z0-9_./-]+$', path)`) early in the request handler to explicitly reject any unexpectedly formatted paths or hidden control characters.

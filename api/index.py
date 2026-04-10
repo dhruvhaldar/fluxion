@@ -1,5 +1,6 @@
 from flask import Flask, send_from_directory
 import os
+import re
 import logging
 from werkzeug.exceptions import HTTPException
 
@@ -98,6 +99,10 @@ def send_assets(path):
     # Prevent directory traversal attacks
     # explicitly checking is good defense in depth
     if '..' in path or path.startswith('/') or '%' in path:
+        return "Bad Request", 400
+
+    # Security Enhancement: Strict allowed characters for file paths to prevent log injection or unexpected parser behavior
+    if not re.match(r'^[a-zA-Z0-9_./-]+$', path):
         return "Bad Request", 400
 
     # Security Enhancement: Only allow serving known safe media extensions
