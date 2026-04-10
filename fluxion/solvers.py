@@ -24,9 +24,6 @@ class LinearSolver:
         mult_y_over_x = mult_y / mult_x
         rhs_eff = rhs_scaled / mult_x
 
-        # ⚡ Bolt: Pre-allocate a temporary array to avoid implicit array creations in the loop
-        tmp_y = np.zeros_like(rhs_scaled)
-
         # ⚡ Bolt: Pre-allocate a full temporary array for convergence checks to avoid implicit allocations
         tmp_full = np.zeros_like(p)
 
@@ -44,7 +41,7 @@ class LinearSolver:
         p2_left = p2[1:-1, :-2]
         p2_center = p2[1:-1, 1:-1]
 
-        check_interval = 50
+        check_interval = 200
 
         p_old, p_new = p1, p2
         p_old_up, p_old_down, p_old_right, p_old_left = p1_up, p1_down, p1_right, p1_left
@@ -64,13 +61,13 @@ class LinearSolver:
             # ⚡ Bolt: Fully in-place interior update to eliminate implicit temporary arrays
             # Factoring out mult_x reduces the number of operations per iteration by combining terms.
             # Using augmented assignments minimizes Python wrapper overhead for subsequent ops.
-            np.add(p_old_right, p_old_left, out=tmp_y)
+            np.add(p_old_right, p_old_left, out=p_new_center)
             if mult_y_over_x != 1.0:
-                tmp_y *= mult_y_over_x
-            tmp_y += p_old_up
-            tmp_y += p_old_down
-            tmp_y -= rhs_eff
-            np.multiply(tmp_y, mult_x, out=p_new_center)
+                p_new_center *= mult_y_over_x
+            p_new_center += p_old_up
+            p_new_center += p_old_down
+            p_new_center -= rhs_eff
+            p_new_center *= mult_x
 
             # Boundary Conditions (Homogeneous Neumann)
             # ⚡ Bolt: Direct row assignments are slightly faster than slice assignments
@@ -124,7 +121,7 @@ class LinearSolver:
 
         p_slice = p_new[1:-1, 1:-1]
 
-        check_interval = 50
+        check_interval = 200
         p_old = p_new.copy()
 
         # Pre-allocate temporary arrays to avoid implicit array creations in the loop

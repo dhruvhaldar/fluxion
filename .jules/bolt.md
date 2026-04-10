@@ -21,3 +21,7 @@
 ## 2024-04-01 - Avoiding Implicit Temporaries in Convergence Checks
 **Learning:** In tight iterative loops (such as convergence checks like `np.max(np.abs(p_new - p_old))` in Jacobi/SOR solvers), evaluating the check creates multiple whole-grid temporary arrays internally (`p_new - p_old`, and the `abs()` of that). This causes high memory bandwidth overhead even when executed periodically (e.g., every 50 steps).
 **Action:** Pre-allocate a full-sized array buffer outside the loop (e.g. `tmp_full = np.zeros_like(p)`) and use in-place ufuncs (`np.subtract(p_new, p_old, out=tmp_full)`, `np.abs(tmp_full, out=tmp_full)`) to compute convergence metrics to eliminate implicit allocations.
+
+## 2024-04-10 - Optimizing Temporary Array Use and Convergence Frequency
+**Learning:** In tight iterative loops in FVM solvers (`solve_jacobi`, `solve_sor`), even when mathematical operations are done in place, allocating partial temporary slices (like `tmp_y`) and doing convergence checks too often acts as a significant bottleneck.
+**Action:** Eliminate the temporary array completely by accumulating directly into the final target slice view (e.g. `p_new_center`). Increase `check_interval` dynamically or use a higher value (like 200 instead of 50) when the problem space requires thousands of iterations, preventing unnecessary convergence check computations.
