@@ -28,7 +28,7 @@ def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
     # Security Enhancement: Restrict Content-Security-Policy to block base-uri injection, form submissions, frame embedding, and plugin execution
-    response.headers['Content-Security-Policy'] = "default-src 'self'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests;"
+    response.headers['Content-Security-Policy'] = "default-src 'none'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests;"
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     # Security Enhancement: Prevent leaking referrer information cross-origin and disable sensitive browser features
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
