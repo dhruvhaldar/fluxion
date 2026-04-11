@@ -15,3 +15,8 @@
 **Vulnerability:** The `/assets/<path:path>` endpoint relied solely on simple string checks (`'..' in path` or `path.startswith('/')`) and an allowed extensions check to prevent directory traversal. However, this could be bypassed by URL-encoded payloads like `..%2f` or newline characters `%0A` which could confuse downstream functions or parsers.
 **Learning:** Basic string matching is often insufficient for sanitizing user-supplied paths, as attackers can use various encodings or special characters (like null bytes or newlines) to evade these checks before the path is ultimately resolved by the OS.
 **Prevention:** In addition to strict boundary checking (`os.path.abspath` with `startswith()`), implement a strict allowlist regex validation (e.g., `re.match(r'^[a-zA-Z0-9_./-]+$', path)`) early in the request handler to explicitly reject any unexpectedly formatted paths or hidden control characters.
+
+## 2026-04-11 - [Strict CSP Enforcement]
+**Vulnerability:** The application used `default-src 'self'` in its Content Security Policy, which implicitly allowed scripts, fonts, connections, and other unneeded resource types from the origin, violating the principle of least privilege.
+**Learning:** `default-src 'self'` can be overly permissive. If the application only requires styles and images, it is much safer to set `default-src 'none'` and explicitly allow `style-src` and `img-src`. Additionally, if inline SVG favicons are used via data URIs, `img-src` must explicitly include `data:` to prevent breakage.
+**Prevention:** Always default to `default-src 'none'` when configuring CSP and progressively add only the necessary directives and sources.
