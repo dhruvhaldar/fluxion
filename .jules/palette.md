@@ -37,3 +37,7 @@
 ## 2026-04-09 - Native Tooltips for Image Links
 **Learning:** For interfaces displaying scientific visualization images wrapped in `<a>` tags with `target="_blank"`, relying on `cursor: zoom-in` CSS alone isn't sufficient for all users to understand the interaction. Adding a native HTML `title` attribute directly to the `<a>` element provides a reliable, accessible tooltip describing the interaction ("Click to view full size") without requiring any custom CSS or complex JS tooltip libraries.
 **Action:** Always add native `title` attributes to links wrapping full-resolution images to explicitly communicate the expected interaction to the user, especially when constrained from using custom CSS.
+
+## 2026-04-12 - Semantic Contentinfo Landmarks and Fluid Icons
+**Learning:** Burying supplementary content (like external repository links) inside the main document flow reduces navigational clarity for screen readers. Using a `<footer>` tag establishes a semantic `contentinfo` landmark, allowing users to easily jump to the end of the document. Additionally, hardcoded pixel sizes on inline icons break layout when users adjust base font sizes.
+**Action:** Always extract trailing document metadata or global links into a `<footer>` to define a `contentinfo` landmark. When including inline SVG icons alongside text, use `width="1em" height="1em"` instead of pixel values so the icon fluidly scales with user font preferences.
