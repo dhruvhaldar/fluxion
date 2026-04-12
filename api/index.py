@@ -97,15 +97,18 @@ def index():
 def send_assets(path):
     # Security Enhancement: Restrict input length to mitigate DoS attacks
     if len(path) > 256:
+        app.logger.warning(f"Security Event: Blocked request due to URI length > 256. path: {repr(path)}")
         return "URI Too Long", 414
 
     # Prevent directory traversal attacks
     # explicitly checking is good defense in depth
     if '..' in path or path.startswith('/') or '%' in path:
+        app.logger.warning(f"Security Event: Blocked request due to potential directory traversal. path: {repr(path)}")
         return "Bad Request", 400
 
     # Security Enhancement: Strict allowed characters for file paths to prevent log injection or unexpected parser behavior
     if not re.match(r'^[a-zA-Z0-9_./-]+$', path):
+        app.logger.warning(f"Security Event: Blocked request due to invalid characters in path. path: {repr(path)}")
         return "Bad Request", 400
 
     # Security Enhancement: Only allow serving known safe media extensions
@@ -115,6 +118,7 @@ def send_assets(path):
     }
     _, ext = os.path.splitext(path)
     if ext.lower() not in allowed_extensions:
+        app.logger.warning(f"Security Event: Blocked request due to unsupported media type. ext: {repr(ext)}")
         return "Unsupported Media Type", 415
 
     # Determine the absolute path to the assets directory
@@ -126,6 +130,7 @@ def send_assets(path):
     # This acts as a robust defense against any bypass of previous string checks
     requested_path = os.path.abspath(os.path.join(assets_dir, path))
     if not requested_path.startswith(assets_dir + os.sep):
+        app.logger.warning(f"Security Event: Blocked request due to out-of-bounds resolved path. path: {repr(path)}")
         return "Bad Request", 400
 
     return send_from_directory(assets_dir, path)
