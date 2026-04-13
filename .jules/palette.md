@@ -41,3 +41,7 @@
 ## 2026-04-12 - Semantic Contentinfo Landmarks and Fluid Icons
 **Learning:** Burying supplementary content (like external repository links) inside the main document flow reduces navigational clarity for screen readers. Using a `<footer>` tag establishes a semantic `contentinfo` landmark, allowing users to easily jump to the end of the document. Additionally, hardcoded pixel sizes on inline icons break layout when users adjust base font sizes.
 **Action:** Always extract trailing document metadata or global links into a `<footer>` to define a `contentinfo` landmark. When including inline SVG icons alongside text, use `width="1em" height="1em"` instead of pixel values so the icon fluidly scales with user font preferences.
+
+## 2026-04-13 - Anchor Links and Scroll Padding
+**Learning:** When using internal anchor links (like "Skip to main content"), the browser scrolls the target element directly to the top edge of the viewport. This often bypasses the document's `body` padding, causing content to flush uncomfortably against the window edge.
+**Action:** Always add `scroll-padding-top` (matching the `body` padding, e.g., `20px`) to the `html` element. This preserves visual spacing and layout integrity when keyboard and screen-reader users utilize in-page navigation links.
