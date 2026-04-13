@@ -109,7 +109,8 @@ def send_assets(path):
         return "Bad Request", 400
 
     # Security Enhancement: Strict allowed characters for file paths to prevent log injection or unexpected parser behavior
-    if not re.match(r'^[a-zA-Z0-9_./-]+$', path):
+    # Using \Z to ensure trailing newlines are correctly blocked
+    if not re.match(r'^[a-zA-Z0-9_./-]+\Z', path):
         app.logger.warning(f"Security Event: Blocked request due to invalid characters in path. path: {repr(path)}")
         return "Bad Request", 400
 
