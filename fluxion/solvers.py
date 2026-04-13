@@ -24,9 +24,6 @@ class LinearSolver:
         mult_y_over_x = mult_y / mult_x
         rhs_eff = rhs_scaled / mult_x
 
-        # ⚡ Bolt: Pre-allocate a full temporary array for convergence checks to avoid implicit allocations
-        tmp_full = np.zeros_like(p)
-
         # ⚡ Bolt: Pre-compute slice views outside loops to eliminate slicing overhead.
         # These views remain valid as the arrays are updated in place.
         p1_up = p1[2:, 1:-1]
@@ -43,51 +40,56 @@ class LinearSolver:
 
         check_interval = 200
 
-        p_old, p_new = p1, p2
-        p_old_up, p_old_down, p_old_right, p_old_left = p1_up, p1_down, p1_right, p1_left
-        p_new_center = p2_center
+        # ⚡ Bolt: Unroll by 2 to avoid python variable assignment/swapping loop overhead.
+        # Also hoist mult_y_over_x check out of the loop since it is invariant.
+        if mult_y_over_x == 1.0:
+            for it in range(0, max_iter, 2):
+                # ⚡ Bolt: Single mathematical expression with [:] assignment avoids Python loop overhead
+                p2_center[:] = (p1_right + p1_left + p1_up + p1_down - rhs_eff) * mult_x
 
-        for it in range(max_iter):
-            # ⚡ Bolt: Swap references of pre-computed slice views
-            if it % 2 == 0:
-                p_old, p_new = p1, p2
-                p_old_up, p_old_down, p_old_right, p_old_left = p1_up, p1_down, p1_right, p1_left
-                p_new_center = p2_center
-            else:
-                p_old, p_new = p2, p1
-                p_old_up, p_old_down, p_old_right, p_old_left = p2_up, p2_down, p2_right, p2_left
-                p_new_center = p1_center
+                # ⚡ Bolt: Direct row assignments are slightly faster than slice assignments
+                p2[0] = p2[1]
+                p2[-1] = p2[-2]
+                p2[:, 0] = p2[:, 1]
+                p2[:, -1] = p2[:, -2]
 
-            # ⚡ Bolt: Single mathematical expression with [:] assignment avoids Python loop overhead
-            # which outweighs implicit temporary array costs on smaller grids, cutting time by ~40%
-            if mult_y_over_x != 1.0:
-                p_new_center[:] = ((p_old_right + p_old_left) * mult_y_over_x + p_old_up + p_old_down - rhs_eff) * mult_x
-            else:
-                p_new_center[:] = (p_old_right + p_old_left + p_old_up + p_old_down - rhs_eff) * mult_x
+                p1_center[:] = (p2_right + p2_left + p2_up + p2_down - rhs_eff) * mult_x
 
-            # Boundary Conditions (Homogeneous Neumann)
-            # ⚡ Bolt: Direct row assignments are slightly faster than slice assignments
-            # for 2D numpy arrays in tight loops.
-            p_new[0] = p_new[1]
-            p_new[-1] = p_new[-2]
-            p_new[:, 0] = p_new[:, 1]
-            p_new[:, -1] = p_new[:, -2]
+                p1[0] = p1[1]
+                p1[-1] = p1[-2]
+                p1[:, 0] = p1[:, 1]
+                p1[:, -1] = p1[:, -2]
 
-            # Only calculate max diff every check_interval to avoid expensive array operations
-            if it % check_interval == 0 and it > 0:
-                # ⚡ Bolt: Use pre-allocated tmp_full to avoid implicit temporary arrays in convergence check
-                np.subtract(p_new, p_old, out=tmp_full)
-                np.abs(tmp_full, out=tmp_full)
-                if np.max(tmp_full) < tol:
-                    return p_new, it
+                if it > 0 and it % check_interval == 0:
+                    # ⚡ Bolt: It's faster to do np.max(np.abs) letting implicit arrays create than
+                    # making multiple Python interpreter numpy calls with `out=tmp_full`.
+                    if np.max(np.abs(p1 - p2)) < tol:
+                        return p1, it + 1
+        else:
+            for it in range(0, max_iter, 2):
+                p2_center[:] = ((p1_right + p1_left) * mult_y_over_x + p1_up + p1_down - rhs_eff) * mult_x
+
+                p2[0] = p2[1]
+                p2[-1] = p2[-2]
+                p2[:, 0] = p2[:, 1]
+                p2[:, -1] = p2[:, -2]
+
+                p1_center[:] = ((p2_right + p2_left) * mult_y_over_x + p2_up + p2_down - rhs_eff) * mult_x
+
+                p1[0] = p1[1]
+                p1[-1] = p1[-2]
+                p1[:, 0] = p1[:, 1]
+                p1[:, -1] = p1[:, -2]
+
+                if it > 0 and it % check_interval == 0:
+                    if np.max(np.abs(p1 - p2)) < tol:
+                        return p1, it + 1
 
         # Final check if loop finishes
-        np.subtract(p_new, p_old, out=tmp_full)
-        np.abs(tmp_full, out=tmp_full)
-        if np.max(tmp_full) < tol:
-            return p_new, max_iter - 1
+        if np.max(np.abs(p1 - p2)) < tol:
+            return p1, max_iter - 1
 
-        return p_new, max_iter
+        return p1, max_iter
 
     @staticmethod
     def solve_sor(p, rhs, grid, omega=1.7, max_iter=5000, tol=1e-5):
