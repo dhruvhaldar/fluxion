@@ -45,3 +45,7 @@
 ## 2026-04-13 - Anchor Links and Scroll Padding
 **Learning:** When using internal anchor links (like "Skip to main content"), the browser scrolls the target element directly to the top edge of the viewport. This often bypasses the document's `body` padding, causing content to flush uncomfortably against the window edge.
 **Action:** Always add `scroll-padding-top` (matching the `body` padding, e.g., `20px`) to the `html` element. This preserves visual spacing and layout integrity when keyboard and screen-reader users utilize in-page navigation links.
+
+## 2026-04-14 - Back to Top Links on Long Artifact Pages
+**Learning:** On pages with multiple large scientific figures (artifacts), scrolling back to the top navigation or introductory content can be tedious for users. Relying purely on scrollbars or keyboard page-up is less intuitive than a clear interaction point.
+**Action:** Always provide a "Back to Top" link at the bottom of long, image-heavy pages. Implementing it natively with an internal anchor link (e.g., `href="#top"`) and pairing it with CSS `scroll-behavior: smooth` provides an accessible, performant, and delightful micro-UX improvement.
