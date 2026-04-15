@@ -49,3 +49,7 @@
 ## 2026-04-14 - Back to Top Links on Long Artifact Pages
 **Learning:** On pages with multiple large scientific figures (artifacts), scrolling back to the top navigation or introductory content can be tedious for users. Relying purely on scrollbars or keyboard page-up is less intuitive than a clear interaction point.
 **Action:** Always provide a "Back to Top" link at the bottom of long, image-heavy pages. Implementing it natively with an internal anchor link (e.g., `href="#top"`) and pairing it with CSS `scroll-behavior: smooth` provides an accessible, performant, and delightful micro-UX improvement.
+
+## 2026-04-15 - Permalink Heading Anchors
+**Learning:** Document-heavy pages with multiple sections (like scientific reports or long artifact lists) can be difficult for users to share specific references to. Adding anchor tags (`#`) deep-linking directly to sections significantly improves the utility and sharing UX. However, having them permanently visible creates visual noise.
+**Action:** Append a permalink anchor inside headings and style them to be visually hidden (`opacity: 0`) by default, revealing them only on `:hover` or `:focus-visible`. This provides the utility of deep linking without compromising visual cleanliness, while remaining fully accessible to keyboard users.

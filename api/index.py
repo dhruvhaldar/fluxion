@@ -60,7 +60,7 @@ def index():
             <p>A structured Finite Volume Method (FVM) solver for SG2212 Computational Fluid Dynamics.</p>
             <p>This page demonstrates the generated artifacts from the solver.</p>
 
-            <h2>Lid Driven Cavity Streamlines (Re=100)</h2>
+            <h2 id="lid-driven-cavity-streamlines">Lid Driven Cavity Streamlines (Re=100) <a href="#lid-driven-cavity-streamlines" class="heading-anchor" aria-label="Permalink to this section">#</a></h2>
             <figure>
                 <a href="/assets/lid_driven_streamlines.png" target="_blank" rel="noopener noreferrer" title="Click to view full size">
                     <img src="/assets/lid_driven_streamlines.png" width="800" height="600" alt="Streamlines and velocity magnitude contours for Re=100. The primary vortex is centered at (0.6, 0.5), matching benchmark data." />
@@ -69,7 +69,7 @@ def index():
                 <figcaption>Figure 1: Streamlines and velocity magnitude contours for Re=100</figcaption>
             </figure>
 
-            <h2>Grid Convergence Study</h2>
+            <h2 id="grid-convergence-study">Grid Convergence Study <a href="#grid-convergence-study" class="heading-anchor" aria-label="Permalink to this section">#</a></h2>
             <figure>
                 <a href="/assets/grid_convergence.png" target="_blank" rel="noopener noreferrer" title="Click to view full size">
                     <img src="/assets/grid_convergence.png" width="800" height="600" alt="Log-Log plot of L2-Error Norm vs. Grid Spacing (dx). The slope of the line is approximately 2.0, confirming the solver is Second-Order Accurate in space." />
@@ -78,7 +78,7 @@ def index():
                 <figcaption>Figure 2: Grid Convergence Study demonstrating second-order spatial accuracy</figcaption>
             </figure>
 
-            <h2>Convection Scheme Comparison</h2>
+            <h2 id="convection-scheme-comparison">Convection Scheme Comparison <a href="#convection-scheme-comparison" class="heading-anchor" aria-label="Permalink to this section">#</a></h2>
             <figure>
                 <a href="/assets/scheme_comparison.png" target="_blank" rel="noopener noreferrer" title="Click to view full size">
                     <img src="/assets/scheme_comparison.png" width="1000" height="600" alt="Convection of a step profile comparing Upwind, Central Difference, and QUICK schemes. Upwind shows diffusion, Central shows dispersion." />
