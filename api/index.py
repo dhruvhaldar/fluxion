@@ -15,7 +15,13 @@ app = Flask(__name__)
 @app.errorhandler(Exception)
 def handle_exception(e):
     if isinstance(e, HTTPException):
-        return e
+        # Security Enhancement: Return safe plain text response for HTTPExceptions
+        # rather than the default Werkzeug HTML templates to prevent framework
+        # fingerprinting and potential XSS issues.
+        response = e.get_response()
+        response.data = f"{e.code} {e.name}: {e.description}"
+        response.content_type = "text/plain"
+        return response
     app.logger.error("Unexpected error", exc_info=True)
     return "Internal Server Error", 500
 
@@ -100,7 +106,10 @@ def index():
 def send_assets(path):
     # Security Enhancement: Restrict input length to mitigate DoS attacks
     if len(path) > 256:
-        app.logger.warning(f"Security Event: Blocked request due to URI length > 256. path: {repr(path)}")
+        # Security Enhancement: Truncate excessively long path payload before logging
+        # to mitigate log bombing/Disk DoS.
+        truncated_path = path[:256] + '...[TRUNCATED]'
+        app.logger.warning(f"Security Event: Blocked request due to URI length > 256. path: {repr(truncated_path)}")
         return "URI Too Long", 414
 
     # Prevent directory traversal attacks
@@ -110,8 +119,8 @@ def send_assets(path):
         return "Bad Request", 400
 
     # Security Enhancement: Strict allowed characters for file paths to prevent log injection or unexpected parser behavior
-    # Using \Z to ensure trailing newlines are correctly blocked
-    if not re.match(r'^[a-zA-Z0-9_./-]+\Z', path):
+    # Using \Z and re.fullmatch to ensure trailing newlines are correctly blocked
+    if not re.fullmatch(r'^[a-zA-Z0-9_./-]+\Z', path):
         app.logger.warning(f"Security Event: Blocked request due to invalid characters in path. path: {repr(path)}")
         return "Bad Request", 400
 
