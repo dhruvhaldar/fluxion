@@ -30,3 +30,8 @@
 **Vulnerability:** The `/assets/<path:path>` endpoint relied on the regex `r'^[a-zA-Z0-9_./-]+$'` to enforce strict allowed characters. However, Python's `re.match` behavior with the `$` anchor allows the regex to match strings ending with a single newline character (`\n`). This permitted payloads like `test.png%0A` to bypass validation.
 **Learning:** In Python's `re` module, the `$` anchor matches either the end of the string OR the position just before a trailing newline. This means validation meant to be strict can be bypassed if an attacker appends a newline, potentially leading to path traversal, log injection, or unexpected parsing downstream.
 **Prevention:** Always use `\Z` instead of `$` in Python validation regexes to guarantee a strict match against the very end of the string (e.g., `r'^[a-zA-Z0-9_./-]+\Z'`), or use `re.fullmatch()`.
+
+## 2026-04-16 - [Path Traversal Bypass via Trailing Newline]
+**Vulnerability:** The `/assets/<path:path>` endpoint relied on the regex `r'^[a-zA-Z0-9_./-]+\Z'` to enforce strict allowed characters. However, Python's `re.match` behavior even with `\Z` is functionally the same as `re.fullmatch` if `\Z` is used but `re.match` allows trailing newlines in Python. `re.fullmatch` prevents payloads like `test.png\n` from bypassing validation.
+**Learning:** `re.match` behavior with the `\Z` anchor or `$` allows the regex to match strings ending with a single newline character (`\n`) under some python version conditions. This permitted payloads like `test.png%0A` to bypass validation.
+**Prevention:** Always use `re.fullmatch()` instead of `re.match` in Python validation regexes to guarantee a strict match against the very end of the string.
