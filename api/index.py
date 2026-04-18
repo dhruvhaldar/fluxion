@@ -1,8 +1,9 @@
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request
 import os
 import re
 import logging
 from werkzeug.exceptions import HTTPException
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import werkzeug.serving
 # Security Enhancement: Prevent Werkzeug from disclosing server version
@@ -10,6 +11,8 @@ werkzeug.serving.WSGIRequestHandler.server_version = ""
 werkzeug.serving.WSGIRequestHandler.sys_version = ""
 
 app = Flask(__name__)
+# Security Enhancement: Accurately resolve client IPs behind reverse proxies (like Vercel) for audit logging
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # Security Enhancement: Prevent leaking stack traces or sensitive internal state on unexpected errors
 @app.errorhandler(Exception)
@@ -109,19 +112,19 @@ def send_assets(path):
         # Security Enhancement: Truncate excessively long path payload before logging
         # to mitigate log bombing/Disk DoS.
         truncated_path = path[:256] + '...[TRUNCATED]'
-        app.logger.warning(f"Security Event: Blocked request due to URI length > 256. path: {repr(truncated_path)}")
+        app.logger.warning(f"Security Event: Blocked request from {request.remote_addr} due to URI length > 256. path: {repr(truncated_path)}")
         return "URI Too Long", 414
 
     # Prevent directory traversal attacks
     # explicitly checking is good defense in depth
     if '..' in path or path.startswith('/') or '%' in path:
-        app.logger.warning(f"Security Event: Blocked request due to potential directory traversal. path: {repr(path)}")
+        app.logger.warning(f"Security Event: Blocked request from {request.remote_addr} due to potential directory traversal. path: {repr(path)}")
         return "Bad Request", 400
 
     # Security Enhancement: Strict allowed characters for file paths to prevent log injection or unexpected parser behavior
     # Using \Z and re.fullmatch to ensure trailing newlines are correctly blocked
     if not re.fullmatch(r'^[a-zA-Z0-9_./-]+\Z', path):
-        app.logger.warning(f"Security Event: Blocked request due to invalid characters in path. path: {repr(path)}")
+        app.logger.warning(f"Security Event: Blocked request from {request.remote_addr} due to invalid characters in path. path: {repr(path)}")
         return "Bad Request", 400
 
     # Security Enhancement: Only allow serving known safe media extensions
@@ -131,7 +134,7 @@ def send_assets(path):
     }
     _, ext = os.path.splitext(path)
     if ext.lower() not in allowed_extensions:
-        app.logger.warning(f"Security Event: Blocked request due to unsupported media type. ext: {repr(ext)}")
+        app.logger.warning(f"Security Event: Blocked request from {request.remote_addr} due to unsupported media type. ext: {repr(ext)}")
         return "Unsupported Media Type", 415
 
     # Determine the absolute path to the assets directory
@@ -143,7 +146,7 @@ def send_assets(path):
     # This acts as a robust defense against any bypass of previous string checks
     requested_path = os.path.abspath(os.path.join(assets_dir, path))
     if not requested_path.startswith(assets_dir + os.sep):
-        app.logger.warning(f"Security Event: Blocked request due to out-of-bounds resolved path. path: {repr(path)}")
+        app.logger.warning(f"Security Event: Blocked request from {request.remote_addr} due to out-of-bounds resolved path. path: {repr(path)}")
         return "Bad Request", 400
 
     return send_from_directory(assets_dir, path)
