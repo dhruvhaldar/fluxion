@@ -39,6 +39,7 @@ class LinearSolver:
         p2_center = p2[1:-1, 1:-1]
 
         check_interval = 200
+        tmp_full = np.empty_like(p)
 
         # ⚡ Bolt: Unroll by 2 to avoid python variable assignment/swapping loop overhead.
         # Also hoist mult_y_over_x check out of the loop since it is invariant.
@@ -61,9 +62,10 @@ class LinearSolver:
                 p1[:, -1] = p1[:, -2]
 
                 if it > 0 and it % check_interval == 0:
-                    # ⚡ Bolt: It's faster to do np.max(np.abs) letting implicit arrays create than
-                    # making multiple Python interpreter numpy calls with `out=tmp_full`.
-                    if np.max(np.abs(p1 - p2)) < tol:
+                    # ⚡ Bolt: Use pre-allocated buffer for convergence checks to avoid implicit array creation overhead.
+                    np.subtract(p1, p2, out=tmp_full)
+                    np.abs(tmp_full, out=tmp_full)
+                    if np.max(tmp_full) < tol:
                         return p1, it + 1
         else:
             for it in range(0, max_iter, 2):
@@ -82,11 +84,15 @@ class LinearSolver:
                 p1[:, -1] = p1[:, -2]
 
                 if it > 0 and it % check_interval == 0:
-                    if np.max(np.abs(p1 - p2)) < tol:
+                    np.subtract(p1, p2, out=tmp_full)
+                    np.abs(tmp_full, out=tmp_full)
+                    if np.max(tmp_full) < tol:
                         return p1, it + 1
 
         # Final check if loop finishes
-        if np.max(np.abs(p1 - p2)) < tol:
+        np.subtract(p1, p2, out=tmp_full)
+        np.abs(tmp_full, out=tmp_full)
+        if np.max(tmp_full) < tol:
             return p1, max_iter - 1
 
         return p1, max_iter
