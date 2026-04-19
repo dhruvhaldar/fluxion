@@ -3,6 +3,7 @@ import os
 import re
 import logging
 from werkzeug.exceptions import HTTPException
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import werkzeug.serving
 # Security Enhancement: Prevent Werkzeug from disclosing server version
@@ -10,6 +11,10 @@ werkzeug.serving.WSGIRequestHandler.server_version = ""
 werkzeug.serving.WSGIRequestHandler.sys_version = ""
 
 app = Flask(__name__)
+
+# Security Enhancement: Ensure accurate client IP resolution behind reverse proxies (like Vercel)
+# for reliable security audit logging and rate limiting.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # Security Enhancement: Prevent leaking stack traces or sensitive internal state on unexpected errors
 @app.errorhandler(Exception)

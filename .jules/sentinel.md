@@ -35,3 +35,7 @@
 **Vulnerability:** The `/assets/<path:path>` endpoint relied on the regex `r'^[a-zA-Z0-9_./-]+\Z'` to enforce strict allowed characters. However, Python's `re.match` behavior even with `\Z` is functionally the same as `re.fullmatch` if `\Z` is used but `re.match` allows trailing newlines in Python. `re.fullmatch` prevents payloads like `test.png\n` from bypassing validation.
 **Learning:** `re.match` behavior with the `\Z` anchor or `$` allows the regex to match strings ending with a single newline character (`\n`) under some python version conditions. This permitted payloads like `test.png%0A` to bypass validation.
 **Prevention:** Always use `re.fullmatch()` instead of `re.match` in Python validation regexes to guarantee a strict match against the very end of the string.
+## 2026-04-19 - [ProxyFix Configuration]
+**Vulnerability:** Applications deployed behind a reverse proxy (like Vercel) can be tricked into resolving malicious IP addresses if the `X-Forwarded-For` header is spoofed.
+**Learning:** Adding `werkzeug.middleware.proxy_fix.ProxyFix` allows the application to accurately resolve the client IP instead of the proxy's IP.
+**Prevention:** Always use `ProxyFix` when a web application is running behind a reverse proxy to ensure reliable rate limiting and security audit logs.
