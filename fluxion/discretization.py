@@ -7,8 +7,10 @@ def compute_divergence(u, v, grid):
     v: (nx, ny+1) defined at horizontal faces.
     Returns: div (nx, ny)
     """
-    dx, dy = grid.dx, grid.dy
-    return (u[1:, :] - u[:-1, :]) / dx + (v[:, 1:] - v[:, :-1]) / dy
+    # ⚡ Bolt: Use multiplication by pre-computed inverse dx/dy instead of division
+    # which avoids numpy's slower floating-point array division.
+    inv_dx, inv_dy = 1.0 / grid.dx, 1.0 / grid.dy
+    return (u[1:, :] - u[:-1, :]) * inv_dx + (v[:, 1:] - v[:, :-1]) * inv_dy
 
 def compute_gradient(p, grid):
     """
@@ -18,13 +20,14 @@ def compute_gradient(p, grid):
         grad_x: (nx+1, ny) at u-faces
         grad_y: (nx, ny+1) at v-faces
     """
-    dx, dy = grid.dx, grid.dy
+    # ⚡ Bolt: Multiplication by inverse dx/dy is faster than division
+    inv_dx, inv_dy = 1.0 / grid.dx, 1.0 / grid.dy
     grad_x = np.zeros((grid.nx+1, grid.ny))
     grad_y = np.zeros((grid.nx, grid.ny+1))
 
     # Interior faces
-    grad_x[1:-1, :] = (p[1:, :] - p[:-1, :]) / dx
-    grad_y[:, 1:-1] = (p[:, 1:] - p[:, :-1]) / dy
+    grad_x[1:-1, :] = (p[1:, :] - p[:-1, :]) * inv_dx
+    grad_y[:, 1:-1] = (p[:, 1:] - p[:, :-1]) * inv_dy
 
     # Boundaries are left as 0.0 (Homogeneous Neumann assumption common in PPE)
     return grad_x, grad_y
@@ -38,13 +41,17 @@ def compute_laplacian(phi, grid):
     Here we compute for interior cells 1:-1.
     """
     nx, ny = grid.nx, grid.ny
-    dx, dy = grid.dx, grid.dy
+    # ⚡ Bolt: Pre-calculate inverses and reuse phi_c slice to reduce loop overhead
+    inv_dx2, inv_dy2 = 1.0 / grid.dx**2, 1.0 / grid.dy**2
     lap = np.zeros_like(phi)
+
+    # ⚡ Bolt: Store the center slice reference so we aren't creating it multiple times
+    phi_c = phi[1:-1, 1:-1]
 
     # Interior
     lap[1:-1, 1:-1] = (
-        (phi[2:, 1:-1] - 2*phi[1:-1, 1:-1] + phi[:-2, 1:-1]) / dx**2 +
-        (phi[1:-1, 2:] - 2*phi[1:-1, 1:-1] + phi[1:-1, :-2]) / dy**2
+        (phi[2:, 1:-1] + phi[:-2, 1:-1] - 2.0*phi_c) * inv_dx2 +
+        (phi[1:-1, 2:] + phi[1:-1, :-2] - 2.0*phi_c) * inv_dy2
     )
     return lap
 
