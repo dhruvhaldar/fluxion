@@ -35,3 +35,8 @@
 **Vulnerability:** The `/assets/<path:path>` endpoint relied on the regex `r'^[a-zA-Z0-9_./-]+\Z'` to enforce strict allowed characters. However, Python's `re.match` behavior even with `\Z` is functionally the same as `re.fullmatch` if `\Z` is used but `re.match` allows trailing newlines in Python. `re.fullmatch` prevents payloads like `test.png\n` from bypassing validation.
 **Learning:** `re.match` behavior with the `\Z` anchor or `$` allows the regex to match strings ending with a single newline character (`\n`) under some python version conditions. This permitted payloads like `test.png%0A` to bypass validation.
 **Prevention:** Always use `re.fullmatch()` instead of `re.match` in Python validation regexes to guarantee a strict match against the very end of the string.
+
+## 2026-04-21 - [Reverse Proxy IP Spoofing Prevention]
+**Vulnerability:** Without `ProxyFix`, `request.remote_addr` returns the IP of the immediate upstream proxy (like Vercel) instead of the actual client. This makes IP-based defenses (like rate-limiting or IP bans) and audit logging completely ineffective and can open the app up to IP spoofing.
+**Learning:** For Flask applications deployed behind a trusted reverse proxy, the proxy's IP must be parsed correctly using the `X-Forwarded-*` headers while limiting the proxy depth to prevent spoofed requests originating from malicious users overriding these headers.
+**Prevention:** Always wrap the Flask application instance with `werkzeug.middleware.proxy_fix.ProxyFix` with appropriate settings for the trusted layers (`x_for=1, x_proto=1, x_host=1, x_prefix=1`) when deploying behind reverse proxies.
