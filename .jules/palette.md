@@ -53,3 +53,7 @@
 ## 2026-04-15 - Permalink Heading Anchors
 **Learning:** Document-heavy pages with multiple sections (like scientific reports or long artifact lists) can be difficult for users to share specific references to. Adding anchor tags (`#`) deep-linking directly to sections significantly improves the utility and sharing UX. However, having them permanently visible creates visual noise.
 **Action:** Append a permalink anchor inside headings and style them to be visually hidden (`opacity: 0`) by default, revealing them only on `:hover` or `:focus-visible`. This provides the utility of deep linking without compromising visual cleanliness, while remaining fully accessible to keyboard users.
+
+## 2025-02-12 - Internal Anchor Link Focus Management
+**Learning:** When adding permalink anchor tags (like "#") directly inside headings (`<h2>`) to enable deep-linking to sections, screen readers require the heading element to programmatically manage focus correctly. Without `tabindex="-1"`, deep-linking only scrolls the page visually but does not relocate screen reader focus, leaving users disoriented.
+**Action:** Always add `tabindex="-1"` to target heading elements when implementing deep-link anchors inside them. Also, pair it with `outline: none` on the `:focus` pseudo-class (e.g. `h2:focus { outline: none; }`) to suppress the default visual focus ring for sighted users while preserving correct programmatic focus.
