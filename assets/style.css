@@ -52,7 +52,9 @@ main:focus { outline: none; }
     vertical-align: middle;
     margin-left: 4px;
     margin-bottom: 2px;
+    transition: transform 0.2s;
 }
+a:hover .external-link-icon { transform: translate(2px, -2px); }
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -72,7 +74,12 @@ body:focus { outline: none; }
     }
     .skip-link,
     footer a[href="#top"],
-    .heading-anchor {
+    .heading-anchor,
+    .sr-only,
+    .external-link-icon {
         display: none !important;
+    }
+    a[href^="http"]::after {
+        content: " (" attr(href) ")";
     }
 }
