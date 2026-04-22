@@ -80,7 +80,12 @@ class NavierStokes2D:
         # Correct Slicing for internal u (1 to nx-1)
         # i=1 corresponds to index 1. Left neighbor 0. Right neighbor 2.
         u_interior = u[1:-1, :]
-        du_dx = (u[2:, :] - u[:-2, :]) / (2*dx)
+        inv_2dx = 1.0 / (2*dx)
+        inv_2dy = 1.0 / (2*dy)
+        inv_dx2 = 1.0 / (dx**2)
+        inv_dy2 = 1.0 / (dy**2)
+
+        du_dx = (u[2:, :] - u[:-2, :]) * inv_2dx
 
         # Advection v * du/dy
         # Need v at u-locations.
@@ -111,12 +116,12 @@ class NavierStokes2D:
 
         du_dy = np.zeros_like(u_interior)
         # Interior Y (j=1..ny-2)
-        du_dy[:, 1:-1] = (u_interior[:, 2:] - u_interior[:, :-2]) / (2*dy)
+        du_dy[:, 1:-1] = (u_interior[:, 2:] - u_interior[:, :-2]) * inv_2dy
 
         # Diffusion d2u/dx2 + d2u/dy2
-        d2u_dx2 = (u[2:, :] - 2*u[1:-1, :] + u[:-2, :]) / dx**2
+        d2u_dx2 = (u[2:, :] - 2*u[1:-1, :] + u[:-2, :]) * inv_dx2
         d2u_dy2 = np.zeros_like(u_interior)
-        d2u_dy2[:, 1:-1] = (u_interior[:, 2:] - 2*u_interior[:, 1:-1] + u_interior[:, :-2]) / dy**2
+        d2u_dy2[:, 1:-1] = (u_interior[:, 2:] - 2*u_interior[:, 1:-1] + u_interior[:, :-2]) * inv_dy2
 
         # Apply BCs for u derivatives near walls
         # Top Wall (Lid): u = u_lid.
@@ -126,16 +131,16 @@ class NavierStokes2D:
         # = (2*u_top - u_last - 2*u_last + u_last_minus_1) / dy^2
         # = (2*u_top - 3*u_last + u_last_minus_1) / dy^2
         u_top = self.bc_u['top']
-        d2u_dy2[:, -1] = (2*u_top - 3*u_interior[:, -1] + u_interior[:, -2]) / dy**2
+        d2u_dy2[:, -1] = (2*u_top - 3*u_interior[:, -1] + u_interior[:, -2]) * inv_dy2
 
         u_bot = self.bc_u['bottom']
-        d2u_dy2[:, 0] = (2*u_bot - 3*u_interior[:, 0] + u_interior[:, 1]) / dy**2
+        d2u_dy2[:, 0] = (2*u_bot - 3*u_interior[:, 0] + u_interior[:, 1]) * inv_dy2
 
         # Advection needs full du_dy?
         # du/dy at j=ny-1: (u_ghost - u_last_minus_1) / 2dy
         # = (2*u_top - u_last - u_last_minus_1) / 2dy
-        du_dy[:, -1] = (2*u_top - u_interior[:, -1] - u_interior[:, -2]) / (2*dy)
-        du_dy[:, 0] = (u_interior[:, 1] - (2*u_bot - u_interior[:, 0])) / (2*dy)
+        du_dy[:, -1] = (2*u_top - u_interior[:, -1] - u_interior[:, -2]) * inv_2dy
+        du_dy[:, 0] = (u_interior[:, 1] - (2*u_bot - u_interior[:, 0])) * inv_2dy
 
         rhs_u = -(u_interior * du_dx + v_interp * du_dy) + self.nu * (d2u_dx2 + d2u_dy2)
         u_star[1:-1, :] = u_interior + dt * rhs_u
@@ -145,7 +150,7 @@ class NavierStokes2D:
         v_interior = v[:, 1:-1] # j=1..ny-1
 
         # dv/dy
-        dv_dy = (v[:, 2:] - v[:, :-2]) / (2*dy)
+        dv_dy = (v[:, 2:] - v[:, :-2]) * inv_2dy
 
         # dv/dx
         # Need v ghost in x.
@@ -154,7 +159,7 @@ class NavierStokes2D:
         dv_dx = np.zeros_like(v_interior)
 
         # d2v/dy2
-        d2v_dy2 = (v[:, 2:] - 2*v[:, 1:-1] + v[:, :-2]) / dy**2
+        d2v_dy2 = (v[:, 2:] - 2*v[:, 1:-1] + v[:, :-2]) * inv_dy2
 
         # d2v/dx2
         d2v_dx2 = np.zeros_like(v_interior)
@@ -167,13 +172,13 @@ class NavierStokes2D:
         # d2v/dx2 = (v[1] - 2v[0] + v_ghost) / dx^2
         # v_ghost = 2*v_left - v[0]
         # => (v[1] - 3v[0] + 2*v_left) / dx^2
-        d2v_dx2[0, :] = (v_interior[1, :] - 3*v_interior[0, :] + 2*v_left) / dx**2
-        d2v_dx2[-1, :] = (2*v_right - 3*v_interior[-1, :] + v_interior[-2, :]) / dx**2
-        d2v_dx2[1:-1, :] = (v_interior[2:, :] - 2*v_interior[1:-1, :] + v_interior[:-2, :]) / dx**2
+        d2v_dx2[0, :] = (v_interior[1, :] - 3*v_interior[0, :] + 2*v_left) * inv_dx2
+        d2v_dx2[-1, :] = (2*v_right - 3*v_interior[-1, :] + v_interior[-2, :]) * inv_dx2
+        d2v_dx2[1:-1, :] = (v_interior[2:, :] - 2*v_interior[1:-1, :] + v_interior[:-2, :]) * inv_dx2
 
-        dv_dx[0, :] = (v_interior[1, :] - (2*v_left - v_interior[0, :])) / (2*dx)
-        dv_dx[-1, :] = ((2*v_right - v_interior[-1, :]) - v_interior[-2, :]) / (2*dx)
-        dv_dx[1:-1, :] = (v_interior[2:, :] - v_interior[:-2, :]) / (2*dx)
+        dv_dx[0, :] = (v_interior[1, :] - (2*v_left - v_interior[0, :])) * inv_2dx
+        dv_dx[-1, :] = ((2*v_right - v_interior[-1, :]) - v_interior[-2, :]) * inv_2dx
+        dv_dx[1:-1, :] = (v_interior[2:, :] - v_interior[:-2, :]) * inv_2dx
 
         # u interpolation for v eq
         # u at (i, j), (i+1, j), (i, j-1), (i+1, j-1)
