@@ -40,3 +40,8 @@
 **Vulnerability:** Without `ProxyFix`, `request.remote_addr` returns the IP of the immediate upstream proxy (like Vercel) instead of the actual client. This makes IP-based defenses (like rate-limiting or IP bans) and audit logging completely ineffective and can open the app up to IP spoofing.
 **Learning:** For Flask applications deployed behind a trusted reverse proxy, the proxy's IP must be parsed correctly using the `X-Forwarded-*` headers while limiting the proxy depth to prevent spoofed requests originating from malicious users overriding these headers.
 **Prevention:** Always wrap the Flask application instance with `werkzeug.middleware.proxy_fix.ProxyFix` with appropriate settings for the trusted layers (`x_for=1, x_proto=1, x_host=1, x_prefix=1`) when deploying behind reverse proxies.
+
+## 2026-04-23 - [Log Injection via Reverse Proxy IP Headers]
+**Vulnerability:** When implementing security audit logging using `request.remote_addr`, especially when behind a reverse proxy managed by `ProxyFix`, malicious clients can send crafted HTTP headers (like `X-Forwarded-For: 1.2.3.4\nFake-Log-Entry`) to inject arbitrary content into the application logs if the underlying WSGI server or middleware parses and passes these strings unvalidated.
+**Learning:** Even fields that seem purely metadata-driven, like `remote_addr`, must be treated as untrusted user input when logging, as they are ultimately derived from HTTP headers which can be freely spoofed.
+**Prevention:** Always sanitize or safely encode `request.remote_addr` before logging it, for example by wrapping it in `repr()` (e.g., `f"Blocked request from {repr(request.remote_addr)}"`).
