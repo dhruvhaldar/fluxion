@@ -48,6 +48,7 @@ def add_security_headers(response):
     # Security Enhancement: Prevent cross-origin resource embedding/reading
     response.headers['Cross-Origin-Resource-Policy'] = 'same-origin'
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+    response.headers['Cross-Origin-Embedder-Policy'] = 'require-corp'
     response.headers.pop('Server', None)
     return response
 
