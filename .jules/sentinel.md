@@ -45,3 +45,8 @@
 **Vulnerability:** When implementing security audit logging using `request.remote_addr`, especially when behind a reverse proxy managed by `ProxyFix`, malicious clients can send crafted HTTP headers (like `X-Forwarded-For: 1.2.3.4\nFake-Log-Entry`) to inject arbitrary content into the application logs if the underlying WSGI server or middleware parses and passes these strings unvalidated.
 **Learning:** Even fields that seem purely metadata-driven, like `remote_addr`, must be treated as untrusted user input when logging, as they are ultimately derived from HTTP headers which can be freely spoofed.
 **Prevention:** Always sanitize or safely encode `request.remote_addr` before logging it, for example by wrapping it in `repr()` (e.g., `f"Blocked request from {repr(request.remote_addr)}"`).
+
+## 2026-04-24 - [Cross-Origin Isolation Enhancement]
+**Vulnerability:** The application was setting `Cross-Origin-Opener-Policy` and `Cross-Origin-Resource-Policy` headers, but was missing the `Cross-Origin-Embedder-Policy: require-corp` header, meaning true cross-origin isolation was not fully enabled to mitigate side-channel attacks like Spectre.
+**Learning:** For a document to be truly cross-origin isolated (which is required to enable secure features like `SharedArrayBuffer` or high-resolution timers, and to mitigate Spectre), both `Cross-Origin-Opener-Policy` (COOP) and `Cross-Origin-Embedder-Policy` (COEP) must be set.
+**Prevention:** Always pair `Cross-Origin-Opener-Policy: same-origin` with `Cross-Origin-Embedder-Policy: require-corp` to fully opt-in to cross-origin isolation.
