@@ -65,3 +65,7 @@
 ## 2026-04-22 - Print Accessibility for External Links
 **Learning:** In document-heavy interfaces (such as scientific reports) that are frequently printed or exported to PDF, visually hidden elements meant for screen readers (like `.sr-only` text) and decorative icons (like SVG external link indicators) create messy artifacts on physical pages. More critically, external hyperlinks lose all utility when printed if the destination URL isn't visible.
 **Action:** Always enhance `@media print` stylesheets to explicitly hide `.sr-only` utility classes and decorative icons. Additionally, use CSS generated content (`a[href^="http"]::after { content: " (" attr(href) ")"; }`) to print the actual destination URLs next to external links, ensuring the document remains functional offline.
+
+## 2026-04-24 - Visual Feedback for Deep Links
+**Learning:** When deep-linking to internal page sections, users can become disoriented. Providing temporary visual feedback via the `:target` pseudo-class improves navigational orientation.
+**Action:** Always provide visual highlighting (like a temporary color pulse) using the `:target` pseudo-class when users jump to in-page anchors.

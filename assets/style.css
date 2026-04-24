@@ -59,6 +59,7 @@ a:hover .external-link-icon { transform: translate(2px, -2px); }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         transition: none !important;
+        animation: none !important;
         scroll-behavior: auto !important;
     }
 }
@@ -83,3 +84,16 @@ body:focus { outline: none; }
         content: " (" attr(href) ")";
     }
 }
+
+@keyframes target-pulse {
+    0% { color: inherit; }
+    50% { color: var(--link-hover-color); }
+    100% { color: inherit; }
+}
+h2:target { animation: target-pulse 2s ease-out; }
+
+.back-to-top-icon {
+    display: inline-block;
+    transition: transform 0.2s;
+}
+a:hover .back-to-top-icon { transform: translateY(-2px); }
