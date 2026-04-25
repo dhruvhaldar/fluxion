@@ -69,3 +69,7 @@
 ## 2026-04-24 - Visual Feedback for Deep Links
 **Learning:** When deep-linking to internal page sections, users can become disoriented. Providing temporary visual feedback via the `:target` pseudo-class improves navigational orientation.
 **Action:** Always provide visual highlighting (like a temporary color pulse) using the `:target` pseudo-class when users jump to in-page anchors.
+
+## 2026-04-25 - Touch Device Accessibility for Hover-Revealed Elements
+**Learning:** Hiding utility elements (like permalink anchors) by default with `opacity: 0` and revealing them via `:hover` and `:focus-visible` creates a clean UI for mouse and keyboard users. However, touch device users (like mobile and tablet users) lack hover capability. If they don't use external keyboards, these elements become completely undiscoverable and permanently inaccessible, breaking core navigational utility for a large segment of users.
+**Action:** When hiding interactive elements by default to reduce visual clutter, always include a `@media (hover: none)` block to ensure the elements remain permanently visible (e.g., `opacity: 1` or a semi-transparent state) for touch device users who cannot trigger hover states.
