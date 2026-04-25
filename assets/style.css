@@ -38,6 +38,9 @@ h2:focus { outline: none; }
 .heading-anchor { opacity: 0; text-decoration: none; margin-left: 8px; color: var(--text-muted); transition: opacity 0.2s, color 0.2s; }
 h2:hover .heading-anchor, .heading-anchor:focus-visible { opacity: 1; }
 .heading-anchor:hover { color: var(--link-hover-color); text-decoration: none; }
+@media (hover: none) {
+    .heading-anchor { opacity: 1; }
+}
 a { color: var(--link-color); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--link-color); transition: text-decoration-color 0.2s, color 0.3s; }
 a:hover { color: var(--link-hover-color); text-decoration-color: var(--link-hover-color); text-decoration-thickness: 2px; }
 a:focus-visible { outline: 3px solid var(--link-focus-outline); outline-offset: 2px; border-radius: 2px; }
