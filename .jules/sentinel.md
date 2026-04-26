@@ -50,3 +50,13 @@
 **Vulnerability:** The application was setting `Cross-Origin-Opener-Policy` and `Cross-Origin-Resource-Policy` headers, but was missing the `Cross-Origin-Embedder-Policy: require-corp` header, meaning true cross-origin isolation was not fully enabled to mitigate side-channel attacks like Spectre.
 **Learning:** For a document to be truly cross-origin isolated (which is required to enable secure features like `SharedArrayBuffer` or high-resolution timers, and to mitigate Spectre), both `Cross-Origin-Opener-Policy` (COOP) and `Cross-Origin-Embedder-Policy` (COEP) must be set.
 **Prevention:** Always pair `Cross-Origin-Opener-Policy: same-origin` with `Cross-Origin-Embedder-Policy: require-corp` to fully opt-in to cross-origin isolation.
+
+## 2026-04-26 - [Cache Poisoning DoS Prevention on Error Responses]
+**Vulnerability:** The global HTTP response middleware in the Flask application successfully applied security headers but failed to specify Cache-Control directives for error responses (status codes >= 400), potentially allowing CDNs, reverse proxies, or browsers to cache error states or 404 pages.
+**Learning:** Missing cache-control headers on error pages can lead to Cache Poisoning DoS (CPDoS), where an attacker forces a CDN to cache an error response for a valid URL, denying service to legitimate users. Error responses should never be cached.
+**Prevention:** Explicitly set  in the  handler whenever .
+
+## 2026-04-26 - [Cache Poisoning DoS Prevention on Error Responses]
+**Vulnerability:** The global HTTP response middleware in the Flask application successfully applied security headers but failed to specify Cache-Control directives for error responses (status codes >= 400), potentially allowing CDNs, reverse proxies, or browsers to cache error states or 404 pages.
+**Learning:** Missing cache-control headers on error pages can lead to Cache Poisoning DoS (CPDoS), where an attacker forces a CDN to cache an error response for a valid URL, denying service to legitimate users. Error responses should never be cached.
+**Prevention:** Explicitly set `Cache-Control: no-store, max-age=0` in the `@app.after_request` handler whenever `response.status_code >= 400`.

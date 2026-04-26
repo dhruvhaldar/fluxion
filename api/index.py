@@ -49,6 +49,8 @@ def add_security_headers(response):
     response.headers['Cross-Origin-Resource-Policy'] = 'same-origin'
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
     response.headers['Cross-Origin-Embedder-Policy'] = 'require-corp'
+    if response.status_code >= 400:
+        response.headers["Cache-Control"] = "no-store, max-age=0"
     response.headers.pop('Server', None)
     return response
 
