@@ -60,3 +60,8 @@
 **Vulnerability:** The global HTTP response middleware in the Flask application successfully applied security headers but failed to specify Cache-Control directives for error responses (status codes >= 400), potentially allowing CDNs, reverse proxies, or browsers to cache error states or 404 pages.
 **Learning:** Missing cache-control headers on error pages can lead to Cache Poisoning DoS (CPDoS), where an attacker forces a CDN to cache an error response for a valid URL, denying service to legitimate users. Error responses should never be cached.
 **Prevention:** Explicitly set `Cache-Control: no-store, max-age=0` in the `@app.after_request` handler whenever `response.status_code >= 400`.
+
+## 2026-04-28 - [HSTS Preload Directive Omission]
+**Vulnerability:** The application configured a `Strict-Transport-Security` header with `max-age` and `includeSubDomains`, but omitted the `preload` directive. This means the site is not eligible for browser HSTS preload lists, leaving new users vulnerable to downgrade attacks (like SSL stripping) on their very first HTTP connection before the HSTS policy is cached.
+**Learning:** For HSTS to be maximally effective, domains must be preloaded into browsers. This requires explicitly including the `preload` token in the HSTS header alongside a sufficiently long `max-age` and `includeSubDomains`.
+**Prevention:** Always append the `preload` directive when configuring the `Strict-Transport-Security` header (e.g., `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`).
