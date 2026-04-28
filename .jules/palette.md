@@ -73,3 +73,7 @@
 ## 2026-04-25 - Touch Device Accessibility for Hover-Revealed Elements
 **Learning:** Hiding utility elements (like permalink anchors) by default with `opacity: 0` and revealing them via `:hover` and `:focus-visible` creates a clean UI for mouse and keyboard users. However, touch device users (like mobile and tablet users) lack hover capability. If they don't use external keyboards, these elements become completely undiscoverable and permanently inaccessible, breaking core navigational utility for a large segment of users.
 **Action:** When hiding interactive elements by default to reduce visual clutter, always include a `@media (hover: none)` block to ensure the elements remain permanently visible (e.g., `opacity: 1` or a semi-transparent state) for touch device users who cannot trigger hover states.
+
+## 2026-04-28 - Redundant Alt Text in Figures
+**Learning:** When images are wrapped in `<figure>` tags and paired with a descriptive `<figcaption>`, replicating the caption text inside the image's `alt` attribute creates a frustrating, redundant double-reading experience for screen reader users. Furthermore, repeating the title of a scientific plot in the `alt` text fails to convey the actual visual information (the trend or shape of the data) that sighted users receive.
+**Action:** When an image has an adjacent `<figcaption>`, ensure the `alt` text describes the *visual content* of the image (e.g., 'A line graph showing an upward curve') to provide equivalent informational value without repeating the caption.
