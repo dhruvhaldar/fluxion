@@ -24,10 +24,7 @@ def handle_exception(e):
         # Security Enhancement: Return safe plain text response for HTTPExceptions
         # rather than the default Werkzeug HTML templates to prevent framework
         # fingerprinting and potential XSS issues.
-        response = e.get_response()
-        response.data = f"{e.code} {e.name}: {e.description}"
-        response.content_type = "text/plain"
-        return response
+        return f"{e.code} {e.name}: {e.description}", e.code, {'Content-Type': 'text/plain; charset=utf-8'}
     app.logger.error("Unexpected error", exc_info=True)
     return "Internal Server Error", 500
 
