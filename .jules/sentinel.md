@@ -65,3 +65,8 @@
 **Vulnerability:** The application configured a `Strict-Transport-Security` header with `max-age` and `includeSubDomains`, but omitted the `preload` directive. This means the site is not eligible for browser HSTS preload lists, leaving new users vulnerable to downgrade attacks (like SSL stripping) on their very first HTTP connection before the HSTS policy is cached.
 **Learning:** For HSTS to be maximally effective, domains must be preloaded into browsers. This requires explicitly including the `preload` token in the HSTS header alongside a sufficiently long `max-age` and `includeSubDomains`.
 **Prevention:** Always append the `preload` directive when configuring the `Strict-Transport-Security` header (e.g., `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`).
+
+## 2026-04-30 - [Customizing HTTPException Responses Securely]
+**Vulnerability:** When customizing `werkzeug.exceptions.HTTPException` responses in a global error handler to prevent XSS via plain-text responses, mutating properties of `e.get_response()` (e.g., `response.content_type = 'text/plain'`) does not reliably enforce the Content-Type header across all Werkzeug versions.
+**Learning:** Mutating the default Werkzeug exception response object can lead to inconsistent behavior and potential security gaps, such as the `Content-Type` header not being set correctly or charset missing.
+**Prevention:** Instead of mutating the response object, explicitly return a Flask response tuple with the header dictionary (e.g., `return body, e.code, {'Content-Type': 'text/plain; charset=utf-8'}`) to guarantee the header is strictly enforced.
