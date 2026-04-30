@@ -137,56 +137,95 @@ class LinearSolver:
         p_right = p_new[1:-1, 2:]
         p_left = p_new[1:-1, :-2]
 
-        for it in range(max_iter):
-            # Capture the previous iteration's state right before the check iteration
-            if it > 0 and it % check_interval == 0:
-                np.copyto(p_old, p_new)
+        # ⚡ Bolt: Pre-calculate 1 - omega outside the loop
+        one_minus_omega = 1.0 - omega
 
-            # 1. Update Red Points
-            # ⚡ Bolt: Single mathematical expression with [:] assignment avoids Python loop overhead
-            # which outweighs implicit temporary array costs on smaller grids, cutting time by ~40%
-            if mult_y_over_x != 1.0:
-                p_gs[:] = ((p_right + p_left) * mult_y_over_x + p_up + p_down - rhs_eff) * mult_x
-            else:
+        # ⚡ Bolt: Hoist invariant branch conditions outside the loop to avoid Python overhead
+        if mult_y_over_x == 1.0 and omega == 1.0:
+            for it in range(max_iter):
+                if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
+
                 p_gs[:] = (p_right + p_left + p_up + p_down - rhs_eff) * mult_x
-
-            # Update only Red points in-place using np.putmask for performance
-            # Add (1 - omega) * p_slice in-place to avoid implicit temporary whole-array creation
-            if omega != 1.0:
-                # ⚡ Bolt: Use tmp_y to avoid implicit temporary array from (1 - omega) * p_slice
-                np.multiply(p_slice, 1 - omega, out=tmp_y)
-                p_gs += tmp_y
-            np.putmask(p_slice, mask_red, p_gs)
-
-            # 2. Update Black Points
-            # Recompute neighbors (Red points have changed)
-            if mult_y_over_x != 1.0:
-                p_gs[:] = ((p_right + p_left) * mult_y_over_x + p_up + p_down - rhs_eff) * mult_x
-            else:
+                np.putmask(p_slice, mask_red, p_gs)
                 p_gs[:] = (p_right + p_left + p_up + p_down - rhs_eff) * mult_x
+                np.putmask(p_slice, mask_black, p_gs)
 
-            # Update only Black points in-place
-            if omega != 1.0:
-                np.multiply(p_slice, 1 - omega, out=tmp_y)
+                p_new[0] = p_new[1]
+                p_new[-1] = p_new[-2]
+                p_new[:, 0] = p_new[:, 1]
+                p_new[:, -1] = p_new[:, -2]
+
+                if it > 0 and it % check_interval == 0:
+                    np.subtract(p_new, p_old, out=tmp_full)
+                    np.abs(tmp_full, out=tmp_full)
+                    if np.max(tmp_full) < tol: return p_new, it
+
+        elif mult_y_over_x == 1.0 and omega != 1.0:
+            for it in range(max_iter):
+                if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
+
+                p_gs[:] = (p_right + p_left + p_up + p_down - rhs_eff) * mult_x
+                np.multiply(p_slice, one_minus_omega, out=tmp_y)
                 p_gs += tmp_y
-            np.putmask(p_slice, mask_black, p_gs)
+                np.putmask(p_slice, mask_red, p_gs)
 
-            # Boundary Conditions
-            # ⚡ Bolt: Direct row assignments are slightly faster than slice assignments
-            # for 2D numpy arrays in tight loops.
-            p_new[0] = p_new[1]
-            p_new[-1] = p_new[-2]
-            p_new[:, 0] = p_new[:, 1]
-            p_new[:, -1] = p_new[:, -2]
+                p_gs[:] = (p_right + p_left + p_up + p_down - rhs_eff) * mult_x
+                np.multiply(p_slice, one_minus_omega, out=tmp_y)
+                p_gs += tmp_y
+                np.putmask(p_slice, mask_black, p_gs)
 
-            # Only calculate max diff every check_interval to avoid expensive array operations
-            # We captured p_old at the START of this iteration, so p_new - p_old is exactly the diff
-            # of this one iteration.
-            if it > 0 and it % check_interval == 0:
-                np.subtract(p_new, p_old, out=tmp_full)
-                np.abs(tmp_full, out=tmp_full)
-                if np.max(tmp_full) < tol:
-                    return p_new, it
+                p_new[0] = p_new[1]
+                p_new[-1] = p_new[-2]
+                p_new[:, 0] = p_new[:, 1]
+                p_new[:, -1] = p_new[:, -2]
+
+                if it > 0 and it % check_interval == 0:
+                    np.subtract(p_new, p_old, out=tmp_full)
+                    np.abs(tmp_full, out=tmp_full)
+                    if np.max(tmp_full) < tol: return p_new, it
+
+        elif mult_y_over_x != 1.0 and omega == 1.0:
+            for it in range(max_iter):
+                if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
+
+                p_gs[:] = ((p_right + p_left) * mult_y_over_x + p_up + p_down - rhs_eff) * mult_x
+                np.putmask(p_slice, mask_red, p_gs)
+                p_gs[:] = ((p_right + p_left) * mult_y_over_x + p_up + p_down - rhs_eff) * mult_x
+                np.putmask(p_slice, mask_black, p_gs)
+
+                p_new[0] = p_new[1]
+                p_new[-1] = p_new[-2]
+                p_new[:, 0] = p_new[:, 1]
+                p_new[:, -1] = p_new[:, -2]
+
+                if it > 0 and it % check_interval == 0:
+                    np.subtract(p_new, p_old, out=tmp_full)
+                    np.abs(tmp_full, out=tmp_full)
+                    if np.max(tmp_full) < tol: return p_new, it
+
+        else:
+            for it in range(max_iter):
+                if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
+
+                p_gs[:] = ((p_right + p_left) * mult_y_over_x + p_up + p_down - rhs_eff) * mult_x
+                np.multiply(p_slice, one_minus_omega, out=tmp_y)
+                p_gs += tmp_y
+                np.putmask(p_slice, mask_red, p_gs)
+
+                p_gs[:] = ((p_right + p_left) * mult_y_over_x + p_up + p_down - rhs_eff) * mult_x
+                np.multiply(p_slice, one_minus_omega, out=tmp_y)
+                p_gs += tmp_y
+                np.putmask(p_slice, mask_black, p_gs)
+
+                p_new[0] = p_new[1]
+                p_new[-1] = p_new[-2]
+                p_new[:, 0] = p_new[:, 1]
+                p_new[:, -1] = p_new[:, -2]
+
+                if it > 0 and it % check_interval == 0:
+                    np.subtract(p_new, p_old, out=tmp_full)
+                    np.abs(tmp_full, out=tmp_full)
+                    if np.max(tmp_full) < tol: return p_new, it
 
         # Final check if loop finishes
         # Check against previous iteration which wasn't saved, so we just return.
