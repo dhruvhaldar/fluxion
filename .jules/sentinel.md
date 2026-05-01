@@ -70,3 +70,8 @@
 **Vulnerability:** When customizing `werkzeug.exceptions.HTTPException` responses in a global error handler to prevent XSS via plain-text responses, mutating properties of `e.get_response()` (e.g., `response.content_type = 'text/plain'`) does not reliably enforce the Content-Type header across all Werkzeug versions.
 **Learning:** Mutating the default Werkzeug exception response object can lead to inconsistent behavior and potential security gaps, such as the `Content-Type` header not being set correctly or charset missing.
 **Prevention:** Instead of mutating the response object, explicitly return a Flask response tuple with the header dictionary (e.g., `return body, e.code, {'Content-Type': 'text/plain; charset=utf-8'}`) to guarantee the header is strictly enforced.
+
+## 2026-05-01 - [XSS Prevention via Explicit Content-Type in Tuples]
+**Vulnerability:** When manually returning error responses as tuples in Flask routes (e.g., `return "Bad Request", 400`), Werkzeug defaults to serving the response as `text/html; charset=utf-8` if a Content-Type is not specified. While current hardcoded strings are safe, this creates a potential MIME-sniffing and Cross-Site Scripting (XSS) vulnerability if these responses are ever updated to include dynamic user input in the future.
+**Learning:** Returning bare strings or tuples without headers in Flask is not perfectly secure by default, as the framework assumes HTML. Defensive programming requires explicitly treating all raw string returns as plain text.
+**Prevention:** Always explicitly include the `{'Content-Type': 'text/plain; charset=utf-8'}` header when returning string-based error tuples (e.g., `return "Bad Request", 400, {'Content-Type': 'text/plain; charset=utf-8'}`).
