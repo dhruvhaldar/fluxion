@@ -77,3 +77,7 @@
 ## 2026-04-28 - Redundant Alt Text in Figures
 **Learning:** When images are wrapped in `<figure>` tags and paired with a descriptive `<figcaption>`, replicating the caption text inside the image's `alt` attribute creates a frustrating, redundant double-reading experience for screen reader users. Furthermore, repeating the title of a scientific plot in the `alt` text fails to convey the actual visual information (the trend or shape of the data) that sighted users receive.
 **Action:** When an image has an adjacent `<figcaption>`, ensure the `alt` text describes the *visual content* of the image (e.g., 'A line graph showing an upward curve') to provide equivalent informational value without repeating the caption.
+
+## 2026-05-01 - Context-Specific Permalink Labels
+**Learning:** Using generic labels like `aria-label="Permalink to this section"` on heading anchor links creates a frustrating experience for screen reader users who navigate by links, as they hear the same uninformative phrase repeated.
+**Action:** Always provide context-specific `aria-label` and `title` attributes on internal section anchors (e.g., `Permalink to [Heading Name]`) to improve navigability and context.
