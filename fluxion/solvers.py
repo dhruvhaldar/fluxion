@@ -164,12 +164,22 @@ class LinearSolver:
             for it in range(max_iter):
                 if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
 
-                p_gs[:] = (p_right + p_left + p_up + p_down - rhs_eff) * mult_x
+                # ⚡ Bolt: Use in-place numpy ufuncs on p_gs to avoid implicit array allocations
+                # which significantly reduces memory bandwidth requirements in the hot loop.
+                np.add(p_right, p_left, out=p_gs)
+                np.add(p_gs, p_up, out=p_gs)
+                np.add(p_gs, p_down, out=p_gs)
+                np.subtract(p_gs, rhs_eff, out=p_gs)
+                np.multiply(p_gs, mult_x, out=p_gs)
                 np.multiply(p_slice, one_minus_omega, out=tmp_y)
                 p_gs += tmp_y
                 np.putmask(p_slice, mask_red, p_gs)
 
-                p_gs[:] = (p_right + p_left + p_up + p_down - rhs_eff) * mult_x
+                np.add(p_right, p_left, out=p_gs)
+                np.add(p_gs, p_up, out=p_gs)
+                np.add(p_gs, p_down, out=p_gs)
+                np.subtract(p_gs, rhs_eff, out=p_gs)
+                np.multiply(p_gs, mult_x, out=p_gs)
                 np.multiply(p_slice, one_minus_omega, out=tmp_y)
                 p_gs += tmp_y
                 np.putmask(p_slice, mask_black, p_gs)
@@ -188,9 +198,20 @@ class LinearSolver:
             for it in range(max_iter):
                 if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
 
-                p_gs[:] = ((p_right + p_left) * mult_y_over_x + p_up + p_down - rhs_eff) * mult_x
+                np.add(p_right, p_left, out=p_gs)
+                np.multiply(p_gs, mult_y_over_x, out=p_gs)
+                np.add(p_gs, p_up, out=p_gs)
+                np.add(p_gs, p_down, out=p_gs)
+                np.subtract(p_gs, rhs_eff, out=p_gs)
+                np.multiply(p_gs, mult_x, out=p_gs)
                 np.putmask(p_slice, mask_red, p_gs)
-                p_gs[:] = ((p_right + p_left) * mult_y_over_x + p_up + p_down - rhs_eff) * mult_x
+
+                np.add(p_right, p_left, out=p_gs)
+                np.multiply(p_gs, mult_y_over_x, out=p_gs)
+                np.add(p_gs, p_up, out=p_gs)
+                np.add(p_gs, p_down, out=p_gs)
+                np.subtract(p_gs, rhs_eff, out=p_gs)
+                np.multiply(p_gs, mult_x, out=p_gs)
                 np.putmask(p_slice, mask_black, p_gs)
 
                 p_new[0] = p_new[1]
@@ -207,12 +228,22 @@ class LinearSolver:
             for it in range(max_iter):
                 if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
 
-                p_gs[:] = ((p_right + p_left) * mult_y_over_x + p_up + p_down - rhs_eff) * mult_x
+                np.add(p_right, p_left, out=p_gs)
+                np.multiply(p_gs, mult_y_over_x, out=p_gs)
+                np.add(p_gs, p_up, out=p_gs)
+                np.add(p_gs, p_down, out=p_gs)
+                np.subtract(p_gs, rhs_eff, out=p_gs)
+                np.multiply(p_gs, mult_x, out=p_gs)
                 np.multiply(p_slice, one_minus_omega, out=tmp_y)
                 p_gs += tmp_y
                 np.putmask(p_slice, mask_red, p_gs)
 
-                p_gs[:] = ((p_right + p_left) * mult_y_over_x + p_up + p_down - rhs_eff) * mult_x
+                np.add(p_right, p_left, out=p_gs)
+                np.multiply(p_gs, mult_y_over_x, out=p_gs)
+                np.add(p_gs, p_up, out=p_gs)
+                np.add(p_gs, p_down, out=p_gs)
+                np.subtract(p_gs, rhs_eff, out=p_gs)
+                np.multiply(p_gs, mult_x, out=p_gs)
                 np.multiply(p_slice, one_minus_omega, out=tmp_y)
                 p_gs += tmp_y
                 np.putmask(p_slice, mask_black, p_gs)
