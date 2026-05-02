@@ -81,3 +81,7 @@
 ## 2026-05-01 - Context-Specific Permalink Labels
 **Learning:** Using generic labels like `aria-label="Permalink to this section"` on heading anchor links creates a frustrating experience for screen reader users who navigate by links, as they hear the same uninformative phrase repeated.
 **Action:** Always provide context-specific `aria-label` and `title` attributes on internal section anchors (e.g., `Permalink to [Heading Name]`) to improve navigability and context.
+
+## 2026-05-02 - Linking Image Wrapper Links to Captions
+**Learning:** When images are wrapped in `<figure>` tags and `<a>` tags, adding an `aria-describedby` attribute to the link pointing to the `<figcaption>` element's `id` ensures that screen reader users navigating via links hear both the image's `alt` text and the surrounding caption context.
+**Action:** When wrapping images inside `<figure>` elements with links, always link the `<a>` tag to the `<figcaption>` using `aria-describedby` and matching `id` attributes.
