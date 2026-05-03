@@ -172,7 +172,7 @@ class LinearSolver:
                 np.subtract(p_gs, rhs_eff, out=p_gs)
                 np.multiply(p_gs, mult_x, out=p_gs)
                 np.multiply(p_slice, one_minus_omega, out=tmp_y)
-                p_gs += tmp_y
+                np.add(p_gs, tmp_y, out=p_gs)
                 np.putmask(p_slice, mask_red, p_gs)
 
                 np.add(p_right, p_left, out=p_gs)
@@ -181,7 +181,7 @@ class LinearSolver:
                 np.subtract(p_gs, rhs_eff, out=p_gs)
                 np.multiply(p_gs, mult_x, out=p_gs)
                 np.multiply(p_slice, one_minus_omega, out=tmp_y)
-                p_gs += tmp_y
+                np.add(p_gs, tmp_y, out=p_gs)
                 np.putmask(p_slice, mask_black, p_gs)
 
                 p_new[0] = p_new[1]
@@ -235,7 +235,7 @@ class LinearSolver:
                 np.subtract(p_gs, rhs_eff, out=p_gs)
                 np.multiply(p_gs, mult_x, out=p_gs)
                 np.multiply(p_slice, one_minus_omega, out=tmp_y)
-                p_gs += tmp_y
+                np.add(p_gs, tmp_y, out=p_gs)
                 np.putmask(p_slice, mask_red, p_gs)
 
                 np.add(p_right, p_left, out=p_gs)
@@ -245,7 +245,7 @@ class LinearSolver:
                 np.subtract(p_gs, rhs_eff, out=p_gs)
                 np.multiply(p_gs, mult_x, out=p_gs)
                 np.multiply(p_slice, one_minus_omega, out=tmp_y)
-                p_gs += tmp_y
+                np.add(p_gs, tmp_y, out=p_gs)
                 np.putmask(p_slice, mask_black, p_gs)
 
                 p_new[0] = p_new[1]
