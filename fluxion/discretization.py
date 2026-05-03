@@ -10,7 +10,11 @@ def compute_divergence(u, v, grid):
     # ⚡ Bolt: Multiplying by the inverse is faster than array division
     inv_dx = 1.0 / grid.dx
     inv_dy = 1.0 / grid.dy
-    return (u[1:, :] - u[:-1, :]) * inv_dx + (v[:, 1:] - v[:, :-1]) * inv_dy
+
+    if inv_dx == inv_dy:
+        return (u[1:, :] - u[:-1, :] + v[:, 1:] - v[:, :-1]) * inv_dx
+    else:
+        return (u[1:, :] - u[:-1, :]) * inv_dx + (v[:, 1:] - v[:, :-1]) * inv_dy
 
 def compute_gradient(p, grid):
     """
@@ -48,10 +52,15 @@ def compute_laplacian(phi, grid):
     lap = np.zeros_like(phi)
 
     # Interior
-    lap[1:-1, 1:-1] = (
-        (phi[2:, 1:-1] - 2*phi[1:-1, 1:-1] + phi[:-2, 1:-1]) * inv_dx2 +
-        (phi[1:-1, 2:] - 2*phi[1:-1, 1:-1] + phi[1:-1, :-2]) * inv_dy2
-    )
+    if inv_dx2 == inv_dy2:
+        lap[1:-1, 1:-1] = (
+            phi[2:, 1:-1] + phi[:-2, 1:-1] + phi[1:-1, 2:] + phi[1:-1, :-2] - 4*phi[1:-1, 1:-1]
+        ) * inv_dx2
+    else:
+        lap[1:-1, 1:-1] = (
+            (phi[2:, 1:-1] - 2*phi[1:-1, 1:-1] + phi[:-2, 1:-1]) * inv_dx2 +
+            (phi[1:-1, 2:] - 2*phi[1:-1, 1:-1] + phi[1:-1, :-2]) * inv_dy2
+        )
     return lap
 
 def convection_term(phi, u, v, grid, scheme='central'):
@@ -189,6 +198,9 @@ def convection_term(phi, u, v, grid, scheme='central'):
     flux_y[:, -1] = v[:, -1] * phi[:, -1]
 
     # Compute Divergence
-    conv = (flux_x[1:, :] - flux_x[:-1, :]) * inv_dx + (flux_y[:, 1:] - flux_y[:, :-1]) * inv_dy
+    if inv_dx == inv_dy:
+        conv = (flux_x[1:, :] - flux_x[:-1, :] + flux_y[:, 1:] - flux_y[:, :-1]) * inv_dx
+    else:
+        conv = (flux_x[1:, :] - flux_x[:-1, :]) * inv_dx + (flux_y[:, 1:] - flux_y[:, :-1]) * inv_dy
 
     return conv
