@@ -85,3 +85,7 @@
 ## 2026-05-02 - Linking Image Wrapper Links to Captions
 **Learning:** When images are wrapped in `<figure>` tags and `<a>` tags, adding an `aria-describedby` attribute to the link pointing to the `<figcaption>` element's `id` ensures that screen reader users navigating via links hear both the image's `alt` text and the surrounding caption context.
 **Action:** When wrapping images inside `<figure>` elements with links, always link the `<a>` tag to the `<figcaption>` using `aria-describedby` and matching `id` attributes.
+
+## 2026-05-03 - Keyboard Interaction Parity for Micro-Interactions
+**Learning:** When micro-interactions (such as link color shifts, underline thickness changes, or SVG icon translations) are mapped exclusively to the `:hover` pseudo-class, keyboard users navigating via Tab do not receive the same visual feedback or polish, experiencing only the default or custom focus ring. This breaks interaction parity and visual delight for keyboard-only users.
+**Action:** Always pair `:focus-visible` with `:hover` selectors for delightful state changes (e.g., `a:hover, a:focus-visible`) to ensure keyboard users experience the exact same visual micro-interactions as mouse users.
