@@ -101,11 +101,7 @@ class NavierStokes2D:
         # For u[i, j], neighbors are v[i, j], v[i, j+1], v[i-1, j], v[i-1, j+1].
         # Indices in v array: i and i-1.
 
-        v_nw = v[:-1, 1:] # i-1, j+1
-        v_ne = v[1:, 1:]  # i, j+1
-        v_sw = v[:-1, :-1] # i-1, j
-        v_se = v[1:, :-1] # i, j
-        v_interp = 0.25 * (v_nw + v_ne + v_sw + v_se)
+        v_interp = 0.25 * (v[:-1, 1:] + v[1:, 1:] + v[:-1, :-1] + v[1:, :-1])
 
         # du/dy
         # u[i, j+1] - u[i, j-1]
@@ -114,13 +110,12 @@ class NavierStokes2D:
         # For j=0, need j=-1. For j=ny-1, need j=ny.
         # Handle boundaries later. For now assume internal j=1..ny-2.
 
-        du_dy = np.zeros_like(u_interior)
+        du_dy = np.empty_like(u_interior)
         # Interior Y (j=1..ny-2)
         du_dy[:, 1:-1] = (u_interior[:, 2:] - u_interior[:, :-2]) * inv_2dy
 
         # Diffusion d2u/dx2 + d2u/dy2
-        d2u_dx2 = (u[2:, :] - 2*u[1:-1, :] + u[:-2, :]) * inv_dx2
-        d2u_dy2 = np.zeros_like(u_interior)
+        d2u_dy2 = np.empty_like(u_interior)
         d2u_dy2[:, 1:-1] = (u_interior[:, 2:] - 2*u_interior[:, 1:-1] + u_interior[:, :-2]) * inv_dy2
 
         # Apply BCs for u derivatives near walls
@@ -142,7 +137,12 @@ class NavierStokes2D:
         du_dy[:, -1] = (2*u_top - u_interior[:, -1] - u_interior[:, -2]) * inv_2dy
         du_dy[:, 0] = (u_interior[:, 1] - (2*u_bot - u_interior[:, 0])) * inv_2dy
 
-        rhs_u = -(u_interior * du_dx + v_interp * du_dy) + self.nu * (d2u_dx2 + d2u_dy2)
+        # ⚡ Bolt: Chain inplace operations to avoid implicit array allocations
+        rhs_u = (u[2:, :] - 2*u[1:-1, :] + u[:-2, :]) * inv_dx2
+        rhs_u += d2u_dy2
+        rhs_u *= self.nu
+        rhs_u -= u_interior * du_dx
+        rhs_u -= v_interp * du_dy
         u_star[1:-1, :] = u_interior + dt * rhs_u
 
         # --- V-Momentum ---
@@ -150,19 +150,10 @@ class NavierStokes2D:
         v_interior = v[:, 1:-1] # j=1..ny-1
 
         # dv/dy
-        dv_dy = (v[:, 2:] - v[:, :-2]) * inv_2dy
-
-        # dv/dx
-        # Need v ghost in x.
-        # Left wall u=0, v=0 usually.
-        # v_ghost_left = 2*v_left - v_first.
-        dv_dx = np.zeros_like(v_interior)
+        dv_dx = np.empty_like(v_interior)
 
         # d2v/dy2
-        d2v_dy2 = (v[:, 2:] - 2*v[:, 1:-1] + v[:, :-2]) * inv_dy2
-
-        # d2v/dx2
-        d2v_dx2 = np.zeros_like(v_interior)
+        d2v_dx2 = np.empty_like(v_interior)
 
         # Boundaries for V (Left/Right)
         v_left = self.bc_v['left']
@@ -184,13 +175,14 @@ class NavierStokes2D:
         # u at (i, j), (i+1, j), (i, j-1), (i+1, j-1)
         # v interior j ranges 1..ny-1.
         # We need u around v[i, j]
-        u_sw = u[:-1, :-1]
-        u_se = u[1:, :-1]
-        u_nw = u[:-1, 1:]
-        u_ne = u[1:, 1:]
-        u_interp = 0.25 * (u_sw + u_se + u_nw + u_ne)
+        u_interp = 0.25 * (u[:-1, :-1] + u[1:, :-1] + u[:-1, 1:] + u[1:, 1:])
 
-        rhs_v = -(u_interp * dv_dx + v_interior * dv_dy) + self.nu * (d2v_dx2 + d2v_dy2)
+        # ⚡ Bolt: Chain inplace operations to avoid implicit array allocations
+        rhs_v = d2v_dx2
+        rhs_v += (v[:, 2:] - 2*v[:, 1:-1] + v[:, :-2]) * inv_dy2
+        rhs_v *= self.nu
+        rhs_v -= u_interp * dv_dx
+        rhs_v -= v_interior * ((v[:, 2:] - v[:, :-2]) * inv_2dy)
         v_star[:, 1:-1] = v_interior + dt * rhs_v
 
         # Enforce BCs on Intermediate Velocity (Walls)
@@ -203,10 +195,12 @@ class NavierStokes2D:
         # 2. Pressure Solve
         # div(u*) / dt = Lap(p)
         div_u_star = discretization.compute_divergence(u_star, v_star, grid)
-        rhs_p = div_u_star / dt
+
+        # ⚡ Bolt: Perform in-place division to avoid allocating a new array for rhs_p
+        div_u_star /= dt
 
         # Solve PPE
-        self.p, _ = solvers.LinearSolver.solve_jacobi(self.p, rhs_p, grid, max_iter=2000, tol=1e-5)
+        self.p, _ = solvers.LinearSolver.solve_jacobi(self.p, div_u_star, grid, max_iter=2000, tol=1e-5)
 
         # 3. Correction
         # u = u* - dt * grad(p)
