@@ -12,9 +12,23 @@ def compute_divergence(u, v, grid):
     inv_dy = 1.0 / grid.dy
 
     if inv_dx == inv_dy:
-        return (u[1:, :] - u[:-1, :] + v[:, 1:] - v[:, :-1]) * inv_dx
+        # ⚡ Bolt: Eliminate implicit array creations by chaining operators manually, avoiding full allocations
+        div = np.empty((grid.nx, grid.ny))
+        np.subtract(u[1:, :], u[:-1, :], out=div)
+        np.add(div, v[:, 1:], out=div)
+        np.subtract(div, v[:, :-1], out=div)
+        np.multiply(div, inv_dx, out=div)
+        return div
     else:
-        return (u[1:, :] - u[:-1, :]) * inv_dx + (v[:, 1:] - v[:, :-1]) * inv_dy
+        # ⚡ Bolt: Eliminate implicit array creations by chaining operators manually, avoiding full allocations
+        div = np.empty((grid.nx, grid.ny))
+        np.subtract(u[1:, :], u[:-1, :], out=div)
+        np.multiply(div, inv_dx, out=div)
+        v_diff = np.empty((grid.nx, grid.ny))
+        np.subtract(v[:, 1:], v[:, :-1], out=v_diff)
+        np.multiply(v_diff, inv_dy, out=v_diff)
+        np.add(div, v_diff, out=div)
+        return div
 
 def compute_gradient(p, grid):
     """
