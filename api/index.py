@@ -2,6 +2,8 @@ from flask import Flask, send_from_directory, request
 import os
 import re
 import logging
+import time
+from collections import deque
 from werkzeug.exceptions import HTTPException
 
 import werkzeug.serving
@@ -31,6 +33,46 @@ def handle_exception(e):
 
 # Security Enhancement: Restrict max content length to mitigate DoS (Denial of Service) via large payloads
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+
+# Security Enhancement: Rate Limiting
+MAX_TRACKED_IPS = 10000
+RATE_LIMIT_WINDOW = 60  # seconds
+RATE_LIMIT_MAX_REQUESTS = 100
+
+# Track IPs in memory. Bounded by MAX_TRACKED_IPS to prevent memory exhaustion DoS.
+ip_tracker = {}
+
+@app.before_request
+def rate_limit():
+    ip = request.remote_addr
+    current_time = time.time()
+
+    if ip not in ip_tracker:
+        # Enforce maximum size on the tracker dictionary
+        if len(ip_tracker) >= MAX_TRACKED_IPS:
+            # Prune stale entries
+            stale_ips = [k for k, v in ip_tracker.items() if not v or v[-1] < current_time - RATE_LIMIT_WINDOW]
+            for stale_ip in stale_ips:
+                del ip_tracker[stale_ip]
+
+            # If still full, we must block to prevent OOM DoS
+            if len(ip_tracker) >= MAX_TRACKED_IPS:
+                app.logger.warning(f"Security Event: Rate limiter memory full. Dropping request from {repr(ip)}")
+                return "Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8", "Retry-After": str(RATE_LIMIT_WINDOW)}
+
+        ip_tracker[ip] = deque()
+
+    req_queue = ip_tracker[ip]
+
+    # Prune old requests for this IP
+    while req_queue and req_queue[0] < current_time - RATE_LIMIT_WINDOW:
+        req_queue.popleft()
+
+    if len(req_queue) >= RATE_LIMIT_MAX_REQUESTS:
+        app.logger.warning(f"Security Event: Rate limit exceeded for {repr(ip)}")
+        return "Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8", "Retry-After": str(RATE_LIMIT_WINDOW)}
+
+    req_queue.append(current_time)
 
 
 @app.after_request

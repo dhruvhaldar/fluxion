@@ -75,3 +75,7 @@
 **Vulnerability:** When manually returning error responses as tuples in Flask routes (e.g., `return "Bad Request", 400`), Werkzeug defaults to serving the response as `text/html; charset=utf-8` if a Content-Type is not specified. While current hardcoded strings are safe, this creates a potential MIME-sniffing and Cross-Site Scripting (XSS) vulnerability if these responses are ever updated to include dynamic user input in the future.
 **Learning:** Returning bare strings or tuples without headers in Flask is not perfectly secure by default, as the framework assumes HTML. Defensive programming requires explicitly treating all raw string returns as plain text.
 **Prevention:** Always explicitly include the `{'Content-Type': 'text/plain; charset=utf-8'}` header when returning string-based error tuples (e.g., `return "Bad Request", 400, {'Content-Type': 'text/plain; charset=utf-8'}`).
+## 2024-05-06 - [Memory Exhaustion via Unbounded Rate Limiter]
+**Vulnerability:** A missing or unbounded in-memory rate limiter can lead to a Denial of Service (DoS) attack where an attacker exhausts server memory by sending requests from numerous spoofed or distributed IP addresses.
+**Learning:** Storing state (like a request history for rate limiting) per client IP in a dictionary without a strict maximum size bound is dangerous.
+**Prevention:** Always enforce a strict maximum size limit (e.g., `MAX_TRACKED_IPS = 10000`) on in-memory tracking dictionaries. When the limit is reached, either evict stale entries or block new IPs to prevent Out-Of-Memory (OOM) crashes.
