@@ -45,6 +45,13 @@ ip_tracker = {}
 @app.before_request
 def rate_limit():
     ip = request.remote_addr
+
+    # Security Enhancement: Limit the length of the remote address to mitigate DoS
+    # via memory exhaustion or log bombing using extremely long spoofed IP headers.
+    if ip and len(ip) > 45:
+        app.logger.warning("Security Event: Blocked request due to excessively long remote address.")
+        return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
+
     current_time = time.time()
 
     if ip not in ip_tracker:
