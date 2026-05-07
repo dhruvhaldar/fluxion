@@ -79,3 +79,8 @@
 **Vulnerability:** A missing or unbounded in-memory rate limiter can lead to a Denial of Service (DoS) attack where an attacker exhausts server memory by sending requests from numerous spoofed or distributed IP addresses.
 **Learning:** Storing state (like a request history for rate limiting) per client IP in a dictionary without a strict maximum size bound is dangerous.
 **Prevention:** Always enforce a strict maximum size limit (e.g., `MAX_TRACKED_IPS = 10000`) on in-memory tracking dictionaries. When the limit is reached, either evict stale entries or block new IPs to prevent Out-Of-Memory (OOM) crashes.
+
+## 2026-05-07 - [Memory Exhaustion / DoS via Excessively Long IP Addresses]
+**Vulnerability:** The rate limiting middleware used `request.remote_addr` directly as a dictionary key. When deployed behind a reverse proxy managed by `ProxyFix`, an attacker could craft an HTTP request with an excessively long `X-Forwarded-For` header. This massively long string would be stored in the memory-bound rate limiter dictionary, consuming disproportionate memory and causing extreme latency on dictionary lookups. This bypasses typical rate-limiter bounds, enabling a Denial of Service (DoS) attack.
+**Learning:** Any untrusted data, even data presumed to be metadata like an IP address, must be length-validated before being stored in stateful data structures or used in operations.
+**Prevention:** Always enforce a strict maximum length limit on headers or fields derived from user inputs (like `request.remote_addr` behind `ProxyFix`) before using them as keys in dictionaries or memory structures (e.g., `if ip and len(ip) > 45: return 400`).
