@@ -27,13 +27,14 @@
 }
 html { scroll-behavior: smooth; scroll-padding-top: 20px; }
 body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
+p { text-wrap: pretty; }
 figure { margin: 0 0 24px 0; padding: 0; }
 figure a { display: block; border-radius: 4px; cursor: zoom-in; text-decoration: none; }
 img { max-width: 100%; height: auto; border: 1px solid var(--img-border); border-radius: 4px; display: block; box-shadow: 0 1px 3px var(--img-shadow); transition: border-color 0.3s, box-shadow 0.3s, filter 0.3s; }
 a:hover img { border-color: var(--link-hover-color); box-shadow: 0 4px 6px var(--img-shadow); }
 a:focus-visible img { border-color: var(--link-focus-outline); box-shadow: 0 4px 6px var(--img-shadow); }
-figcaption { margin-top: 8px; font-size: 0.9em; color: var(--text-muted); text-align: center; font-style: italic; }
-h1, h2 { color: var(--heading-color); transition: color 0.3s; }
+figcaption { margin-top: 8px; font-size: 0.9em; color: var(--text-muted); text-align: center; font-style: italic; text-wrap: pretty; }
+h1, h2 { color: var(--heading-color); transition: color 0.3s; text-wrap: balance; }
 h2:focus { outline: none; }
 .heading-anchor { opacity: 0; text-decoration: none; margin-left: 8px; color: var(--text-muted); transition: opacity 0.2s, color 0.2s; }
 h2:hover .heading-anchor, .heading-anchor:focus-visible { opacity: 1; }
@@ -75,6 +76,14 @@ body:focus { outline: none; }
     body {
         background: white !important;
         color: black !important;
+    }
+    figure {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    h2 {
+        page-break-after: avoid;
+        break-after: avoid;
     }
     .skip-link,
     footer a[href="#top"],

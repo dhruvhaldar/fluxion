@@ -89,3 +89,7 @@
 ## 2026-05-03 - Keyboard Interaction Parity for Micro-Interactions
 **Learning:** When micro-interactions (such as link color shifts, underline thickness changes, or SVG icon translations) are mapped exclusively to the `:hover` pseudo-class, keyboard users navigating via Tab do not receive the same visual feedback or polish, experiencing only the default or custom focus ring. This breaks interaction parity and visual delight for keyboard-only users.
 **Action:** Always pair `:focus-visible` with `:hover` selectors for delightful state changes (e.g., `a:hover, a:focus-visible`) to ensure keyboard users experience the exact same visual micro-interactions as mouse users.
+
+## 2026-05-07 - Typographic Polish and Print Layout Flow
+**Learning:** For document-heavy interfaces meant for reading and printing, CSS text-wrapping properties significantly improve readability by preventing typographic widows. Furthermore, when physical printing is common, preventing awkward page breaks (like splitting a figure from its caption or orphaning a heading at the bottom of a page) is a critical UX consideration.
+**Action:** Use `text-wrap: balance` for headings and `text-wrap: pretty` for paragraphs/captions. Always include `break-inside: avoid` on `<figure>` elements and `break-after: avoid` on headings within `@media print` stylesheets to ensure logical document flow on physical pages.
