@@ -45,8 +45,13 @@ def compute_gradient(p, grid):
     grad_y = np.zeros((grid.nx, grid.ny+1))
 
     # Interior faces
-    grad_x[1:-1, :] = (p[1:, :] - p[:-1, :]) * inv_dx
-    grad_y[:, 1:-1] = (p[:, 1:] - p[:, :-1]) * inv_dy
+    # ⚡ Bolt: Eliminate implicit array allocations in chained gradient operations.
+    # We assign intermediate results directly to the target output slice using `out=`.
+    np.subtract(p[1:, :], p[:-1, :], out=grad_x[1:-1, :])
+    np.multiply(grad_x[1:-1, :], inv_dx, out=grad_x[1:-1, :])
+
+    np.subtract(p[:, 1:], p[:, :-1], out=grad_y[:, 1:-1])
+    np.multiply(grad_y[:, 1:-1], inv_dy, out=grad_y[:, 1:-1])
 
     # Boundaries are left as 0.0 (Homogeneous Neumann assumption common in PPE)
     return grad_x, grad_y
