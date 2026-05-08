@@ -3,6 +3,7 @@ import os
 import re
 import logging
 import time
+import threading
 from collections import deque
 from werkzeug.exceptions import HTTPException
 
@@ -41,6 +42,7 @@ RATE_LIMIT_MAX_REQUESTS = 100
 
 # Track IPs in memory. Bounded by MAX_TRACKED_IPS to prevent memory exhaustion DoS.
 ip_tracker = {}
+ip_tracker_lock = threading.Lock()
 
 @app.before_request
 def rate_limit():
@@ -49,37 +51,39 @@ def rate_limit():
     # Security Enhancement: Limit the length of the remote address to mitigate DoS
     # via memory exhaustion or log bombing using extremely long spoofed IP headers.
     if ip and len(ip) > 45:
-        app.logger.warning("Security Event: Blocked request due to excessively long remote address.")
+        truncated_ip = ip[:45] + '...[TRUNCATED]'
+        app.logger.warning(f"Security Event: Blocked request due to excessively long remote address: {repr(truncated_ip)}.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
 
     current_time = time.time()
 
-    if ip not in ip_tracker:
-        # Enforce maximum size on the tracker dictionary
-        if len(ip_tracker) >= MAX_TRACKED_IPS:
-            # Prune stale entries
-            stale_ips = [k for k, v in ip_tracker.items() if not v or v[-1] < current_time - RATE_LIMIT_WINDOW]
-            for stale_ip in stale_ips:
-                del ip_tracker[stale_ip]
-
-            # If still full, we must block to prevent OOM DoS
+    with ip_tracker_lock:
+        if ip not in ip_tracker:
+            # Enforce maximum size on the tracker dictionary
             if len(ip_tracker) >= MAX_TRACKED_IPS:
-                app.logger.warning(f"Security Event: Rate limiter memory full. Dropping request from {repr(ip)}")
-                return "Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8", "Retry-After": str(RATE_LIMIT_WINDOW)}
+                # Prune stale entries
+                stale_ips = [k for k, v in ip_tracker.items() if not v or v[-1] < current_time - RATE_LIMIT_WINDOW]
+                for stale_ip in stale_ips:
+                    del ip_tracker[stale_ip]
 
-        ip_tracker[ip] = deque()
+                # If still full, we must block to prevent OOM DoS
+                if len(ip_tracker) >= MAX_TRACKED_IPS:
+                    app.logger.warning(f"Security Event: Rate limiter memory full. Dropping request from {repr(ip)}")
+                    return "Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8", "Retry-After": str(RATE_LIMIT_WINDOW)}
 
-    req_queue = ip_tracker[ip]
+            ip_tracker[ip] = deque()
 
-    # Prune old requests for this IP
-    while req_queue and req_queue[0] < current_time - RATE_LIMIT_WINDOW:
-        req_queue.popleft()
+        req_queue = ip_tracker[ip]
 
-    if len(req_queue) >= RATE_LIMIT_MAX_REQUESTS:
-        app.logger.warning(f"Security Event: Rate limit exceeded for {repr(ip)}")
-        return "Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8", "Retry-After": str(RATE_LIMIT_WINDOW)}
+        # Prune old requests for this IP
+        while req_queue and req_queue[0] < current_time - RATE_LIMIT_WINDOW:
+            req_queue.popleft()
 
-    req_queue.append(current_time)
+        if len(req_queue) >= RATE_LIMIT_MAX_REQUESTS:
+            app.logger.warning(f"Security Event: Rate limit exceeded for {repr(ip)}")
+            return "Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8", "Retry-After": str(RATE_LIMIT_WINDOW)}
+
+        req_queue.append(current_time)
 
 
 @app.after_request
