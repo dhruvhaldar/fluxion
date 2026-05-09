@@ -48,9 +48,13 @@ ip_tracker_lock = threading.Lock()
 def rate_limit():
     ip = request.remote_addr
 
+    if not ip:
+        app.logger.warning("Security Event: Blocked request with missing remote address.")
+        return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
+
     # Security Enhancement: Limit the length of the remote address to mitigate DoS
     # via memory exhaustion or log bombing using extremely long spoofed IP headers.
-    if ip and len(ip) > 45:
+    if len(ip) > 45:
         truncated_ip = ip[:45] + '...[TRUNCATED]'
         app.logger.warning(f"Security Event: Blocked request due to excessively long remote address: {repr(truncated_ip)}.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
@@ -66,10 +70,11 @@ def rate_limit():
                 for stale_ip in stale_ips:
                     del ip_tracker[stale_ip]
 
-                # If still full, we must block to prevent OOM DoS
+                # If still full, we must evict the oldest entry instead of blocking new users
+                # to prevent a Global Lockout Denial of Service (DoS) attack.
                 if len(ip_tracker) >= MAX_TRACKED_IPS:
-                    app.logger.warning(f"Security Event: Rate limiter memory full. Dropping request from {repr(ip)}")
-                    return "Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8", "Retry-After": str(RATE_LIMIT_WINDOW)}
+                    oldest_ip = next(iter(ip_tracker))
+                    del ip_tracker[oldest_ip]
 
             ip_tracker[ip] = deque()
 
