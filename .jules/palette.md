@@ -93,3 +93,7 @@
 ## 2026-05-07 - Typographic Polish and Print Layout Flow
 **Learning:** For document-heavy interfaces meant for reading and printing, CSS text-wrapping properties significantly improve readability by preventing typographic widows. Furthermore, when physical printing is common, preventing awkward page breaks (like splitting a figure from its caption or orphaning a heading at the bottom of a page) is a critical UX consideration.
 **Action:** Use `text-wrap: balance` for headings and `text-wrap: pretty` for paragraphs/captions. Always include `break-inside: avoid` on `<figure>` elements and `break-after: avoid` on headings within `@media print` stylesheets to ensure logical document flow on physical pages.
+
+## 2026-05-10 - Preventing Double Focus Rings on Linked Images
+**Learning:** When adding custom `:focus-visible` styles to images wrapped inside anchor tags within a `<figure>` element (e.g., to improve visual feedback for scientific visualizations), the browser also applies a default focus ring to the wrapping `<a>` element. This results in a confusing and messy double-focus ring when keyboard users navigate to the image.
+**Action:** When applying custom focus styles to `img` elements inside linked figures (`a:focus-visible img`), always explicitly remove the default focus ring on the parent anchor tag by adding `figure a:focus-visible { outline: none; }` to maintain a clean interaction state.
