@@ -72,14 +72,35 @@ def compute_laplacian(phi, grid):
 
     # Interior
     if inv_dx2 == inv_dy2:
-        lap[1:-1, 1:-1] = (
-            phi[2:, 1:-1] + phi[:-2, 1:-1] + phi[1:-1, 2:] + phi[1:-1, :-2] - 4*phi[1:-1, 1:-1]
-        ) * inv_dx2
+        # ⚡ Bolt: Use pre-allocated temporary arrays and explicit in-place mathematical operators
+        # to prevent implicit allocations of full arrays during evaluation.
+        lap_int = lap[1:-1, 1:-1]
+        phi_int = phi[1:-1, 1:-1]
+        tmp = np.empty_like(phi_int)
+
+        np.add(phi[2:, 1:-1], phi[:-2, 1:-1], out=lap_int)
+        np.add(lap_int, phi[1:-1, 2:], out=lap_int)
+        np.add(lap_int, phi[1:-1, :-2], out=lap_int)
+        np.multiply(phi_int, 4.0, out=tmp)
+        np.subtract(lap_int, tmp, out=lap_int)
+        np.multiply(lap_int, inv_dx2, out=lap_int)
     else:
-        lap[1:-1, 1:-1] = (
-            (phi[2:, 1:-1] - 2*phi[1:-1, 1:-1] + phi[:-2, 1:-1]) * inv_dx2 +
-            (phi[1:-1, 2:] - 2*phi[1:-1, 1:-1] + phi[1:-1, :-2]) * inv_dy2
-        )
+        lap_int = lap[1:-1, 1:-1]
+        phi_int = phi[1:-1, 1:-1]
+        tmp1 = np.empty_like(phi_int)
+        tmp2 = np.empty_like(phi_int)
+
+        np.add(phi[2:, 1:-1], phi[:-2, 1:-1], out=tmp1)
+        np.multiply(phi_int, 2.0, out=tmp2)
+        np.subtract(tmp1, tmp2, out=tmp1)
+        np.multiply(tmp1, inv_dx2, out=tmp1)
+
+        np.add(phi[1:-1, 2:], phi[1:-1, :-2], out=lap_int)
+        np.subtract(lap_int, tmp2, out=lap_int)
+        np.multiply(lap_int, inv_dy2, out=lap_int)
+
+        np.add(lap_int, tmp1, out=lap_int)
+
     return lap
 
 def convection_term(phi, u, v, grid, scheme='central'):
