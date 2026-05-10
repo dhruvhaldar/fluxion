@@ -109,3 +109,8 @@ h2:target { animation: target-pulse 2s ease-out; }
     transition: transform 0.2s;
 }
 a:hover .back-to-top-icon, a:focus-visible .back-to-top-icon { transform: translateY(-2px); }
+
+/* Prevent double focus ring on linked images since the image gets custom focus styles */
+figure a:has(img):focus-visible {
+    outline: none;
+}
