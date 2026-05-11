@@ -101,7 +101,12 @@ class NavierStokes2D:
         # For u[i, j], neighbors are v[i, j], v[i, j+1], v[i-1, j], v[i-1, j+1].
         # Indices in v array: i and i-1.
 
-        v_interp = 0.25 * (v[:-1, 1:] + v[1:, 1:] + v[:-1, :-1] + v[1:, :-1])
+        # ⚡ Bolt: Use in-place operations to prevent implicit array creations for v_interp
+        v_interp = np.empty_like(u_interior)
+        np.add(v[:-1, 1:], v[1:, 1:], out=v_interp)
+        np.add(v_interp, v[:-1, :-1], out=v_interp)
+        np.add(v_interp, v[1:, :-1], out=v_interp)
+        np.multiply(v_interp, 0.25, out=v_interp)
 
         # du/dy
         # u[i, j+1] - u[i, j-1]
@@ -141,8 +146,14 @@ class NavierStokes2D:
         rhs_u = (u[2:, :] - 2*u[1:-1, :] + u[:-2, :]) * inv_dx2
         rhs_u += d2u_dy2
         rhs_u *= self.nu
-        rhs_u -= u_interior * du_dx
-        rhs_u -= v_interp * du_dy
+
+        # ⚡ Bolt: Prevent implicit allocations in advection term multiplications
+        tmp_u = np.empty_like(u_interior)
+        np.multiply(u_interior, du_dx, out=tmp_u)
+        rhs_u -= tmp_u
+        np.multiply(v_interp, du_dy, out=tmp_u)
+        rhs_u -= tmp_u
+
         u_star[1:-1, :] = u_interior + dt * rhs_u
 
         # --- V-Momentum ---
@@ -175,14 +186,30 @@ class NavierStokes2D:
         # u at (i, j), (i+1, j), (i, j-1), (i+1, j-1)
         # v interior j ranges 1..ny-1.
         # We need u around v[i, j]
-        u_interp = 0.25 * (u[:-1, :-1] + u[1:, :-1] + u[:-1, 1:] + u[1:, 1:])
+
+        # ⚡ Bolt: Use in-place operations to prevent implicit array creations for u_interp
+        u_interp = np.empty_like(v_interior)
+        np.add(u[:-1, :-1], u[1:, :-1], out=u_interp)
+        np.add(u_interp, u[:-1, 1:], out=u_interp)
+        np.add(u_interp, u[1:, 1:], out=u_interp)
+        np.multiply(u_interp, 0.25, out=u_interp)
 
         # ⚡ Bolt: Chain inplace operations to avoid implicit array allocations
         rhs_v = d2v_dx2
         rhs_v += (v[:, 2:] - 2*v[:, 1:-1] + v[:, :-2]) * inv_dy2
         rhs_v *= self.nu
-        rhs_v -= u_interp * dv_dx
-        rhs_v -= v_interior * ((v[:, 2:] - v[:, :-2]) * inv_2dy)
+
+        # ⚡ Bolt: Prevent implicit allocations in advection term multiplications
+        tmp_v = np.empty_like(v_interior)
+        np.multiply(u_interp, dv_dx, out=tmp_v)
+        rhs_v -= tmp_v
+
+        # v_interior * ((v[:, 2:] - v[:, :-2]) * inv_2dy)
+        np.subtract(v[:, 2:], v[:, :-2], out=tmp_v)
+        np.multiply(tmp_v, inv_2dy, out=tmp_v)
+        np.multiply(v_interior, tmp_v, out=tmp_v)
+        rhs_v -= tmp_v
+
         v_star[:, 1:-1] = v_interior + dt * rhs_v
 
         # Enforce BCs on Intermediate Velocity (Walls)
