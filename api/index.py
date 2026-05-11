@@ -65,16 +65,11 @@ def rate_limit():
         if ip not in ip_tracker:
             # Enforce maximum size on the tracker dictionary
             if len(ip_tracker) >= MAX_TRACKED_IPS:
-                # Prune stale entries
-                stale_ips = [k for k, v in ip_tracker.items() if not v or v[-1] < current_time - RATE_LIMIT_WINDOW]
-                for stale_ip in stale_ips:
-                    del ip_tracker[stale_ip]
-
-                # If still full, we must evict the oldest entry instead of blocking new users
-                # to prevent a Global Lockout Denial of Service (DoS) attack.
-                if len(ip_tracker) >= MAX_TRACKED_IPS:
-                    oldest_ip = next(iter(ip_tracker))
-                    del ip_tracker[oldest_ip]
+                # Security Enhancement: Prevent Algorithmic Complexity DoS (CPU exhaustion)
+                # by avoiding an O(N) scan of all tracked IPs. We only check the oldest IP
+                # and evict it, which is O(1) and safely bounds memory without CPU lag.
+                oldest_ip = next(iter(ip_tracker))
+                del ip_tracker[oldest_ip]
 
             ip_tracker[ip] = deque()
 
