@@ -123,16 +123,16 @@ def index():
         <a href="#main" class="skip-link">Skip to main content</a>
         <main id="main" tabindex="-1">
             <h1>Fluxion</h1>
-            <p>A structured Finite Volume Method (FVM) solver for SG2212 Computational Fluid Dynamics.</p>
+            <p>A structured <abbr title="Finite Volume Method">FVM</abbr> solver for SG2212 <abbr title="Computational Fluid Dynamics">CFD</abbr>.</p>
             <p>This page demonstrates the generated artifacts from the solver.</p>
 
-            <h2 id="lid-driven-cavity-streamlines" tabindex="-1">Lid Driven Cavity Streamlines (Re=100) <a href="#lid-driven-cavity-streamlines" class="heading-anchor" aria-label="Permalink to Lid Driven Cavity Streamlines (Re=100)" title="Permalink to Lid Driven Cavity Streamlines (Re=100)">#</a></h2>
+            <h2 id="lid-driven-cavity-streamlines" tabindex="-1">Lid Driven Cavity Streamlines (<abbr title="Reynolds number">Re</abbr>=100) <a href="#lid-driven-cavity-streamlines" class="heading-anchor" aria-label="Permalink to Lid Driven Cavity Streamlines (Re=100)" title="Permalink to Lid Driven Cavity Streamlines (Re=100)">#</a></h2>
             <figure>
                 <a href="/assets/lid_driven_streamlines.png" target="_blank" rel="noopener noreferrer" title="Click to view full size" aria-describedby="fig1-caption">
                     <img src="/assets/lid_driven_streamlines.png" width="800" height="600" alt="A color contour map showing a large primary vortex centered at coordinates (0.6, 0.5) with smaller secondary vortices in the bottom corners." />
                     <span class="sr-only">(opens in a new tab)</span>
                 </a>
-                <figcaption id="fig1-caption">Figure 1: Streamlines and velocity magnitude contours for Re=100</figcaption>
+                <figcaption id="fig1-caption">Figure 1: Streamlines and velocity magnitude contours for <abbr title="Reynolds number">Re</abbr>=100</figcaption>
             </figure>
 
             <h2 id="grid-convergence-study" tabindex="-1">Grid Convergence Study <a href="#grid-convergence-study" class="heading-anchor" aria-label="Permalink to Grid Convergence Study" title="Permalink to Grid Convergence Study">#</a></h2>
@@ -150,7 +150,7 @@ def index():
                     <img src="/assets/scheme_comparison.png" width="1000" height="600" alt="A line graph comparing three lines against a sharp step function. The upwind line is heavily smoothed out, while the central difference line has sharp wiggles near the step." />
                     <span class="sr-only">(opens in a new tab)</span>
                 </a>
-                <figcaption id="fig3-caption">Figure 3: Comparison of Convection Schemes (Upwind, Central, QUICK)</figcaption>
+                <figcaption id="fig3-caption">Figure 3: Comparison of Convection Schemes (Upwind, Central, <abbr title="Quadratic Upstream Interpolation for Convective Kinematics">QUICK</abbr>)</figcaption>
             </figure>
 
         </main>

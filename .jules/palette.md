@@ -97,3 +97,6 @@
 ## 2026-05-10 - Preventing Double Focus Rings on Linked Images
 **Learning:** When adding custom `:focus-visible` styles to images wrapped inside anchor tags within a `<figure>` element (e.g., to improve visual feedback for scientific visualizations), the browser also applies a default focus ring to the wrapping `<a>` element. This results in a confusing and messy double-focus ring when keyboard users navigate to the image.
 **Action:** When applying custom focus styles to `img` elements inside linked figures (`a:focus-visible img`), always explicitly remove the default focus ring on the parent anchor tag by adding `figure a:focus-visible { outline: none; }` to maintain a clean interaction state.
+## 2026-05-12 - Explicit Interactive Affordance for <abbr> tags
+**Learning:** Relying entirely on browser default styling for `<abbr>` tags leaves them undiscoverable since they look identical to regular text, meaning users miss out on helpful tooltips.
+**Action:** When using `<abbr title="...">`, always add `text-decoration: underline dotted` and `cursor: help` to ensure the element clearly signals interactivity.
