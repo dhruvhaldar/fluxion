@@ -143,12 +143,19 @@ class NavierStokes2D:
         du_dy[:, 0] = (u_interior[:, 1] - (2*u_bot - u_interior[:, 0])) * inv_2dy
 
         # ⚡ Bolt: Chain inplace operations to avoid implicit array allocations
-        rhs_u = (u[2:, :] - 2*u[1:-1, :] + u[:-2, :]) * inv_dx2
-        rhs_u += d2u_dy2
-        rhs_u *= self.nu
+        rhs_u = np.empty_like(u_interior)
 
         # ⚡ Bolt: Prevent implicit allocations in advection term multiplications
         tmp_u = np.empty_like(u_interior)
+
+        np.multiply(u[1:-1, :], 2.0, out=tmp_u)
+        np.subtract(u[2:, :], tmp_u, out=rhs_u)
+        np.add(rhs_u, u[:-2, :], out=rhs_u)
+        np.multiply(rhs_u, inv_dx2, out=rhs_u)
+
+        rhs_u += d2u_dy2
+        rhs_u *= self.nu
+
         np.multiply(u_interior, du_dx, out=tmp_u)
         rhs_u -= tmp_u
         np.multiply(v_interp, du_dy, out=tmp_u)
@@ -196,11 +203,18 @@ class NavierStokes2D:
 
         # ⚡ Bolt: Chain inplace operations to avoid implicit array allocations
         rhs_v = d2v_dx2
-        rhs_v += (v[:, 2:] - 2*v[:, 1:-1] + v[:, :-2]) * inv_dy2
-        rhs_v *= self.nu
 
         # ⚡ Bolt: Prevent implicit allocations in advection term multiplications
         tmp_v = np.empty_like(v_interior)
+
+        np.multiply(v[:, 1:-1], 2.0, out=tmp_v)
+        np.subtract(v[:, 2:], tmp_v, out=tmp_v)
+        np.add(tmp_v, v[:, :-2], out=tmp_v)
+        np.multiply(tmp_v, inv_dy2, out=tmp_v)
+
+        rhs_v += tmp_v
+        rhs_v *= self.nu
+
         np.multiply(u_interp, dv_dx, out=tmp_v)
         rhs_v -= tmp_v
 
