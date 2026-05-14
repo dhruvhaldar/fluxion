@@ -41,6 +41,7 @@ class LinearSolver:
         check_interval = 200
 
         tmp = np.empty_like(p1_center)
+        tmp_full = np.empty_like(p1)
 
         # ⚡ Bolt: Unroll by 2 to avoid python variable assignment/swapping loop overhead.
         # Also hoist mult_y_over_x check out of the loop since it is invariant.
@@ -71,9 +72,9 @@ class LinearSolver:
                 p1[:, -1] = p1[:, -2]
 
                 if it > 0 and it % check_interval == 0:
-                    # ⚡ Bolt: It's faster to do np.max(np.abs) letting implicit arrays create than
-                    # making multiple Python interpreter numpy calls with `out=tmp_full`.
-                    if np.max(np.abs(p1 - p2)) < tol:
+                    np.subtract(p1, p2, out=tmp_full)
+                    np.abs(tmp_full, out=tmp_full)
+                    if np.max(tmp_full) < tol:
                         return p1, it + 1
         else:
             for it in range(0, max_iter, 2):
@@ -102,7 +103,9 @@ class LinearSolver:
                 p1[:, -1] = p1[:, -2]
 
                 if it > 0 and it % check_interval == 0:
-                    if np.max(np.abs(p1 - p2)) < tol:
+                    np.subtract(p1, p2, out=tmp_full)
+                    np.abs(tmp_full, out=tmp_full)
+                    if np.max(tmp_full) < tol:
                         return p1, it + 1
 
         # Final check if loop finishes
