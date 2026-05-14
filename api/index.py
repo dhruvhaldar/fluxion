@@ -68,7 +68,9 @@ def rate_limit():
         app.logger.warning(f"Security Event: Blocked request with invalid IP address format: {repr(ip)}.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
 
-    current_time = time.time()
+    # Security Enhancement: Use monotonic time for rate limiting to prevent
+    # bypasses or lockouts caused by system clock adjustments (e.g., NTP sync).
+    current_time = time.monotonic()
 
     with ip_tracker_lock:
         if ip not in ip_tracker:

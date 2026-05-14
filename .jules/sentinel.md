@@ -104,3 +104,8 @@
 **Vulnerability:** The rate limiting middleware used the raw string from `request.remote_addr` as the key in the tracking dictionary. Because IPv6 addresses can be represented in multiple valid formats (e.g., `2001:db8::1`, `2001:db8:0:0:0:0:0:1`, `2001:DB8::1`), an attacker could easily bypass the IP-based rate limiter by repeatedly changing the string representation of their IPv6 address, multiplying their effective limit and enabling brute-force or Denial of Service attacks.
 **Learning:** Raw IP address strings should never be trusted or used directly as keys in access control or state-tracking mechanisms without normalization, especially when dealing with the flexible formatting of IPv6.
 **Prevention:** Always normalize IP addresses to a canonical representation (e.g., using `ipaddress.ip_address(ip).compressed` in Python) before using them as identifiers for security controls.
+
+## 2026-05-14 - Prevent Rate Limit Bypass via System Clock Adjustments
+**Vulnerability:** The rate limiter used `time.time()` which relies on the system wall clock. A backward jump in the system clock (e.g., via NTP synchronization) could unfairly lock users out for extended periods, and a forward jump could prematurely reset the rate limiting window, allowing an attacker to bypass the rate limit.
+**Learning:** Security-sensitive time intervals (like rate limits, timeouts, and token expirations) must not rely on wall-clock time which is mutable.
+**Prevention:** Always use `time.monotonic()` for interval-based checks to ensure a continuously increasing, tamper-proof time source.
