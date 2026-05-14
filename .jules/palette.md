@@ -100,3 +100,7 @@
 ## 2026-05-12 - Explicit Interactive Affordance for <abbr> tags
 **Learning:** Relying entirely on browser default styling for `<abbr>` tags leaves them undiscoverable since they look identical to regular text, meaning users miss out on helpful tooltips.
 **Action:** When using `<abbr title="...">`, always add `text-decoration: underline dotted` and `cursor: help` to ensure the element clearly signals interactivity.
+
+## 2026-05-14 - Print Accessibility for Abbreviations
+**Learning:** In document-heavy interfaces that are frequently printed or exported to PDF, `<abbr>` tags with `title` attributes lose their utility because the expanded definition isn't visible.
+**Action:** Always enhance `@media print` stylesheets to append the `title` attribute of an `<abbr>` tag using CSS generated content (e.g., `abbr[title]::after { content: " (" attr(title) ")"; }`) to ensure acronym definitions are visible on physical prints.

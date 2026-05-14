@@ -87,6 +87,9 @@ abbr[title] {
         text-decoration: none !important;
         cursor: auto !important;
     }
+    abbr[title]::after {
+        content: " (" attr(title) ")";
+    }
     figure {
         page-break-inside: avoid;
         break-inside: avoid;
