@@ -104,3 +104,7 @@
 ## 2026-05-14 - Print Accessibility for Abbreviations
 **Learning:** In document-heavy interfaces that are frequently printed or exported to PDF, `<abbr>` tags with `title` attributes lose their utility because the expanded definition isn't visible.
 **Action:** Always enhance `@media print` stylesheets to append the `title` attribute of an `<abbr>` tag using CSS generated content (e.g., `abbr[title]::after { content: " (" attr(title) ")"; }`) to ensure acronym definitions are visible on physical prints.
+
+## 2026-05-15 - Keyboard Focus for <abbr> Tooltips
+**Learning:** By default, HTML `<abbr>` elements with `title` attributes only show tooltips on hover, rendering the expanded definition inaccessible to sighted keyboard users who cannot hover.
+**Action:** When using `<abbr>` elements for tooltips, always add `tabindex="0"` to make them keyboard-focusable, and ensure they have a `:focus-visible` outline in CSS for clear interactive feedback.
