@@ -62,8 +62,12 @@ def rate_limit():
 
     # Security Enhancement: Normalize IP address to prevent bypass of IP-based controls
     # via multiple representations of the same IPv6 address (e.g., 2001:db8::1 vs 2001:db8:0:0:0:0:0:1).
+    # Also handles IPv4-mapped IPv6 addresses (e.g. ::ffff:192.168.0.1) to prevent rate-limit bypasses
     try:
-        ip = ipaddress.ip_address(ip).compressed
+        ip_obj = ipaddress.ip_address(ip)
+        if getattr(ip_obj, 'ipv4_mapped', None):
+            ip_obj = ip_obj.ipv4_mapped
+        ip = ip_obj.compressed
     except ValueError:
         app.logger.warning(f"Security Event: Blocked request with invalid IP address format: {repr(ip)}.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
