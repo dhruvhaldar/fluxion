@@ -23,3 +23,13 @@ def test_rate_limiter_blocks_requests(client):
     response = client.get('/', environ_base={'REMOTE_ADDR': '192.168.0.2'})
     assert response.status_code == 429
     assert response.headers['Content-Type'] == 'text/plain; charset=utf-8'
+
+def test_rate_limiter_ipv4_mapped_ipv6(client):
+    # Make 100 requests using IPv4
+    for _ in range(100):
+        response = client.get('/', environ_base={'REMOTE_ADDR': '192.168.1.5'})
+        assert response.status_code == 200
+
+    # The 101st request using IPv4-mapped IPv6 should be BLOCKED because it's the same logical IP
+    response = client.get('/', environ_base={'REMOTE_ADDR': '::ffff:192.168.1.5'})
+    assert response.status_code == 429

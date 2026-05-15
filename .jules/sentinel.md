@@ -109,3 +109,8 @@
 **Vulnerability:** The rate limiter used `time.time()` which relies on the system wall clock. A backward jump in the system clock (e.g., via NTP synchronization) could unfairly lock users out for extended periods, and a forward jump could prematurely reset the rate limiting window, allowing an attacker to bypass the rate limit.
 **Learning:** Security-sensitive time intervals (like rate limits, timeouts, and token expirations) must not rely on wall-clock time which is mutable.
 **Prevention:** Always use `time.monotonic()` for interval-based checks to ensure a continuously increasing, tamper-proof time source.
+
+## 2026-05-15 - [Rate Limiting Bypass via IPv4-Mapped IPv6]
+**Vulnerability:** The IP rate limiter normalized IPv6 address representations to prevent bypasses, but failed to unpack IPv4-mapped IPv6 addresses (e.g., `::ffff:192.168.0.1`). This allowed an attacker to exhaust the rate limit for their native IPv4 address (`192.168.0.1`) and then immediately bypass the limit by issuing requests using the IPv4-mapped IPv6 format, as they were treated as distinct keys.
+**Learning:** IP address normalization must account for protocol translation formats. IPv4-mapped IPv6 addresses represent the exact same logical client and must be mapped back to their native IPv4 format for stateful tracking to prevent evasion.
+**Prevention:** Always check if an IPv6 address represents a mapped IPv4 address (e.g., using `getattr(ip_obj, 'ipv4_mapped', None)` in Python) and use the underlying IPv4 object as the tracking key before applying IP-based limits.
