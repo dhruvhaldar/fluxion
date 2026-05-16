@@ -76,6 +76,7 @@ abbr[title] {
     text-decoration: underline dotted;
     text-underline-offset: 3px;
     cursor: help;
+    position: relative;
 }
 abbr[title]:focus-visible {
     outline: 3px solid var(--link-focus-outline);
@@ -83,7 +84,45 @@ abbr[title]:focus-visible {
     border-radius: 2px;
 }
 
+/* Custom Tooltip for Keyboard Focus */
+abbr[title]:focus-visible::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    background-color: var(--heading-color);
+    color: var(--bg-color);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-style: normal;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+    box-shadow: 0 4px 6px var(--img-shadow);
+}
+
+/* Triangle pointer */
+abbr[title]:focus-visible::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 2px;
+    border-width: 6px 6px 0;
+    border-style: solid;
+    border-color: var(--heading-color) transparent transparent transparent;
+    z-index: 10;
+    pointer-events: none;
+}
+
 @media print {
+    abbr[title]::after, abbr[title]::before {
+        display: none !important;
+    }
     body {
         background: white !important;
         color: black !important;
