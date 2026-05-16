@@ -77,7 +77,14 @@ def rate_limit():
     current_time = time.monotonic()
 
     with ip_tracker_lock:
-        if ip not in ip_tracker:
+        if ip in ip_tracker:
+            # Security Enhancement: Move the accessed IP to the end of the dictionary
+            # to maintain strict Least Recently Used (LRU) ordering. This prevents
+            # active IPs from being unfairly evicted (and their rate limit history wiped)
+            # when the dictionary fills up during a distributed attack.
+            req_queue = ip_tracker.pop(ip)
+            ip_tracker[ip] = req_queue
+        else:
             # Enforce maximum size on the tracker dictionary
             if len(ip_tracker) >= MAX_TRACKED_IPS:
                 # Security Enhancement: Prevent Algorithmic Complexity DoS (CPU exhaustion)
@@ -87,8 +94,7 @@ def rate_limit():
                 del ip_tracker[oldest_ip]
 
             ip_tracker[ip] = deque()
-
-        req_queue = ip_tracker[ip]
+            req_queue = ip_tracker[ip]
 
         # Prune old requests for this IP
         while req_queue and req_queue[0] < current_time - RATE_LIMIT_WINDOW:
