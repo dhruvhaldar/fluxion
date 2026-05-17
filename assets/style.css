@@ -76,11 +76,29 @@ abbr[title] {
     text-decoration: underline dotted;
     text-underline-offset: 3px;
     cursor: help;
+    position: relative;
 }
 abbr[title]:focus-visible {
     outline: 3px solid var(--link-focus-outline);
     outline-offset: 2px;
     border-radius: 2px;
+}
+abbr[title]:focus-visible::before {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-color);
+    color: var(--bg-color);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 4px var(--img-shadow);
 }
 
 @media print {
@@ -94,6 +112,9 @@ abbr[title]:focus-visible {
     }
     abbr[title]::after {
         content: " (" attr(title) ")";
+    }
+    abbr[title]:focus-visible::before {
+        display: none !important;
     }
     figure {
         page-break-inside: avoid;
