@@ -87,6 +87,12 @@ def rate_limit():
                 del ip_tracker[oldest_ip]
 
             ip_tracker[ip] = deque()
+        else:
+            # Security Enhancement: Strict LRU Eviction Policy.
+            # Move the existing key to the end of the dictionary (making it the most recently used)
+            # This prevents attackers from filling the dict with dummy requests to unfairly evict active IPs.
+            req_queue = ip_tracker.pop(ip)
+            ip_tracker[ip] = req_queue
 
         req_queue = ip_tracker[ip]
 
