@@ -29,7 +29,24 @@ html { scroll-behavior: smooth; scroll-padding-top: 20px; }
 body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
 p { text-wrap: pretty; }
 figure { margin: 0 0 24px 0; padding: 0; }
-figure a { display: block; border-radius: 4px; cursor: zoom-in; text-decoration: none; }
+figure a { display: block; border-radius: 4px; cursor: zoom-in; text-decoration: none; position: relative; }
+figure a[title]:focus-visible::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-color);
+    color: var(--bg-color);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 4px var(--img-shadow);
+}
 img { max-width: 100%; height: auto; border: 1px solid var(--img-border); border-radius: 4px; display: block; box-shadow: 0 1px 3px var(--img-shadow); transition: border-color 0.3s, box-shadow 0.3s, filter 0.3s; }
 a:hover img { border-color: var(--link-hover-color); box-shadow: 0 4px 6px var(--img-shadow); }
 a:focus-visible img { border-color: var(--link-focus-outline); box-shadow: 0 4px 6px var(--img-shadow); }
@@ -114,6 +131,9 @@ abbr[title]:focus-visible::before {
         content: " (" attr(title) ")";
     }
     abbr[title]:focus-visible::before {
+        display: none !important;
+    }
+    figure a[title]:focus-visible::after {
         display: none !important;
     }
     figure {
