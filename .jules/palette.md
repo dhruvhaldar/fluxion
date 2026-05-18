@@ -108,3 +108,7 @@
 ## 2026-05-15 - Keyboard Focus for <abbr> Tooltips
 **Learning:** By default, HTML `<abbr>` elements with `title` attributes only show tooltips on hover, rendering the expanded definition inaccessible to sighted keyboard users who cannot hover.
 **Action:** When using `<abbr>` elements for tooltips, always add `tabindex="0"` to make them keyboard-focusable, and ensure they have a `:focus-visible` outline in CSS for clear interactive feedback.
+
+## 2026-05-17 - Keyboard Accessible Abbreviations Tooltips
+**Learning:** When using `<abbr>` elements for tooltips, relying solely on the default `title` attribute renders the expanded definition inaccessible to sighted keyboard users who cannot hover. To achieve visible parity for keyboard focus, a custom CSS tooltip pseudo-element (e.g., `::before` with `content: attr(title)`) triggered by `:focus-visible` must be implemented. However, care must be taken to explicitly hide this pseudo-element in `@media print` to avoid generating duplicate text or visual artifacts alongside the printed definitions (which typically use `::after`).
+**Action:** When implementing keyboard-accessible tooltips on `<abbr>` elements, always add `tabindex="0"` to make them focusable, and use a `:focus-visible` triggered pseudo-element to display the `title` attribute. Ensure the tooltip is hidden in print stylesheets (`@media print`) and use `::before` to avoid conflicts if `::after` is used to append definitions for physical prints.
