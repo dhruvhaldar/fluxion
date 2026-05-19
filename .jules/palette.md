@@ -116,3 +116,7 @@
 ## 2026-05-18 - Keyboard Accessible Tooltips for Links
 **Learning:** Browsers only display the native `title` attribute tooltip on hover. When adding a `title` attribute to links (such as `<a>` tags wrapping images) to provide helpful context (e.g., "Click to view full size"), sighted keyboard users are entirely excluded from this information because they cannot trigger the hover state.
 **Action:** When relying on the `title` attribute on links for important contextual information or utility, provide interaction parity by creating a custom CSS tooltip (e.g., using `::after` with `content: attr(title)`) triggered on the `:focus-visible` state. Ensure these custom tooltips are explicitly hidden in `@media print` stylesheets to prevent printing artifacts.
+
+## 2026-05-19 - Touch Accessibility for Custom Tooltips
+**Learning:** While mapping custom CSS tooltips (such as for `<abbr>` elements) to `:hover` and `:focus-visible` covers mouse and keyboard users, it entirely excludes touch device users. Touch devices (like mobile/tablets) don't trigger hover easily, and tapping an element often does not reliably trigger `:focus-visible` to display the tooltip, rendering definitions undiscoverable.
+**Action:** When implementing custom CSS tooltips, always include a `@media (hover: none)` block mapping the tooltip visibility to the `:active` state. This ensures that users on touch devices can view the tooltip while pressing down on the element. Ensure to explicitly hide this `:active` state tooltip in `@media print` to prevent print artifacts.

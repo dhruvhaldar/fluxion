@@ -47,6 +47,7 @@ figure a[title]:focus-visible::after {
     margin-bottom: 8px;
     box-shadow: 0 2px 4px var(--img-shadow);
 }
+
 img { max-width: 100%; height: auto; border: 1px solid var(--img-border); border-radius: 4px; display: block; box-shadow: 0 1px 3px var(--img-shadow); transition: border-color 0.3s, box-shadow 0.3s, filter 0.3s; }
 a:hover img { border-color: var(--link-hover-color); box-shadow: 0 4px 6px var(--img-shadow); }
 a:focus-visible img { border-color: var(--link-focus-outline); box-shadow: 0 4px 6px var(--img-shadow); }
@@ -118,6 +119,26 @@ abbr[title]:focus-visible::before {
     box-shadow: 0 2px 4px var(--img-shadow);
 }
 
+@media (hover: none) {
+    abbr[title]:active::before {
+        content: attr(title);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--text-color);
+        color: var(--bg-color);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        white-space: nowrap;
+        z-index: 10;
+        pointer-events: none;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 4px var(--img-shadow);
+    }
+}
+
 @media print {
     body {
         background: white !important;
@@ -130,7 +151,8 @@ abbr[title]:focus-visible::before {
     abbr[title]::after {
         content: " (" attr(title) ")";
     }
-    abbr[title]:focus-visible::before {
+    abbr[title]:focus-visible::before,
+    abbr[title]:active::before {
         display: none !important;
     }
     figure a[title]:focus-visible::after {
