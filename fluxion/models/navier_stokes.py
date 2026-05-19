@@ -85,7 +85,9 @@ class NavierStokes2D:
         inv_dx2 = 1.0 / (dx**2)
         inv_dy2 = 1.0 / (dy**2)
 
-        du_dx = (u[2:, :] - u[:-2, :]) * inv_2dx
+        du_dx = np.empty_like(u_interior)
+        np.subtract(u[2:, :], u[:-2, :], out=du_dx)
+        np.multiply(du_dx, inv_2dx, out=du_dx)
 
         # Advection v * du/dy
         # Need v at u-locations.
@@ -117,11 +119,15 @@ class NavierStokes2D:
 
         du_dy = np.empty_like(u_interior)
         # Interior Y (j=1..ny-2)
-        du_dy[:, 1:-1] = (u_interior[:, 2:] - u_interior[:, :-2]) * inv_2dy
+        np.subtract(u_interior[:, 2:], u_interior[:, :-2], out=du_dy[:, 1:-1])
+        np.multiply(du_dy[:, 1:-1], inv_2dy, out=du_dy[:, 1:-1])
 
         # Diffusion d2u/dx2 + d2u/dy2
         d2u_dy2 = np.empty_like(u_interior)
-        d2u_dy2[:, 1:-1] = (u_interior[:, 2:] - 2*u_interior[:, 1:-1] + u_interior[:, :-2]) * inv_dy2
+        np.multiply(u_interior[:, 1:-1], 2.0, out=d2u_dy2[:, 1:-1])
+        np.subtract(u_interior[:, 2:], d2u_dy2[:, 1:-1], out=d2u_dy2[:, 1:-1])
+        np.add(d2u_dy2[:, 1:-1], u_interior[:, :-2], out=d2u_dy2[:, 1:-1])
+        np.multiply(d2u_dy2[:, 1:-1], inv_dy2, out=d2u_dy2[:, 1:-1])
 
         # Apply BCs for u derivatives near walls
         # Top Wall (Lid): u = u_lid.
@@ -183,11 +189,17 @@ class NavierStokes2D:
         # => (v[1] - 3v[0] + 2*v_left) / dx^2
         d2v_dx2[0, :] = (v_interior[1, :] - 3*v_interior[0, :] + 2*v_left) * inv_dx2
         d2v_dx2[-1, :] = (2*v_right - 3*v_interior[-1, :] + v_interior[-2, :]) * inv_dx2
-        d2v_dx2[1:-1, :] = (v_interior[2:, :] - 2*v_interior[1:-1, :] + v_interior[:-2, :]) * inv_dx2
+
+        np.multiply(v_interior[1:-1, :], 2.0, out=d2v_dx2[1:-1, :])
+        np.subtract(v_interior[2:, :], d2v_dx2[1:-1, :], out=d2v_dx2[1:-1, :])
+        np.add(d2v_dx2[1:-1, :], v_interior[:-2, :], out=d2v_dx2[1:-1, :])
+        np.multiply(d2v_dx2[1:-1, :], inv_dx2, out=d2v_dx2[1:-1, :])
 
         dv_dx[0, :] = (v_interior[1, :] - (2*v_left - v_interior[0, :])) * inv_2dx
         dv_dx[-1, :] = ((2*v_right - v_interior[-1, :]) - v_interior[-2, :]) * inv_2dx
-        dv_dx[1:-1, :] = (v_interior[2:, :] - v_interior[:-2, :]) * inv_2dx
+
+        np.subtract(v_interior[2:, :], v_interior[:-2, :], out=dv_dx[1:-1, :])
+        np.multiply(dv_dx[1:-1, :], inv_2dx, out=dv_dx[1:-1, :])
 
         # u interpolation for v eq
         # u at (i, j), (i+1, j), (i, j-1), (i+1, j-1)
