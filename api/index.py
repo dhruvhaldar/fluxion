@@ -33,6 +33,13 @@ def handle_exception(e):
     app.logger.error("Unexpected error", exc_info=True)
     return "Internal Server Error", 500, {"Content-Type": "text/plain; charset=utf-8"}
 
+# Security Enhancement: Ensure secure defaults for sessions
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+)
+
 # Security Enhancement: Restrict max content length to mitigate DoS (Denial of Service) via large payloads
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
 
