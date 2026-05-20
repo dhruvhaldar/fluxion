@@ -120,7 +120,8 @@ abbr[title]:focus-visible::before {
 }
 
 @media (hover: none) {
-    abbr[title]:active::before {
+    abbr[title]:active::before,
+    figure a[title]:active::after {
         content: attr(title);
         position: absolute;
         bottom: 100%;
@@ -155,7 +156,8 @@ abbr[title]:focus-visible::before {
     abbr[title]:active::before {
         display: none !important;
     }
-    figure a[title]:focus-visible::after {
+    figure a[title]:focus-visible::after,
+    figure a[title]:active::after {
         display: none !important;
     }
     figure {
