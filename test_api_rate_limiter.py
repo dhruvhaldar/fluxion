@@ -65,3 +65,13 @@ def test_rate_limiter_lru_eviction(client):
     # The 101st request should be blocked
     response = client.get('/', environ_base={'REMOTE_ADDR': '10.0.0.1'})
     assert response.status_code == 429
+
+def test_rate_limiter_ipv6_subnet(client):
+    # Make 100 requests using one IP in the /64 subnet
+    for _ in range(100):
+        response = client.get('/', environ_base={'REMOTE_ADDR': '2001:db8:85a3::1'})
+        assert response.status_code == 200
+
+    # The 101st request using a different IP in the SAME /64 subnet should be BLOCKED
+    response = client.get('/', environ_base={'REMOTE_ADDR': '2001:db8:85a3::2'})
+    assert response.status_code == 429
