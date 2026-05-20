@@ -120,3 +120,7 @@
 ## 2026-05-19 - Touch Accessibility for Custom Tooltips
 **Learning:** While mapping custom CSS tooltips (such as for `<abbr>` elements) to `:hover` and `:focus-visible` covers mouse and keyboard users, it entirely excludes touch device users. Touch devices (like mobile/tablets) don't trigger hover easily, and tapping an element often does not reliably trigger `:focus-visible` to display the tooltip, rendering definitions undiscoverable.
 **Action:** When implementing custom CSS tooltips, always include a `@media (hover: none)` block mapping the tooltip visibility to the `:active` state. This ensures that users on touch devices can view the tooltip while pressing down on the element. Ensure to explicitly hide this `:active` state tooltip in `@media print` to prevent print artifacts.
+
+## 2026-05-20 - Touch Accessibility for Custom Link Tooltips
+**Learning:** Adding custom CSS tooltips (via `::after` triggered on `:focus-visible`) to image links allows keyboard users to access `title` attribute context, but completely excludes touch device users who cannot trigger hover or robust focus states.
+**Action:** When creating custom CSS tooltips for `title` attributes on anchor tags or other elements, always include a `@media (hover: none)` block mapping the tooltip visibility to the `:active` pseudo-class (e.g., `a[title]:active::after`). This enables touch device users to view the tooltip while long-pressing the element. Ensure to explicitly hide this `:active` state tooltip in `@media print` to prevent print artifacts.
