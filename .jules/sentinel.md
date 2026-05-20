@@ -124,3 +124,8 @@
 **Vulnerability:** By default, Flask session cookies (if ever implemented by another developer) do not have `Secure`, `HttpOnly`, or `SameSite` flags set defensively out of the box. This makes potential future sessions vulnerable to Cross-Site Scripting (XSS) extraction, Man-In-The-Middle (MITM) interception over HTTP, and Cross-Site Request Forgery (CSRF).
 **Learning:** Security configurations should be proactive and secure-by-default, even if the feature (like sessions) is not currently used. This defense-in-depth prevents future developers from inadvertently introducing vulnerabilities.
 **Prevention:** Always set secure session cookie defaults early in the Flask application setup using `app.config.update(SESSION_COOKIE_SECURE=True, SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax')`.
+
+## 2024-05-18 - [IPv6 Rate Limiting Bypass]
+**Vulnerability:** Rate limiting was tracking IPv6 addresses exactly. This allows a single user with a typical /64 IPv6 allocation to bypass rate limits by making requests from different addresses within their subnet.
+**Learning:** Always consider IPv6 subnets when designing rate limiting based on IP address. A single user can easily rotate through billions of IPv6 addresses in their allocated /64 block.
+**Prevention:** Truncate incoming IPv6 addresses to their /64 network prefix (e.g., `ipaddress.ip_network(f"{ip}/64", strict=False).network_address.compressed`) to group requests from the same user's subnet together.
