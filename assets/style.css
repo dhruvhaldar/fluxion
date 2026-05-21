@@ -41,7 +41,10 @@ figure a[title]:focus-visible::after {
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 0.8em;
-    white-space: nowrap;
+    white-space: normal;
+    width: max-content;
+    max-width: min(250px, 90vw);
+    text-align: center;
     z-index: 10;
     pointer-events: none;
     margin-bottom: 8px;
@@ -112,7 +115,10 @@ abbr[title]:focus-visible::before {
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 0.8em;
-    white-space: nowrap;
+    white-space: normal;
+    width: max-content;
+    max-width: min(250px, 90vw);
+    text-align: center;
     z-index: 10;
     pointer-events: none;
     margin-bottom: 8px;
@@ -132,7 +138,10 @@ abbr[title]:focus-visible::before {
         padding: 4px 8px;
         border-radius: 4px;
         font-size: 0.8em;
-        white-space: nowrap;
+        white-space: normal;
+        width: max-content;
+        max-width: min(250px, 90vw);
+        text-align: center;
         z-index: 10;
         pointer-events: none;
         margin-bottom: 8px;

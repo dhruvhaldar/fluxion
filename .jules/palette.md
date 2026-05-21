@@ -124,3 +124,7 @@
 ## 2026-05-20 - Touch Accessibility for Custom Link Tooltips
 **Learning:** Adding custom CSS tooltips (via `::after` triggered on `:focus-visible`) to image links allows keyboard users to access `title` attribute context, but completely excludes touch device users who cannot trigger hover or robust focus states.
 **Action:** When creating custom CSS tooltips for `title` attributes on anchor tags or other elements, always include a `@media (hover: none)` block mapping the tooltip visibility to the `:active` pseudo-class (e.g., `a[title]:active::after`). This enables touch device users to view the tooltip while long-pressing the element. Ensure to explicitly hide this `:active` state tooltip in `@media print` to prevent print artifacts.
+
+## 2026-05-21 - Responsive Custom Tooltips
+**Learning:** Using `white-space: nowrap` on custom CSS tooltips (such as those generated for `abbr[title]`) causes the tooltip box to overflow the viewport horizontally on narrow mobile screens if the text is too long, rendering parts of it unreadable and creating awkward scrollbars.
+**Action:** Always make custom tooltips wrap gracefully by replacing `white-space: nowrap` with `white-space: normal; width: max-content; max-width: min(250px, 90vw); text-align: center;`. This ensures the tooltip scales nicely while preventing text from running off the screen.
