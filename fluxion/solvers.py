@@ -148,9 +148,9 @@ class LinearSolver:
         # Pre-allocate temporary arrays to avoid implicit array creations in the loop
         # We need an array for the entire right-hand-side expression of the SOR update
         # p_gs_red and p_gs_black can share the same buffer since they are updated sequentially
-        p_gs = np.zeros_like(p_slice)
-        tmp_y = np.zeros_like(p_slice)
-        tmp_full = np.zeros_like(p)
+        p_gs = np.empty_like(p_slice)
+        tmp_y = np.empty_like(p_slice)
+        tmp_full = np.empty_like(p)
 
         # Pre-compute slice views to avoid overhead inside the loop.
         # These are views into p_new, which is updated in place, so they
