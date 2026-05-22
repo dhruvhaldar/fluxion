@@ -128,3 +128,7 @@
 ## 2026-05-21 - Responsive Custom Tooltips
 **Learning:** Using `white-space: nowrap` on custom CSS tooltips (such as those generated for `abbr[title]`) causes the tooltip box to overflow the viewport horizontally on narrow mobile screens if the text is too long, rendering parts of it unreadable and creating awkward scrollbars.
 **Action:** Always make custom tooltips wrap gracefully by replacing `white-space: nowrap` with `white-space: normal; width: max-content; max-width: min(250px, 90vw); text-align: center;`. This ensures the tooltip scales nicely while preventing text from running off the screen.
+
+## 2026-05-22 - Skip Link Visibility with Font Scaling
+**Learning:** Hiding "skip to content" links using a fixed negative offset (e.g., `top: -40px`) breaks when users increase their browser's default font size or zoom. As the text scales up, the height of the link increases beyond the fixed 40px, causing the bottom of the link to peek out permanently at the top of the viewport.
+**Action:** Always hide skip links dynamically based on their own computed height by using `transform: translateY(-100%)`. On focus, reveal the link with `transform: translateY(0)`. This ensures the link remains completely hidden by default, regardless of how much the user scales the font.
