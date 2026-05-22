@@ -83,7 +83,7 @@ def rate_limit():
             else:
                 ip = ip_obj.compressed
     except ValueError:
-        app.logger.warning(f"Security Event: Blocked request with invalid IP address format: {repr(ip)}.")
+        app.logger.warning(f"Security Event: Blocked request from {repr(request.remote_addr)} with invalid IP address format.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
 
     # Security Enhancement: Use monotonic time for rate limiting to prevent
@@ -114,7 +114,7 @@ def rate_limit():
             req_queue.popleft()
 
         if len(req_queue) >= RATE_LIMIT_MAX_REQUESTS:
-            app.logger.warning(f"Security Event: Rate limit exceeded for {repr(ip)}")
+            app.logger.warning(f"Security Event: Rate limit exceeded for {repr(request.remote_addr)} (normalized to {repr(ip)})")
             return "Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8", "Retry-After": str(RATE_LIMIT_WINDOW)}
 
         req_queue.append(current_time)

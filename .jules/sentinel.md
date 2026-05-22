@@ -129,3 +129,8 @@
 **Vulnerability:** Rate limiting was tracking IPv6 addresses exactly. This allows a single user with a typical /64 IPv6 allocation to bypass rate limits by making requests from different addresses within their subnet.
 **Learning:** Always consider IPv6 subnets when designing rate limiting based on IP address. A single user can easily rotate through billions of IPv6 addresses in their allocated /64 block.
 **Prevention:** Truncate incoming IPv6 addresses to their /64 network prefix (e.g., `ipaddress.ip_network(f"{ip}/64", strict=False).network_address.compressed`) to group requests from the same user's subnet together.
+
+## 2026-05-22 - Log Accurate Attacker IP for Threat Intelligence
+**Vulnerability:** The rate limiter and invalid IP format error handlers were logging the normalized or truncated versions of the attacker's IP address (e.g., the /64 subnet for IPv6 or missing original context on error). This degraded the quality of security audit logs by obscuring the exact source of malicious requests.
+**Learning:** While normalizing IP addresses (e.g., to /64 subnets) is necessary for robust rate limiting logic, logging only the normalized IP in security alerts prevents security analysts from accurately tracking or blacklisting the specific offending host.
+**Prevention:** Always log the raw, original `repr(request.remote_addr)` in security audit logs (such as rate limit exceeded warnings or invalid IP format blocks), even if the application logic internally uses a normalized representation for state tracking.
