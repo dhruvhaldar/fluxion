@@ -125,8 +125,15 @@ def convection_term(phi, u, v, grid, scheme='central'):
 
     # Central Difference
     if scheme == 'central':
-        flux_x[1:-1, :] = u[1:-1, :] * 0.5 * (phi[:-1, :] + phi[1:, :])
-        flux_y[:, 1:-1] = v[:, 1:-1] * 0.5 * (phi[:, :-1] + phi[:, 1:])
+        # ⚡ Bolt: Use explicit in-place mathematical operators (np.add, np.multiply)
+        # to prevent implicit memory allocations of intermediate result arrays
+        np.add(phi[:-1, :], phi[1:, :], out=flux_x[1:-1, :])
+        np.multiply(flux_x[1:-1, :], 0.5, out=flux_x[1:-1, :])
+        np.multiply(flux_x[1:-1, :], u[1:-1, :], out=flux_x[1:-1, :])
+
+        np.add(phi[:, :-1], phi[:, 1:], out=flux_y[:, 1:-1])
+        np.multiply(flux_y[:, 1:-1], 0.5, out=flux_y[:, 1:-1])
+        np.multiply(flux_y[:, 1:-1], v[:, 1:-1], out=flux_y[:, 1:-1])
 
     # First Order Upwind
     elif scheme == 'upwind':
