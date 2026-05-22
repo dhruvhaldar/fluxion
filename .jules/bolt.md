@@ -51,10 +51,10 @@
 ## 2026-05-05 - Avoid Unnecessary Array Zero-Filling in Hot Loops
 **Learning:** In the Navier-Stokes predictor step, `np.zeros_like()` was used repeatedly for creating intermediate arrays that were then immediately filled by mathematical operations. Profiling revealed the zero-filling to be a noticeable overhead. Additionally, combining single mathematical operations (e.g. `A + B + C - D`) into inplace operations (`+=`, `-=`) avoids creating implicit temporary arrays.
 **Action:** Replace `np.zeros_like()` with `np.empty_like()` when the array is guaranteed to be completely overwritten. Refactor inline mathematical chains into explicit in-place arithmetic assignments (`+=`, `-=`, `*=`) using `out=` or operator overloads to reduce memory allocation pressure. Ensure the final pressure term handles in-place division (e.g. `div_u_star /= dt`) to avoid redundant array creation prior to Jacobi/SOR solvers.
-## $(date +%Y-%m-%d) - Optimizing Array Allocations in FVM Stencils
+## 2026-05-22 - Optimizing Array Allocations in FVM Stencils
 **Learning:** In heavily used FVM grid operators like `compute_divergence`, chained inline mathematical expressions force NumPy to dynamically allocate multiple temporary implicit arrays behind the scenes, degrading performance.
 **Action:** Use pre-allocated buffer arrays and sequential in-place operators (`np.add(out=)`, `np.subtract(out=)`) to strictly avoid allocation overhead within the hot loop.
-## $(date +%Y-%m-%d) - Optimizing Array Allocations in Gradient Computations
+## 2026-05-22 - Optimizing Array Allocations in Gradient Computations
 **Learning:** In frequently called FVM operators like `compute_gradient`, performing chained array operations (e.g., `(p[1:, :] - p[:-1, :]) * inv_dx`) forces NumPy to implicitly allocate full-sized temporary arrays to hold the intermediate subtraction results before multiplication.
 **Action:** Replace inline mathematical chains with explicit in-place arithmetic assignments (`np.subtract`, `np.multiply`) using `out=` pointing to slices of the pre-allocated target array. This avoids implicit memory allocation, reduces memory bandwidth overhead, and yields a ~25-30% speedup for the gradient calculation.
 ## 2026-05-10 - Optimizing implicit array allocations in chained mathematical equations
@@ -75,3 +75,6 @@
 ## 2026-05-15 - Optimizing Implicit Array Allocations in Navier-Stokes RHS
 **Learning:** In the Navier-Stokes predictor step, evaluating advection and diffusion terms sequentially using inline chained math expressions like `(u[2:, :] - u[:-2, :]) * inv_2dx` or `(u[2:] - 2*u[1:-1] + u[:-2]) * inv_dy2` forces Python to implicitly allocate multiple temporary NumPy arrays for intermediate results. Profiling showed this memory allocation overhead is significant in the hot outer loop.
 **Action:** Replace inline mathematical chains for derivatives (`du_dx`, `du_dy`, `d2u_dy2`, `dv_dx`, `d2v_dx2`) with explicit in-place arithmetic assignments (`np.subtract`, `np.multiply`, `np.add`) targeting a pre-allocated empty buffer array using the `out=` argument. This minimizes dynamic allocations and improves memory bandwidth performance in `NavierStokes2D.step`.
+## 2026-05-22 - Optimizing Implicit Array Allocations in Convection Terms
+**Learning:** In the `convection_term` function, chained inline mathematical expressions for the Central Difference Scheme (e.g., `u * 0.5 * (phi_L + phi_R)`) force NumPy to dynamically allocate multiple implicit temporary arrays.
+**Action:** Replace inline mathematical chains for convection fluxes with explicit in-place arithmetic assignments (`np.add`, `np.multiply`) targeting pre-allocated slices (e.g., `flux_x[1:-1, :]`). This minimizes implicit array allocation and improves performance in convective schemes.
