@@ -78,3 +78,6 @@
 ## 2026-05-22 - Optimizing Implicit Array Allocations in Convection Terms
 **Learning:** In the `convection_term` function, chained inline mathematical expressions for the Central Difference Scheme (e.g., `u * 0.5 * (phi_L + phi_R)`) force NumPy to dynamically allocate multiple implicit temporary arrays.
 **Action:** Replace inline mathematical chains for convection fluxes with explicit in-place arithmetic assignments (`np.add`, `np.multiply`) targeting pre-allocated slices (e.g., `flux_x[1:-1, :]`). This minimizes implicit array allocation and improves performance in convective schemes.
+## 2026-05-23 - Prevent implicit array allocations in Navier-Stokes predictor and corrector steps
+**Learning:** In the Navier-Stokes time stepping logic (`NavierStokes2D.step()`), inline arithmetic operations on NumPy arrays (e.g., `u_interior + dt * rhs_u`) for updating intermediate and final velocity fields cause implicit memory allocations, reducing the execution speed.
+**Action:** Always utilize explicit sequential in-place NumPy functions (`np.multiply(..., out=)`, `np.add(..., out=)`, `np.subtract(..., out=)`) to eliminate implicit intermediate allocations, resulting in noticeably faster execution during iterative updates.
