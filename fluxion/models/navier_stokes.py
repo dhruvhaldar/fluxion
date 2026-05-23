@@ -167,7 +167,9 @@ class NavierStokes2D:
         np.multiply(v_interp, du_dy, out=tmp_u)
         rhs_u -= tmp_u
 
-        u_star[1:-1, :] = u_interior + dt * rhs_u
+        # ⚡ Bolt: Eliminate implicit allocations in intermediate velocity update
+        np.multiply(rhs_u, dt, out=rhs_u)
+        np.add(u_interior, rhs_u, out=u_star[1:-1, :])
 
         # --- V-Momentum ---
         v_star = v.copy()
@@ -236,7 +238,9 @@ class NavierStokes2D:
         np.multiply(v_interior, tmp_v, out=tmp_v)
         rhs_v -= tmp_v
 
-        v_star[:, 1:-1] = v_interior + dt * rhs_v
+        # ⚡ Bolt: Eliminate implicit allocations in intermediate velocity update
+        np.multiply(rhs_v, dt, out=rhs_v)
+        np.add(v_interior, rhs_v, out=v_star[:, 1:-1])
 
         # Enforce BCs on Intermediate Velocity (Walls)
         # Tangential velocities
@@ -259,8 +263,12 @@ class NavierStokes2D:
         # u = u* - dt * grad(p)
         grad_p_x, grad_p_y = discretization.compute_gradient(self.p, grid)
 
-        self.u = u_star - dt * grad_p_x
-        self.v = v_star - dt * grad_p_y
+        # ⚡ Bolt: Eliminate implicit allocations in the correction step
+        np.multiply(grad_p_x, dt, out=grad_p_x)
+        np.subtract(u_star, grad_p_x, out=self.u)
+
+        np.multiply(grad_p_y, dt, out=grad_p_y)
+        np.subtract(v_star, grad_p_y, out=self.v)
 
         # Enforce BCs again?
         # Projection method naturally enforces div(u)=0.
