@@ -81,3 +81,7 @@
 ## 2026-05-23 - Prevent implicit array allocations in Navier-Stokes predictor and corrector steps
 **Learning:** In the Navier-Stokes time stepping logic (`NavierStokes2D.step()`), inline arithmetic operations on NumPy arrays (e.g., `u_interior + dt * rhs_u`) for updating intermediate and final velocity fields cause implicit memory allocations, reducing the execution speed.
 **Action:** Always utilize explicit sequential in-place NumPy functions (`np.multiply(..., out=)`, `np.add(..., out=)`, `np.subtract(..., out=)`) to eliminate implicit intermediate allocations, resulting in noticeably faster execution during iterative updates.
+
+## 2024-05-24 - Array allocation performance
+**Learning:** Initializing arrays with `np.zeros_like()` instead of `np.empty_like()` adds severe, unnecessary memory bandwidth overhead when the array is going to be completely and immediately overwritten by subsequent chained in-place mathematical operations (`out=`). This is critical in tight computational loops (like those in Jacobi/SOR solvers or Navier-Stokes predictor steps) and introduces a massive bottleneck.
+**Action:** When pre-allocating contiguous buffers for immediate use as targets for in-place NumPy functions (`out=`) or subsequent array slice assignments within tight loops, explicitly use `np.empty_like()` to skip zero-filling.
