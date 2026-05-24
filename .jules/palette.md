@@ -135,3 +135,7 @@
 ## 2026-05-23 - Interactive Image Focus and Lift States
 **Learning:** Simply changing the border color or shadow of an image inside an anchor tag is often insufficient as a focus indicator for sighted keyboard users. Replacing a native focus ring requires adding a clear, visible `outline` specifically mapped to the `:focus-visible` state of the linked image. Furthermore, augmenting large `box-shadow` changes with a `transform: translateY` provides a more intuitive, physical sense of the element "lifting" off the page for interactive states.
 **Action:** When overriding default focus rings on linked images, ensure an explicit `outline` with adequate offset is supplied on the `:focus-visible` state, and pair heavy shadow transitions with a slight `translateY` offset to match visual expectations.
+
+## 2026-05-24 - Custom Text Selection Highlight
+**Learning:** By default, browsers apply a generic blue or grey highlight color during text selection (via `::selection`). On pages with carefully crafted color palettes or distinct dark mode implementations, this default styling often clashes with the design system and can result in suboptimal text contrast.
+**Action:** Always define custom `::selection` (and `::-moz-selection`) styles using semantic CSS variables (e.g., `background-color: var(--link-color); color: var(--bg-color);`) to ensure text selection remains highly legible, brand-aligned, and automatically responsive to light/dark mode transitions.
