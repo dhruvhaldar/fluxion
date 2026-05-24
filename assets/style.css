@@ -206,3 +206,13 @@ a:hover .back-to-top-icon, a:focus-visible .back-to-top-icon { transform: transl
 figure a:has(img):focus-visible {
     outline: none;
 }
+
+/* Custom text selection highlight */
+::selection {
+    background-color: var(--link-color);
+    color: var(--bg-color);
+}
+::-moz-selection {
+    background-color: var(--link-color);
+    color: var(--bg-color);
+}
