@@ -139,3 +139,7 @@
 ## 2026-05-24 - Custom Text Selection Highlight
 **Learning:** By default, browsers apply a generic blue or grey highlight color during text selection (via `::selection`). On pages with carefully crafted color palettes or distinct dark mode implementations, this default styling often clashes with the design system and can result in suboptimal text contrast.
 **Action:** Always define custom `::selection` (and `::-moz-selection`) styles using semantic CSS variables (e.g., `background-color: var(--link-color); color: var(--bg-color);`) to ensure text selection remains highly legible, brand-aligned, and automatically responsive to light/dark mode transitions.
+
+## 2026-05-25 - Tactile Active States for Lift Interactions
+**Learning:** When using CSS transforms to "lift" elements (e.g., `translateY(-2px)`) on `:hover` or `:focus-visible`, failing to add a corresponding `:active` state that pushes the element back down to its original position (e.g., `translateY(0)`) makes the interaction feel unresponsive and floaty.
+**Action:** Always pair lift animations with an `:active` state that counteracts the transform and reduces the `box-shadow` to provide clear, tactile confirmation of a click or tap.
