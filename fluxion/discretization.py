@@ -41,8 +41,16 @@ def compute_gradient(p, grid):
     # ⚡ Bolt: Multiplying by the inverse is faster than array division
     inv_dx = 1.0 / grid.dx
     inv_dy = 1.0 / grid.dy
-    grad_x = np.zeros((grid.nx+1, grid.ny))
-    grad_y = np.zeros((grid.nx, grid.ny+1))
+
+    # ⚡ Bolt: Use np.empty instead of np.zeros to avoid zero-filling overhead.
+    # Boundaries are explicitly initialized to 0.0, and interior is fully overwritten.
+    grad_x = np.empty((grid.nx+1, grid.ny))
+    grad_y = np.empty((grid.nx, grid.ny+1))
+
+    grad_x[0, :] = 0.0
+    grad_x[-1, :] = 0.0
+    grad_y[:, 0] = 0.0
+    grad_y[:, -1] = 0.0
 
     # Interior faces
     # ⚡ Bolt: Eliminate implicit array allocations in chained gradient operations.
@@ -116,8 +124,10 @@ def convection_term(phi, u, v, grid, scheme='central'):
     inv_dx = 1.0 / grid.dx
     inv_dy = 1.0 / grid.dy
 
-    flux_x = np.zeros((nx+1, ny))
-    flux_y = np.zeros((nx, ny+1))
+    # ⚡ Bolt: Use np.empty instead of np.zeros to avoid zero-filling overhead.
+    # The entire array is explicitly filled by the numerical schemes and boundary conditions below.
+    flux_x = np.empty((nx+1, ny))
+    flux_y = np.empty((nx, ny+1))
 
     # --- X-Fluxes ---
     # Faces i=1 to nx-1 are interior

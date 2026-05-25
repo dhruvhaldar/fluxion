@@ -85,3 +85,6 @@
 ## 2024-05-24 - Array allocation performance
 **Learning:** Initializing arrays with `np.zeros_like()` instead of `np.empty_like()` adds severe, unnecessary memory bandwidth overhead when the array is going to be completely and immediately overwritten by subsequent chained in-place mathematical operations (`out=`). This is critical in tight computational loops (like those in Jacobi/SOR solvers or Navier-Stokes predictor steps) and introduces a massive bottleneck.
 **Action:** When pre-allocating contiguous buffers for immediate use as targets for in-place NumPy functions (`out=`) or subsequent array slice assignments within tight loops, explicitly use `np.empty_like()` to skip zero-filling.
+## 2026-05-24 - Array allocation performance in discretization operators
+**Learning:** Initializing arrays with `np.zeros()` instead of `np.empty()` adds significant, unnecessary memory bandwidth overhead when the array is going to be completely and immediately overwritten by subsequent operations, even in cases where boundaries might need to be zero.
+**Action:** When pre-allocating contiguous buffers, explicitly use `np.empty()`. For arrays where boundaries must be zero (like `grad_x` or `grad_y`), explicitly initialize only the boundaries (e.g., `grad_x[0, :] = 0.0`) to avoid the significant memory bandwidth overhead of needlessly zero-filling the entire array.
