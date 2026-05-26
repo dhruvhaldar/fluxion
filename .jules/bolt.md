@@ -88,3 +88,6 @@
 ## 2026-05-24 - Array allocation performance in discretization operators
 **Learning:** Initializing arrays with `np.zeros()` instead of `np.empty()` adds significant, unnecessary memory bandwidth overhead when the array is going to be completely and immediately overwritten by subsequent operations, even in cases where boundaries might need to be zero.
 **Action:** When pre-allocating contiguous buffers, explicitly use `np.empty()`. For arrays where boundaries must be zero (like `grad_x` or `grad_y`), explicitly initialize only the boundaries (e.g., `grad_x[0, :] = 0.0`) to avoid the significant memory bandwidth overhead of needlessly zero-filling the entire array.
+## 2026-05-24 - Avoiding Inline Math in Convection Term Divergence Calculation
+**Learning:** In `convection_term`, computing the final divergence field `conv` using inline math like `(flux_x[1:, :] - flux_x[:-1, :] + flux_y[:, 1:] - flux_y[:, :-1]) * inv_dx` implicitly allocates temporary memory arrays, causing performance bottlenecks, especially on larger grids and tighter loops.
+**Action:** Replace the inline computation with explicit pre-allocation (`np.empty`) and apply sequential in-place numerical functions (`np.subtract`, `np.add`, `np.multiply` with `out=`) targeting this array. This minimizes implicit memory allocations behind the scenes.

@@ -255,9 +255,20 @@ def convection_term(phi, u, v, grid, scheme='central'):
     flux_y[:, -1] = v[:, -1] * phi[:, -1]
 
     # Compute Divergence
+    # ⚡ Bolt: Eliminate implicit array creations by chaining operators manually, avoiding full allocations
     if inv_dx == inv_dy:
-        conv = (flux_x[1:, :] - flux_x[:-1, :] + flux_y[:, 1:] - flux_y[:, :-1]) * inv_dx
+        conv = np.empty((nx, ny))
+        np.subtract(flux_x[1:, :], flux_x[:-1, :], out=conv)
+        np.add(conv, flux_y[:, 1:], out=conv)
+        np.subtract(conv, flux_y[:, :-1], out=conv)
+        np.multiply(conv, inv_dx, out=conv)
     else:
-        conv = (flux_x[1:, :] - flux_x[:-1, :]) * inv_dx + (flux_y[:, 1:] - flux_y[:, :-1]) * inv_dy
+        conv = np.empty((nx, ny))
+        np.subtract(flux_x[1:, :], flux_x[:-1, :], out=conv)
+        np.multiply(conv, inv_dx, out=conv)
+        v_diff = np.empty((nx, ny))
+        np.subtract(flux_y[:, 1:], flux_y[:, :-1], out=v_diff)
+        np.multiply(v_diff, inv_dy, out=v_diff)
+        np.add(conv, v_diff, out=conv)
 
     return conv
