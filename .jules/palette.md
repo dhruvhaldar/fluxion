@@ -143,3 +143,7 @@
 ## 2026-05-25 - Tactile Active States for Lift Interactions
 **Learning:** When using CSS transforms to "lift" elements (e.g., `translateY(-2px)`) on `:hover` or `:focus-visible`, failing to add a corresponding `:active` state that pushes the element back down to its original position (e.g., `translateY(0)`) makes the interaction feel unresponsive and floaty.
 **Action:** Always pair lift animations with an `:active` state that counteracts the transform and reduces the `box-shadow` to provide clear, tactile confirmation of a click or tap.
+
+## 2026-05-30 - Persistent Interactive Affordance for Touch Devices
+**Learning:** Relying purely on `cursor` or hover/focus-revealed states for linked images (like zoom interactions) leaves touch device users without any visual affordance that the element is interactive, breaking feature discoverability.
+**Action:** Always provide a persistently visible interactive affordance (like a subtle, overlaid icon) on interactive image links to ensure touch-device users know they can interact with the element. Enhance this affordance with `:hover` and `:focus-visible` states for visual delight, and explicitly hide it in `@media print` stylesheets.
