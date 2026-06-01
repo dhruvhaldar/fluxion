@@ -212,6 +212,13 @@ def send_assets(path):
         app.logger.warning(f"Security Event: Blocked request from {repr(request.remote_addr)} due to potential directory traversal. path: {repr(path)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
 
+    # Security Enhancement: Block requests for hidden files or directories
+    # to prevent accidental exposure of sensitive internal metadata (e.g., .git/, .env)
+    # even if allowed_extensions is later relaxed to include generic formats.
+    if path.startswith('.') or '/.' in path:
+        app.logger.warning(f"Security Event: Blocked request from {repr(request.remote_addr)} for hidden file/directory. path: {repr(path)}")
+        return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
+
     # Security Enhancement: Strict allowed characters for file paths to prevent log injection or unexpected parser behavior
     # Using \Z and re.fullmatch to ensure trailing newlines are correctly blocked
     if not re.fullmatch(r'^[a-zA-Z0-9_./-]+\Z', path):

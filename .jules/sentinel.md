@@ -134,3 +134,7 @@
 **Vulnerability:** The rate limiter and invalid IP format error handlers were logging the normalized or truncated versions of the attacker's IP address (e.g., the /64 subnet for IPv6 or missing original context on error). This degraded the quality of security audit logs by obscuring the exact source of malicious requests.
 **Learning:** While normalizing IP addresses (e.g., to /64 subnets) is necessary for robust rate limiting logic, logging only the normalized IP in security alerts prevents security analysts from accurately tracking or blacklisting the specific offending host.
 **Prevention:** Always log the raw, original `repr(request.remote_addr)` in security audit logs (such as rate limit exceeded warnings or invalid IP format blocks), even if the application logic internally uses a normalized representation for state tracking.
+## YYYY-MM-DD - Prevent Hidden File Exposure in Static Routes
+**Vulnerability:** Static file routes lacking hidden file checks can accidentally expose sensitive metadata (like .git/ or .env) if directory contents or allowed extensions are ever relaxed.
+**Learning:** Path traversal protections ('..') and allowed extensions lists do not explicitly protect against hidden files. Relying solely on extensions is fragile because developers may later add generic extensions (like .txt or .json) which could expose .env.txt or .git/config.
+**Prevention:** Always explicitly block paths starting with '.' or containing '/.' in static file serving logic as a foundational defense-in-depth measure.
