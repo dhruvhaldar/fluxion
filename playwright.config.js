@@ -37,7 +37,7 @@ module.exports = defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'python api/index.py',
+    command: 'FLASK_DEBUG=1 python api/index.py',
     url: 'http://127.0.0.1:5000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
