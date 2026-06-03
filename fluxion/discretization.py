@@ -135,15 +135,10 @@ def convection_term(phi, u, v, grid, scheme='central'):
 
     # Central Difference
     if scheme == 'central':
-        # ⚡ Bolt: Use explicit in-place mathematical operators (np.add, np.multiply)
-        # to prevent implicit memory allocations of intermediate result arrays
-        np.add(phi[:-1, :], phi[1:, :], out=flux_x[1:-1, :])
-        np.multiply(flux_x[1:-1, :], 0.5, out=flux_x[1:-1, :])
-        np.multiply(flux_x[1:-1, :], u[1:-1, :], out=flux_x[1:-1, :])
-
-        np.add(phi[:, :-1], phi[:, 1:], out=flux_y[:, 1:-1])
-        np.multiply(flux_y[:, 1:-1], 0.5, out=flux_y[:, 1:-1])
-        np.multiply(flux_y[:, 1:-1], v[:, 1:-1], out=flux_y[:, 1:-1])
+        # ⚡ Bolt: Removed in-place sequential operators and pre-allocated arrays, replacing them
+        # with inline mathematical evaluations assigning to slices to avoid the python wrapper overhead per operator
+        flux_x[1:-1, :] = 0.5 * (phi[:-1, :] + phi[1:, :]) * u[1:-1, :]
+        flux_y[:, 1:-1] = 0.5 * (phi[:, :-1] + phi[:, 1:]) * v[:, 1:-1]
 
     # First Order Upwind
     elif scheme == 'upwind':
@@ -255,20 +250,12 @@ def convection_term(phi, u, v, grid, scheme='central'):
     flux_y[:, -1] = v[:, -1] * phi[:, -1]
 
     # Compute Divergence
-    # ⚡ Bolt: Eliminate implicit array creations by chaining operators manually, avoiding full allocations
+    # ⚡ Bolt: Removed implicit array pre-allocation with np.empty() and in-place sequential operators.
+    # Evaluated inline math expressions instead, which natively creates an array with less python overhead
+    # compared to multiple sequential operator calls like np.add and np.subtract.
     if inv_dx == inv_dy:
-        conv = np.empty((nx, ny))
-        np.subtract(flux_x[1:, :], flux_x[:-1, :], out=conv)
-        np.add(conv, flux_y[:, 1:], out=conv)
-        np.subtract(conv, flux_y[:, :-1], out=conv)
-        np.multiply(conv, inv_dx, out=conv)
+        conv = (flux_x[1:, :] - flux_x[:-1, :] + flux_y[:, 1:] - flux_y[:, :-1]) * inv_dx
     else:
-        conv = np.empty((nx, ny))
-        np.subtract(flux_x[1:, :], flux_x[:-1, :], out=conv)
-        np.multiply(conv, inv_dx, out=conv)
-        v_diff = np.empty((nx, ny))
-        np.subtract(flux_y[:, 1:], flux_y[:, :-1], out=v_diff)
-        np.multiply(v_diff, inv_dy, out=v_diff)
-        np.add(conv, v_diff, out=conv)
+        conv = (flux_x[1:, :] - flux_x[:-1, :]) * inv_dx + (flux_y[:, 1:] - flux_y[:, :-1]) * inv_dy
 
     return conv
