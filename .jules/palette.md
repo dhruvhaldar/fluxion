@@ -147,3 +147,6 @@
 ## 2026-05-30 - Persistent Interactive Affordance for Touch Devices
 **Learning:** Relying purely on `cursor` or hover/focus-revealed states for linked images (like zoom interactions) leaves touch device users without any visual affordance that the element is interactive, breaking feature discoverability.
 **Action:** Always provide a persistently visible interactive affordance (like a subtle, overlaid icon) on interactive image links to ensure touch-device users know they can interact with the element. Enhance this affordance with `:hover` and `:focus-visible` states for visual delight, and explicitly hide it in `@media print` stylesheets.
+## 2024-05-24 - Heading anchor link tooltips for keyboard users
+**Learning:** Native `title` attributes on structural anchor links (like heading permalinks e.g. `#`) are inaccessible to keyboard users because they only display on hover, leaving focus users with only an ambiguous `#` symbol.
+**Action:** When using `title` attributes on minimalist structural links, provide interaction parity by explicitly surfacing the title text via custom CSS pseudo-element tooltips (e.g. `::after` with `content: attr(title)`) triggered by the `:focus-visible` state.
