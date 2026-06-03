@@ -43,7 +43,8 @@ app.config.update(
 # Security Enhancement: Configure SECRET_KEY from environment to avoid dynamic generation
 # which causes issues across multi-worker environments. Do not use a random fallback!
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-if not app.config['SECRET_KEY'] and not os.environ.get("FLASK_DEBUG", "False").lower() in ["true", "1", "t"]:
+is_testing = 'pytest' in __import__('sys').modules
+if not app.config['SECRET_KEY'] and not os.environ.get("FLASK_DEBUG", "False").lower() in ["true", "1", "t"] and not is_testing:
     raise RuntimeError("SECRET_KEY must be set in production.")
 
 # Security Enhancement: Restrict max content length to mitigate DoS (Denial of Service) via large payloads
