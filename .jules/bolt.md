@@ -91,3 +91,9 @@
 ## 2026-05-24 - Avoiding Inline Math in Convection Term Divergence Calculation
 **Learning:** In `convection_term`, computing the final divergence field `conv` using inline math like `(flux_x[1:, :] - flux_x[:-1, :] + flux_y[:, 1:] - flux_y[:, :-1]) * inv_dx` implicitly allocates temporary memory arrays, causing performance bottlenecks, especially on larger grids and tighter loops.
 **Action:** Replace the inline computation with explicit pre-allocation (`np.empty`) and apply sequential in-place numerical functions (`np.subtract`, `np.add`, `np.multiply` with `out=`) targeting this array. This minimizes implicit memory allocations behind the scenes.
+
+## 2026-06-02 - Avoiding Chained Operators that allocate Memory
+
+**Learning:** In heavily used FVM grid operators like `compute_divergence` inside `convection_term`, chained array operations using `np.add`/`np.subtract` and `out=` targets with `np.empty` explicitly to prevent full object creations on each operator might seem fast. However, assigning directly `[:]` to a slice reduces significant overhead in Python bindings by computing the sequence on the C backend directly.
+
+**Action:** Replace sequential in-place operators inside `convection_term` using `out=` buffers with a direct explicit assignment using `[:]` (e.g. `conv[:] = ...`). This cuts execution time drastically in the convection benchmarks by preventing multi-call wrapping penalties in Python.
