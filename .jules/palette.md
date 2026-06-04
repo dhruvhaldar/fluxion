@@ -150,3 +150,7 @@
 ## 2024-05-24 - Heading anchor link tooltips for keyboard users
 **Learning:** Native `title` attributes on structural anchor links (like heading permalinks e.g. `#`) are inaccessible to keyboard users because they only display on hover, leaving focus users with only an ambiguous `#` symbol.
 **Action:** When using `title` attributes on minimalist structural links, provide interaction parity by explicitly surfacing the title text via custom CSS pseudo-element tooltips (e.g. `::after` with `content: attr(title)`) triggered by the `:focus-visible` state.
+
+## 2026-06-04 - Heading Permalinks Text Selection
+**Learning:** Heading permalinks (often represented by a `#` symbol next to the heading text) are a common UX pattern. However, if a user double-clicks the heading text to quickly select and copy it, the permalink symbol `#` is often unintentionally selected as well. This leads to frustrating cleanup when pasting the copied heading.
+**Action:** Always add `user-select: none;` to the CSS class for heading permalinks (e.g., `.heading-anchor`). This simple addition ensures the anchor symbol is ignored during text selection, allowing users to cleanly copy the heading text without accidentally grabbing the `#` character.
