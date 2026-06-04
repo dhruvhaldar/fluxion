@@ -76,38 +76,23 @@ def compute_laplacian(phi, grid):
     # ⚡ Bolt: Multiplying by the inverse is faster than array division
     inv_dx2 = 1.0 / grid.dx**2
     inv_dy2 = 1.0 / grid.dy**2
-    lap = np.zeros_like(phi)
+
+    # ⚡ Bolt: Use np.empty instead of np.zeros to avoid zero-filling overhead.
+    # The boundaries are explicitly initialized to 0.0.
+    lap = np.empty_like(phi)
+    lap[0, :] = 0.0
+    lap[-1, :] = 0.0
+    lap[:, 0] = 0.0
+    lap[:, -1] = 0.0
 
     # Interior
+    # ⚡ Bolt: Avoid chaining multiple sequential in-place NumPy functions.
+    # We replace them with inline vectorized mathematical expressions directly on slices.
+    # This evaluates naturally on the C-backend without the heavy Python wrapper overhead per operator.
     if inv_dx2 == inv_dy2:
-        # ⚡ Bolt: Use pre-allocated temporary arrays and explicit in-place mathematical operators
-        # to prevent implicit allocations of full arrays during evaluation.
-        lap_int = lap[1:-1, 1:-1]
-        phi_int = phi[1:-1, 1:-1]
-        tmp = np.empty_like(phi_int)
-
-        np.add(phi[2:, 1:-1], phi[:-2, 1:-1], out=lap_int)
-        np.add(lap_int, phi[1:-1, 2:], out=lap_int)
-        np.add(lap_int, phi[1:-1, :-2], out=lap_int)
-        np.multiply(phi_int, 4.0, out=tmp)
-        np.subtract(lap_int, tmp, out=lap_int)
-        np.multiply(lap_int, inv_dx2, out=lap_int)
+        lap[1:-1, 1:-1] = (phi[2:, 1:-1] + phi[:-2, 1:-1] + phi[1:-1, 2:] + phi[1:-1, :-2] - 4.0 * phi[1:-1, 1:-1]) * inv_dx2
     else:
-        lap_int = lap[1:-1, 1:-1]
-        phi_int = phi[1:-1, 1:-1]
-        tmp1 = np.empty_like(phi_int)
-        tmp2 = np.empty_like(phi_int)
-
-        np.add(phi[2:, 1:-1], phi[:-2, 1:-1], out=tmp1)
-        np.multiply(phi_int, 2.0, out=tmp2)
-        np.subtract(tmp1, tmp2, out=tmp1)
-        np.multiply(tmp1, inv_dx2, out=tmp1)
-
-        np.add(phi[1:-1, 2:], phi[1:-1, :-2], out=lap_int)
-        np.subtract(lap_int, tmp2, out=lap_int)
-        np.multiply(lap_int, inv_dy2, out=lap_int)
-
-        np.add(lap_int, tmp1, out=lap_int)
+        lap[1:-1, 1:-1] = (phi[2:, 1:-1] + phi[:-2, 1:-1] - 2.0 * phi[1:-1, 1:-1]) * inv_dx2 + (phi[1:-1, 2:] + phi[1:-1, :-2] - 2.0 * phi[1:-1, 1:-1]) * inv_dy2
 
     return lap
 
