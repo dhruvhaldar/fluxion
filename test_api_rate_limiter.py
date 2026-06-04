@@ -75,3 +75,14 @@ def test_rate_limiter_ipv6_subnet(client):
     # The 101st request using a different IP in the SAME /64 subnet should be BLOCKED
     response = client.get('/', environ_base={'REMOTE_ADDR': '2001:db8:85a3::2'})
     assert response.status_code == 429
+
+def test_rate_limiter_ipv6_scope_id(client):
+    # Ensure IPv6 addresses with scope IDs are parsed correctly
+    # Make 100 requests using an IP with a scope ID
+    for _ in range(100):
+        response = client.get('/', environ_base={'REMOTE_ADDR': 'fe80::1%eth0'})
+        assert response.status_code == 200
+
+    # The 101st request using the same IP should be BLOCKED
+    response = client.get('/', environ_base={'REMOTE_ADDR': 'fe80::1%eth0'})
+    assert response.status_code == 429
