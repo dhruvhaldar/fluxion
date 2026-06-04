@@ -79,7 +79,10 @@ def rate_limit():
     # Also handles IPv4-mapped IPv6 addresses (e.g. ::ffff:192.168.0.1) to prevent rate-limit bypasses
     # Groups IPv6 addresses by /64 subnet to prevent rate-limit bypasses by using different addresses in the same subnet
     try:
-        ip_obj = ipaddress.ip_address(ip)
+        # Strip scope ID from IPv6 addresses (e.g., fe80::1%eth0) before parsing
+        # to prevent valid requests from being incorrectly blocked as invalid formats
+        clean_ip = ip.split('%')[0]
+        ip_obj = ipaddress.ip_address(clean_ip)
         if getattr(ip_obj, 'ipv4_mapped', None):
             ip_obj = ip_obj.ipv4_mapped
             ip = ip_obj.compressed
