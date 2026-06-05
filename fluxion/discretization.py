@@ -12,22 +12,15 @@ def compute_divergence(u, v, grid):
     inv_dy = 1.0 / grid.dy
 
     if inv_dx == inv_dy:
-        # ⚡ Bolt: Eliminate implicit array creations by chaining operators manually, avoiding full allocations
-        div = np.empty((grid.nx, grid.ny))
-        np.subtract(u[1:, :], u[:-1, :], out=div)
-        np.add(div, v[:, 1:], out=div)
-        np.subtract(div, v[:, :-1], out=div)
-        np.multiply(div, inv_dx, out=div)
+        # ⚡ Bolt: Avoid chaining multiple sequential in-place NumPy functions.
+        # We replace them with an inline vectorized mathematical expression, which natively
+        # creates the output array and evaluates on the C-backend without the heavy Python
+        # wrapper overhead per operator.
+        div = (u[1:, :] - u[:-1, :] + v[:, 1:] - v[:, :-1]) * inv_dx
         return div
     else:
-        # ⚡ Bolt: Eliminate implicit array creations by chaining operators manually, avoiding full allocations
-        div = np.empty((grid.nx, grid.ny))
-        np.subtract(u[1:, :], u[:-1, :], out=div)
-        np.multiply(div, inv_dx, out=div)
-        v_diff = np.empty((grid.nx, grid.ny))
-        np.subtract(v[:, 1:], v[:, :-1], out=v_diff)
-        np.multiply(v_diff, inv_dy, out=v_diff)
-        np.add(div, v_diff, out=div)
+        # ⚡ Bolt: Avoid chaining multiple sequential in-place NumPy functions.
+        div = (u[1:, :] - u[:-1, :]) * inv_dx + (v[:, 1:] - v[:, :-1]) * inv_dy
         return div
 
 def compute_gradient(p, grid):
@@ -53,13 +46,11 @@ def compute_gradient(p, grid):
     grad_y[:, -1] = 0.0
 
     # Interior faces
-    # ⚡ Bolt: Eliminate implicit array allocations in chained gradient operations.
-    # We assign intermediate results directly to the target output slice using `out=`.
-    np.subtract(p[1:, :], p[:-1, :], out=grad_x[1:-1, :])
-    np.multiply(grad_x[1:-1, :], inv_dx, out=grad_x[1:-1, :])
-
-    np.subtract(p[:, 1:], p[:, :-1], out=grad_y[:, 1:-1])
-    np.multiply(grad_y[:, 1:-1], inv_dy, out=grad_y[:, 1:-1])
+    # ⚡ Bolt: Avoid chaining multiple sequential in-place NumPy functions.
+    # We evaluate them inline natively on the C-backend and assign directly to the
+    # pre-allocated slices, avoiding the heavy Python wrapper overhead per operator.
+    grad_x[1:-1, :] = (p[1:, :] - p[:-1, :]) * inv_dx
+    grad_y[:, 1:-1] = (p[:, 1:] - p[:, :-1]) * inv_dy
 
     # Boundaries are left as 0.0 (Homogeneous Neumann assumption common in PPE)
     return grad_x, grad_y
