@@ -124,7 +124,12 @@ def rate_limit():
             req_queue.popleft()
 
         if len(req_queue) >= RATE_LIMIT_MAX_REQUESTS:
-            app.logger.warning(f"Security Event: Rate limit exceeded for {repr(request.remote_addr)} (normalized to {repr(ip)})")
+            # Security Enhancement: Prevent log-bombing / Disk DoS by only logging
+            # the rate limit violation once per burst. By appending the current time
+            # after logging, the queue length exceeds the limit, suppressing further logs.
+            if len(req_queue) == RATE_LIMIT_MAX_REQUESTS:
+                app.logger.warning(f"Security Event: Rate limit exceeded for {repr(request.remote_addr)} (normalized to {repr(ip)})")
+                req_queue.append(current_time)
             return "Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8", "Retry-After": str(RATE_LIMIT_WINDOW)}
 
         req_queue.append(current_time)
