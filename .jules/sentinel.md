@@ -146,3 +146,8 @@
 **Vulnerability:** Python's `ipaddress` module can sometimes throw `ValueError` when parsing IPv6 addresses that include a scope ID (e.g., `fe80::1%eth0`). This was causing the rate limiter to crash and block legitimate requests with a 400 Bad Request error.
 **Learning:** Network interfaces often append scope IDs to link-local IPv6 addresses. Relying on strict parsing libraries without sanitizing these scope IDs can lead to Denial of Service for valid users or bypasses if not handled correctly.
 **Prevention:** Always strip scope IDs from IPv6 addresses using `.split('%')[0]` before passing them to parsing libraries like `ipaddress.ip_address` or `ipaddress.ip_network`.
+
+## 2026-06-09 - [Prevent Log-Bombing/Disk DoS via Rate Limiter Logging]
+**Vulnerability:** The rate limiter continuously logged a warning for every single request that exceeded the rate limit. An attacker could intentionally send thousands of blocked requests per second to trigger massive logging, leading to a log-bombing and Disk DoS vulnerability (exhausting server storage space).
+**Learning:** While rate limiters stop application-level DoS, their own error handling can introduce Disk DoS if every blocked request produces a log entry. The system must degrade gracefully even under sustained attack.
+**Prevention:** Only log the rate limit violation once per burst/window. This can be achieved by incrementing or appending to the tracked requests list even after the limit is reached, and checking `len(req_queue) == RATE_LIMIT_MAX_REQUESTS` to trigger the log exactly once when the threshold is crossed, suppressing further logs until the window resets.
