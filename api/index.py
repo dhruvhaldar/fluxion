@@ -139,6 +139,7 @@ def rate_limit():
 def add_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '0'
     # Security Enhancement: Restrict Content-Security-Policy to block base-uri injection, form submissions, frame embedding, and plugin execution
     response.headers['Content-Security-Policy'] = "default-src 'none'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests;"
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
