@@ -158,3 +158,7 @@
 ## 2026-06-05 - Native Tap Highlights vs Custom Active States
 **Learning:** By default, mobile browsers (like iOS Safari and Android Chrome) apply a grey semi-transparent overlay to interactive elements when tapped. When implementing custom `:active` animations (such as a "lift and press" effect or custom pseudo-element tooltips mapped to `:active`), this native tap highlight visibly clashes with the custom interaction, resulting in a muddy, unresponsive-feeling experience.
 **Action:** When implementing custom `:active` interactions on mobile/touch elements (like `<a>` or `<abbr>`), always suppress the default browser tap highlight by adding `-webkit-tap-highlight-color: transparent;` to the element. Furthermore, ensure tiny interactive elements like heading permalinks (`#`) have an expanded touch target (e.g., using a negatively positioned `::before` pseudo-element) to prevent frustrating tap-misses on mobile screens.
+
+## 2026-06-13 - "Back to Top" Link Accessibility
+**Learning:** Native `<a href="#top">` tags containing both an icon symbol and text might not provide sufficient context for screen reader users when read out of context.
+**Action:** When a "Back to top" link is present, especially one with symbolic icons (like arrows), it's best practice to add a clear, descriptive `aria-label` (e.g., `aria-label="Back to top of page"`) to explicitly describe its function, ensuring an accessible experience.
