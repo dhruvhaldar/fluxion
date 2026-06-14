@@ -70,7 +70,7 @@ def compute_laplacian(phi, grid):
 
     # ⚡ Bolt: Use np.empty instead of np.zeros to avoid zero-filling overhead.
     # The boundaries are explicitly initialized to 0.0.
-    lap = np.empty_like(phi)
+    lap = np.empty(phi.shape)
     lap[0, :] = 0.0
     lap[-1, :] = 0.0
     lap[:, 0] = 0.0
