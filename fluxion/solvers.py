@@ -6,6 +6,7 @@ class LinearSolver:
         """
         Solves Laplacian(p) = rhs using Jacobi Iteration.
         """
+        nx, ny = grid.nx, grid.ny
         dx, dy = grid.dx, grid.dy
         dx2, dy2 = dx**2, dy**2
         denom = 2 * (1/dx2 + 1/dy2)
@@ -40,8 +41,7 @@ class LinearSolver:
 
         check_interval = 200
 
-        tmp = np.empty_like(p1_center)
-        tmp_full = np.empty_like(p1)
+        tmp_full = np.empty(p1.shape)
 
         # ⚡ Bolt: Unroll by 2 to avoid python variable assignment/swapping loop overhead.
         # Also hoist mult_y_over_x check out of the loop since it is invariant.
@@ -130,9 +130,9 @@ class LinearSolver:
         # Pre-allocate temporary arrays to avoid implicit array creations in the loop
         # We need an array for the entire right-hand-side expression of the SOR update
         # p_gs_red and p_gs_black can share the same buffer since they are updated sequentially
-        p_gs = np.empty_like(p_slice)
-        tmp_y = np.empty_like(p_slice)
-        tmp_full = np.empty_like(p)
+        p_gs = np.empty(p_slice.shape)
+        tmp_y = np.empty(p_slice.shape)
+        tmp_full = np.empty(p.shape)
 
         # Pre-compute slice views to avoid overhead inside the loop.
         # These are views into p_new, which is updated in place, so they
