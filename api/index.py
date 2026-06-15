@@ -63,6 +63,13 @@ ip_tracker_lock = threading.Lock()
 def rate_limit():
     ip = request.remote_addr
 
+    # Security Enhancement: Restrict the maximum length of the entire URL (including query strings)
+    # to mitigate DoS (Denial of Service) attacks via memory exhaustion and buffer overflows.
+    if request.url and len(request.url) > 2048:
+        truncated_url = request.url[:256] + '...[TRUNCATED]'
+        app.logger.warning(f"Security Event: Blocked request from {repr(ip)} due to URI length > 2048. url: {repr(truncated_url)}")
+        return "URI Too Long", 414, {"Content-Type": "text/plain; charset=utf-8"}
+
     if not ip:
         app.logger.warning("Security Event: Blocked request with missing remote address.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
