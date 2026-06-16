@@ -63,13 +63,6 @@ ip_tracker_lock = threading.Lock()
 def rate_limit():
     ip = request.remote_addr
 
-    # Security Enhancement: Restrict the maximum length of the entire URL (including query strings)
-    # to mitigate DoS (Denial of Service) attacks via memory exhaustion and buffer overflows.
-    if request.url and len(request.url) > 2048:
-        truncated_url = request.url[:256] + '...[TRUNCATED]'
-        app.logger.warning(f"Security Event: Blocked request from {repr(ip)} due to URI length > 2048. url: {repr(truncated_url)}")
-        return "URI Too Long", 414, {"Content-Type": "text/plain; charset=utf-8"}
-
     if not ip:
         app.logger.warning("Security Event: Blocked request with missing remote address.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
@@ -80,6 +73,13 @@ def rate_limit():
         truncated_ip = ip[:45] + '...[TRUNCATED]'
         app.logger.warning(f"Security Event: Blocked request due to excessively long remote address: {repr(truncated_ip)}.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
+
+    # Security Enhancement: Restrict the maximum length of the entire URL (including query strings)
+    # to mitigate DoS (Denial of Service) attacks via memory exhaustion and buffer overflows.
+    if request.url and len(request.url) > 2048:
+        truncated_url = request.url[:256] + '...[TRUNCATED]'
+        app.logger.warning(f"Security Event: Blocked request from {repr(ip)} due to URI length > 2048. url: {repr(truncated_url)}")
+        return "URI Too Long", 414, {"Content-Type": "text/plain; charset=utf-8"}
 
     # Security Enhancement: Normalize IP address to prevent bypass of IP-based controls
     # via multiple representations of the same IPv6 address (e.g., 2001:db8::1 vs 2001:db8:0:0:0:0:0:1).
