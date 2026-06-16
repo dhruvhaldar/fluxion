@@ -111,3 +111,6 @@
 ## 2026-06-14 - Replace empty_like with empty shape tuples
 **Learning:** Using `np.empty_like()` on array slices (e.g., `np.empty_like(p[1:-1, 1:-1])`) causes the newly allocated array to have non-contiguous memory access patterns, which significantly degrades performance. It also introduces slight allocation overhead compared to explicitly passing shape tuples to `np.empty()`.
 **Action:** When creating temporary arrays in tight loops, always use explicit shape allocation `np.empty((nx, ny))` rather than `np.empty_like(slice)` to guarantee C-contiguous arrays and minimal overhead.
+## $(date +%Y-%m-%d) - [Optimize inner loops with chained in-place operations]
+**Learning:** Purely vectorized math implicitly allocates temporary arrays per operator evaluation, which introduces significant python wrapper and memory bandwidth overhead inside highly iterative inner loops (like Jacobi or SOR solvers).
+**Action:** Pre-allocate a dedicated contiguous buffer outside the loop and chain in-place operations (`np.add(..., out=buf)`, `np.subtract(..., out=buf)`, `np.multiply(..., out=p_slice)`) to eliminate implicit array allocations.
