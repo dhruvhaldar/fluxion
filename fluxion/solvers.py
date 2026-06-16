@@ -43,12 +43,19 @@ class LinearSolver:
 
         tmp_full = np.empty(p1.shape)
 
+        # ⚡ Bolt: Pre-allocate a contiguous buffer for chained in-place operations
+        buf = np.empty(p1_center.shape)
+
         # ⚡ Bolt: Unroll by 2 to avoid python variable assignment/swapping loop overhead.
         # Also hoist mult_y_over_x check out of the loop since it is invariant.
         if mult_y_over_x == 1.0:
             for it in range(0, max_iter, 2):
-                # ⚡ Bolt: Single mathematical expression with [:] assignment avoids Python loop overhead
-                p2_center[:] = (p1_right + p1_left + p1_up + p1_down - rhs_eff) * mult_x
+                # ⚡ Bolt: Chained in-place operations to contiguous buffer prevent implicit memory allocations
+                np.add(p1_right, p1_left, out=buf)
+                np.add(buf, p1_up, out=buf)
+                np.add(buf, p1_down, out=buf)
+                np.subtract(buf, rhs_eff, out=buf)
+                np.multiply(buf, mult_x, out=p2_center)
 
                 # ⚡ Bolt: Direct row assignments are slightly faster than slice assignments
                 p2[0] = p2[1]
@@ -56,7 +63,11 @@ class LinearSolver:
                 p2[:, 0] = p2[:, 1]
                 p2[:, -1] = p2[:, -2]
 
-                p1_center[:] = (p2_right + p2_left + p2_up + p2_down - rhs_eff) * mult_x
+                np.add(p2_right, p2_left, out=buf)
+                np.add(buf, p2_up, out=buf)
+                np.add(buf, p2_down, out=buf)
+                np.subtract(buf, rhs_eff, out=buf)
+                np.multiply(buf, mult_x, out=p1_center)
 
                 p1[0] = p1[1]
                 p1[-1] = p1[-2]
@@ -70,14 +81,25 @@ class LinearSolver:
                         return p1, it + 1
         else:
             for it in range(0, max_iter, 2):
-                p2_center[:] = ((p1_right + p1_left) * mult_y_over_x + p1_up + p1_down - rhs_eff) * mult_x
+                # ⚡ Bolt: Chained in-place operations to contiguous buffer prevent implicit memory allocations
+                np.add(p1_right, p1_left, out=buf)
+                np.multiply(buf, mult_y_over_x, out=buf)
+                np.add(buf, p1_up, out=buf)
+                np.add(buf, p1_down, out=buf)
+                np.subtract(buf, rhs_eff, out=buf)
+                np.multiply(buf, mult_x, out=p2_center)
 
                 p2[0] = p2[1]
                 p2[-1] = p2[-2]
                 p2[:, 0] = p2[:, 1]
                 p2[:, -1] = p2[:, -2]
 
-                p1_center[:] = ((p2_right + p2_left) * mult_y_over_x + p2_up + p2_down - rhs_eff) * mult_x
+                np.add(p2_right, p2_left, out=buf)
+                np.multiply(buf, mult_y_over_x, out=buf)
+                np.add(buf, p2_up, out=buf)
+                np.add(buf, p2_down, out=buf)
+                np.subtract(buf, rhs_eff, out=buf)
+                np.multiply(buf, mult_x, out=p1_center)
 
                 p1[0] = p1[1]
                 p1[-1] = p1[-2]
