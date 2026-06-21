@@ -61,25 +61,31 @@ ip_tracker_lock = threading.Lock()
 
 @app.before_request
 def rate_limit():
-    ip = request.remote_addr
+    raw_ip = request.remote_addr
+    raw_url = request.url
 
-    if not ip:
-        app.logger.warning("Security Event: Blocked request with missing remote address.")
+    # Explicitly validate and truncate all inputs BEFORE using any of them in log messages.
+    # Logging a failure for one input using the unvalidated, raw value of another creates a log-bombing vulnerability.
+    safe_ip = raw_ip[:45] + '...[TRUNCATED]' if raw_ip and len(raw_ip) > 45 else raw_ip
+    safe_url = raw_url[:256] + '...[TRUNCATED]' if raw_url and len(raw_url) > 2048 else raw_url
+
+    if not raw_ip:
+        app.logger.warning(f"Security Event: Blocked request with missing remote address. url: {repr(safe_url)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
 
     # Security Enhancement: Limit the length of the remote address to mitigate DoS
     # via memory exhaustion or log bombing using extremely long spoofed IP headers.
-    if len(ip) > 45:
-        truncated_ip = ip[:45] + '...[TRUNCATED]'
-        app.logger.warning(f"Security Event: Blocked request due to excessively long remote address: {repr(truncated_ip)}.")
+    if len(raw_ip) > 45:
+        app.logger.warning(f"Security Event: Blocked request due to excessively long remote address: {repr(safe_ip)}. url: {repr(safe_url)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
 
     # Security Enhancement: Restrict the maximum length of the entire URL (including query strings)
     # to mitigate DoS (Denial of Service) attacks via memory exhaustion and buffer overflows.
-    if request.url and len(request.url) > 2048:
-        truncated_url = request.url[:256] + '...[TRUNCATED]'
-        app.logger.warning(f"Security Event: Blocked request from {repr(ip)} due to URI length > 2048. url: {repr(truncated_url)}")
+    if raw_url and len(raw_url) > 2048:
+        app.logger.warning(f"Security Event: Blocked request from {repr(safe_ip)} due to URI length > 2048. url: {repr(safe_url)}")
         return "URI Too Long", 414, {"Content-Type": "text/plain; charset=utf-8"}
+
+    ip = raw_ip
 
     # Security Enhancement: Normalize IP address to prevent bypass of IP-based controls
     # via multiple representations of the same IPv6 address (e.g., 2001:db8::1 vs 2001:db8:0:0:0:0:0:1).
