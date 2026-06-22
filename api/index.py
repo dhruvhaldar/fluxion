@@ -123,14 +123,15 @@ def rate_limit():
                 oldest_ip = next(iter(ip_tracker))
                 del ip_tracker[oldest_ip]
 
-            ip_tracker[ip] = deque()
+            ip_tracker[ip] = {'requests': deque(), 'last_logged': 0.0}
         else:
             # Security Enhancement: Implement LRU eviction policy to prevent eviction bypass
             # By moving the accessed IP to the end of the dictionary, we ensure that
             # active IPs are not evicted when MAX_TRACKED_IPS is reached.
             ip_tracker[ip] = ip_tracker.pop(ip)
 
-        req_queue = ip_tracker[ip]
+        tracker = ip_tracker[ip]
+        req_queue = tracker['requests']
 
         # Prune old requests for this IP
         while req_queue and req_queue[0] < current_time - RATE_LIMIT_WINDOW:
@@ -138,11 +139,11 @@ def rate_limit():
 
         if len(req_queue) >= RATE_LIMIT_MAX_REQUESTS:
             # Security Enhancement: Prevent log-bombing / Disk DoS by only logging
-            # the rate limit violation once per burst. By appending the current time
-            # after logging, the queue length exceeds the limit, suppressing further logs.
-            if len(req_queue) == RATE_LIMIT_MAX_REQUESTS:
+            # the rate limit violation once per burst. By explicitly tracking the last
+            # log time, we reliably suppress logs even against steady-rate attackers.
+            if current_time - tracker['last_logged'] > RATE_LIMIT_WINDOW:
                 app.logger.warning(f"Security Event: Rate limit exceeded for {repr(request.remote_addr)} (normalized to {repr(ip)})")
-                req_queue.append(current_time)
+                tracker['last_logged'] = current_time
             return "Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8", "Retry-After": str(RATE_LIMIT_WINDOW)}
 
         req_queue.append(current_time)
