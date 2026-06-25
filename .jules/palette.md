@@ -162,3 +162,6 @@
 ## 2026-06-13 - "Back to Top" Link Accessibility
 **Learning:** Native `<a href="#top">` tags containing both an icon symbol and text might not provide sufficient context for screen reader users when read out of context.
 **Action:** When a "Back to top" link is present, especially one with symbolic icons (like arrows), it's best practice to add a clear, descriptive `aria-label` (e.g., `aria-label="Back to top of page"`) to explicitly describe its function, ensuring an accessible experience.
+## 2026-06-25 - Absolute Positioning of Skip Links
+**Learning:** When hiding 'skip to content' links using absolute positioning and `transform: translateY(-100%)`, failing to explicitly define `top: 0;` causes the element to align to its natural document flow position. If the parent container (like `body`) has padding or margins, the skip link may partially peek into the viewport by default instead of being fully hidden off-screen.
+**Action:** Always explicitly set `top: 0;` when using absolute positioning and negative `translateY` transforms to reliably hide skip links at the top edge of the viewport.
