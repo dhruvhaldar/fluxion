@@ -85,7 +85,7 @@ class NavierStokes2D:
         inv_dx2 = 1.0 / (dx**2)
         inv_dy2 = 1.0 / (dy**2)
 
-        du_dx = np.empty_like(u_interior)
+        du_dx = np.empty(u_interior.shape, dtype=u_interior.dtype)
         np.subtract(u[2:, :], u[:-2, :], out=du_dx)
         np.multiply(du_dx, inv_2dx, out=du_dx)
 
@@ -104,7 +104,7 @@ class NavierStokes2D:
         # Indices in v array: i and i-1.
 
         # ⚡ Bolt: Use in-place operations to prevent implicit array creations for v_interp
-        v_interp = np.empty_like(u_interior)
+        v_interp = np.empty(u_interior.shape, dtype=u_interior.dtype)
         np.add(v[:-1, 1:], v[1:, 1:], out=v_interp)
         np.add(v_interp, v[:-1, :-1], out=v_interp)
         np.add(v_interp, v[1:, :-1], out=v_interp)
@@ -117,13 +117,13 @@ class NavierStokes2D:
         # For j=0, need j=-1. For j=ny-1, need j=ny.
         # Handle boundaries later. For now assume internal j=1..ny-2.
 
-        du_dy = np.empty_like(u_interior)
+        du_dy = np.empty(u_interior.shape, dtype=u_interior.dtype)
         # Interior Y (j=1..ny-2)
         np.subtract(u_interior[:, 2:], u_interior[:, :-2], out=du_dy[:, 1:-1])
         np.multiply(du_dy[:, 1:-1], inv_2dy, out=du_dy[:, 1:-1])
 
         # Diffusion d2u/dx2 + d2u/dy2
-        d2u_dy2 = np.empty_like(u_interior)
+        d2u_dy2 = np.empty(u_interior.shape, dtype=u_interior.dtype)
         np.multiply(u_interior[:, 1:-1], 2.0, out=d2u_dy2[:, 1:-1])
         np.subtract(u_interior[:, 2:], d2u_dy2[:, 1:-1], out=d2u_dy2[:, 1:-1])
         np.add(d2u_dy2[:, 1:-1], u_interior[:, :-2], out=d2u_dy2[:, 1:-1])
@@ -149,10 +149,10 @@ class NavierStokes2D:
         du_dy[:, 0] = (u_interior[:, 1] - (2*u_bot - u_interior[:, 0])) * inv_2dy
 
         # ⚡ Bolt: Chain inplace operations to avoid implicit array allocations
-        rhs_u = np.empty_like(u_interior)
+        rhs_u = np.empty(u_interior.shape, dtype=u_interior.dtype)
 
         # ⚡ Bolt: Prevent implicit allocations in advection term multiplications
-        tmp_u = np.empty_like(u_interior)
+        tmp_u = np.empty(u_interior.shape, dtype=u_interior.dtype)
 
         np.multiply(u[1:-1, :], 2.0, out=tmp_u)
         np.subtract(u[2:, :], tmp_u, out=rhs_u)
@@ -176,10 +176,10 @@ class NavierStokes2D:
         v_interior = v[:, 1:-1] # j=1..ny-1
 
         # dv/dy
-        dv_dx = np.empty_like(v_interior)
+        dv_dx = np.empty(v_interior.shape, dtype=v_interior.dtype)
 
         # d2v/dy2
-        d2v_dx2 = np.empty_like(v_interior)
+        d2v_dx2 = np.empty(v_interior.shape, dtype=v_interior.dtype)
 
         # Boundaries for V (Left/Right)
         v_left = self.bc_v['left']
@@ -209,7 +209,7 @@ class NavierStokes2D:
         # We need u around v[i, j]
 
         # ⚡ Bolt: Use in-place operations to prevent implicit array creations for u_interp
-        u_interp = np.empty_like(v_interior)
+        u_interp = np.empty(v_interior.shape, dtype=v_interior.dtype)
         np.add(u[:-1, :-1], u[1:, :-1], out=u_interp)
         np.add(u_interp, u[:-1, 1:], out=u_interp)
         np.add(u_interp, u[1:, 1:], out=u_interp)
@@ -219,7 +219,7 @@ class NavierStokes2D:
         rhs_v = d2v_dx2
 
         # ⚡ Bolt: Prevent implicit allocations in advection term multiplications
-        tmp_v = np.empty_like(v_interior)
+        tmp_v = np.empty(v_interior.shape, dtype=v_interior.dtype)
 
         np.multiply(v[:, 1:-1], 2.0, out=tmp_v)
         np.subtract(v[:, 2:], tmp_v, out=tmp_v)
