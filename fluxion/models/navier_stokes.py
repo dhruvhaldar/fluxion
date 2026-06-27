@@ -85,9 +85,8 @@ class NavierStokes2D:
         inv_dx2 = 1.0 / (dx**2)
         inv_dy2 = 1.0 / (dy**2)
 
-        du_dx = np.empty(u_interior.shape, dtype=u_interior.dtype)
-        np.subtract(u[2:, :], u[:-2, :], out=du_dx)
-        np.multiply(du_dx, inv_2dx, out=du_dx)
+        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
+        du_dx = (u[2:, :] - u[:-2, :]) * inv_2dx
 
         # Advection v * du/dy
         # Need v at u-locations.
@@ -103,12 +102,8 @@ class NavierStokes2D:
         # For u[i, j], neighbors are v[i, j], v[i, j+1], v[i-1, j], v[i-1, j+1].
         # Indices in v array: i and i-1.
 
-        # ⚡ Bolt: Use in-place operations to prevent implicit array creations for v_interp
-        v_interp = np.empty(u_interior.shape, dtype=u_interior.dtype)
-        np.add(v[:-1, 1:], v[1:, 1:], out=v_interp)
-        np.add(v_interp, v[:-1, :-1], out=v_interp)
-        np.add(v_interp, v[1:, :-1], out=v_interp)
-        np.multiply(v_interp, 0.25, out=v_interp)
+        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
+        v_interp = 0.25 * (v[:-1, 1:] + v[1:, 1:] + v[:-1, :-1] + v[1:, :-1])
 
         # du/dy
         # u[i, j+1] - u[i, j-1]
@@ -117,17 +112,15 @@ class NavierStokes2D:
         # For j=0, need j=-1. For j=ny-1, need j=ny.
         # Handle boundaries later. For now assume internal j=1..ny-2.
 
+        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
         du_dy = np.empty(u_interior.shape, dtype=u_interior.dtype)
         # Interior Y (j=1..ny-2)
-        np.subtract(u_interior[:, 2:], u_interior[:, :-2], out=du_dy[:, 1:-1])
-        np.multiply(du_dy[:, 1:-1], inv_2dy, out=du_dy[:, 1:-1])
+        du_dy[:, 1:-1] = (u_interior[:, 2:] - u_interior[:, :-2]) * inv_2dy
 
         # Diffusion d2u/dx2 + d2u/dy2
+        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
         d2u_dy2 = np.empty(u_interior.shape, dtype=u_interior.dtype)
-        np.multiply(u_interior[:, 1:-1], 2.0, out=d2u_dy2[:, 1:-1])
-        np.subtract(u_interior[:, 2:], d2u_dy2[:, 1:-1], out=d2u_dy2[:, 1:-1])
-        np.add(d2u_dy2[:, 1:-1], u_interior[:, :-2], out=d2u_dy2[:, 1:-1])
-        np.multiply(d2u_dy2[:, 1:-1], inv_dy2, out=d2u_dy2[:, 1:-1])
+        d2u_dy2[:, 1:-1] = (u_interior[:, 2:] - 2.0 * u_interior[:, 1:-1] + u_interior[:, :-2]) * inv_dy2
 
         # Apply BCs for u derivatives near walls
         # Top Wall (Lid): u = u_lid.
@@ -148,28 +141,15 @@ class NavierStokes2D:
         du_dy[:, -1] = (2*u_top - u_interior[:, -1] - u_interior[:, -2]) * inv_2dy
         du_dy[:, 0] = (u_interior[:, 1] - (2*u_bot - u_interior[:, 0])) * inv_2dy
 
-        # ⚡ Bolt: Chain inplace operations to avoid implicit array allocations
-        rhs_u = np.empty(u_interior.shape, dtype=u_interior.dtype)
-
-        # ⚡ Bolt: Prevent implicit allocations in advection term multiplications
-        tmp_u = np.empty(u_interior.shape, dtype=u_interior.dtype)
-
-        np.multiply(u[1:-1, :], 2.0, out=tmp_u)
-        np.subtract(u[2:, :], tmp_u, out=rhs_u)
-        np.add(rhs_u, u[:-2, :], out=rhs_u)
-        np.multiply(rhs_u, inv_dx2, out=rhs_u)
-
+        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
+        rhs_u = (u[2:, :] - 2.0 * u[1:-1, :] + u[:-2, :]) * inv_dx2
         rhs_u += d2u_dy2
         rhs_u *= self.nu
 
-        np.multiply(u_interior, du_dx, out=tmp_u)
-        rhs_u -= tmp_u
-        np.multiply(v_interp, du_dy, out=tmp_u)
-        rhs_u -= tmp_u
+        rhs_u -= u_interior * du_dx
+        rhs_u -= v_interp * du_dy
 
-        # ⚡ Bolt: Eliminate implicit allocations in intermediate velocity update
-        np.multiply(rhs_u, dt, out=rhs_u)
-        np.add(u_interior, rhs_u, out=u_star[1:-1, :])
+        u_star[1:-1, :] = u_interior + rhs_u * dt
 
         # --- V-Momentum ---
         v_star = v.copy()
@@ -192,55 +172,32 @@ class NavierStokes2D:
         d2v_dx2[0, :] = (v_interior[1, :] - 3*v_interior[0, :] + 2*v_left) * inv_dx2
         d2v_dx2[-1, :] = (2*v_right - 3*v_interior[-1, :] + v_interior[-2, :]) * inv_dx2
 
-        np.multiply(v_interior[1:-1, :], 2.0, out=d2v_dx2[1:-1, :])
-        np.subtract(v_interior[2:, :], d2v_dx2[1:-1, :], out=d2v_dx2[1:-1, :])
-        np.add(d2v_dx2[1:-1, :], v_interior[:-2, :], out=d2v_dx2[1:-1, :])
-        np.multiply(d2v_dx2[1:-1, :], inv_dx2, out=d2v_dx2[1:-1, :])
+        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
+        d2v_dx2[1:-1, :] = (v_interior[2:, :] - 2.0 * v_interior[1:-1, :] + v_interior[:-2, :]) * inv_dx2
 
         dv_dx[0, :] = (v_interior[1, :] - (2*v_left - v_interior[0, :])) * inv_2dx
         dv_dx[-1, :] = ((2*v_right - v_interior[-1, :]) - v_interior[-2, :]) * inv_2dx
 
-        np.subtract(v_interior[2:, :], v_interior[:-2, :], out=dv_dx[1:-1, :])
-        np.multiply(dv_dx[1:-1, :], inv_2dx, out=dv_dx[1:-1, :])
+        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
+        dv_dx[1:-1, :] = (v_interior[2:, :] - v_interior[:-2, :]) * inv_2dx
 
         # u interpolation for v eq
         # u at (i, j), (i+1, j), (i, j-1), (i+1, j-1)
         # v interior j ranges 1..ny-1.
         # We need u around v[i, j]
 
-        # ⚡ Bolt: Use in-place operations to prevent implicit array creations for u_interp
-        u_interp = np.empty(v_interior.shape, dtype=v_interior.dtype)
-        np.add(u[:-1, :-1], u[1:, :-1], out=u_interp)
-        np.add(u_interp, u[:-1, 1:], out=u_interp)
-        np.add(u_interp, u[1:, 1:], out=u_interp)
-        np.multiply(u_interp, 0.25, out=u_interp)
+        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
+        u_interp = 0.25 * (u[:-1, :-1] + u[1:, :-1] + u[:-1, 1:] + u[1:, 1:])
 
-        # ⚡ Bolt: Chain inplace operations to avoid implicit array allocations
+        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
         rhs_v = d2v_dx2
-
-        # ⚡ Bolt: Prevent implicit allocations in advection term multiplications
-        tmp_v = np.empty(v_interior.shape, dtype=v_interior.dtype)
-
-        np.multiply(v[:, 1:-1], 2.0, out=tmp_v)
-        np.subtract(v[:, 2:], tmp_v, out=tmp_v)
-        np.add(tmp_v, v[:, :-2], out=tmp_v)
-        np.multiply(tmp_v, inv_dy2, out=tmp_v)
-
-        rhs_v += tmp_v
+        rhs_v += (v[:, 2:] - 2.0 * v[:, 1:-1] + v[:, :-2]) * inv_dy2
         rhs_v *= self.nu
 
-        np.multiply(u_interp, dv_dx, out=tmp_v)
-        rhs_v -= tmp_v
+        rhs_v -= u_interp * dv_dx
+        rhs_v -= v_interior * (v[:, 2:] - v[:, :-2]) * inv_2dy
 
-        # v_interior * ((v[:, 2:] - v[:, :-2]) * inv_2dy)
-        np.subtract(v[:, 2:], v[:, :-2], out=tmp_v)
-        np.multiply(tmp_v, inv_2dy, out=tmp_v)
-        np.multiply(v_interior, tmp_v, out=tmp_v)
-        rhs_v -= tmp_v
-
-        # ⚡ Bolt: Eliminate implicit allocations in intermediate velocity update
-        np.multiply(rhs_v, dt, out=rhs_v)
-        np.add(v_interior, rhs_v, out=v_star[:, 1:-1])
+        v_star[:, 1:-1] = v_interior + rhs_v * dt
 
         # Enforce BCs on Intermediate Velocity (Walls)
         # Tangential velocities
@@ -253,8 +210,8 @@ class NavierStokes2D:
         # div(u*) / dt = Lap(p)
         div_u_star = discretization.compute_divergence(u_star, v_star, grid)
 
-        # ⚡ Bolt: Perform in-place division to avoid allocating a new array for rhs_p
-        div_u_star /= dt
+        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
+        div_u_star = div_u_star / dt
 
         # Solve PPE
         self.p, _ = solvers.LinearSolver.solve_jacobi(self.p, div_u_star, grid, max_iter=2000, tol=1e-5)
@@ -263,12 +220,9 @@ class NavierStokes2D:
         # u = u* - dt * grad(p)
         grad_p_x, grad_p_y = discretization.compute_gradient(self.p, grid)
 
-        # ⚡ Bolt: Eliminate implicit allocations in the correction step
-        np.multiply(grad_p_x, dt, out=grad_p_x)
-        np.subtract(u_star, grad_p_x, out=self.u)
-
-        np.multiply(grad_p_y, dt, out=grad_p_y)
-        np.subtract(v_star, grad_p_y, out=self.v)
+        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
+        self.u = u_star - grad_p_x * dt
+        self.v = v_star - grad_p_y * dt
 
         # Enforce BCs again?
         # Projection method naturally enforces div(u)=0.
