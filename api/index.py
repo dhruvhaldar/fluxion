@@ -67,7 +67,7 @@ def rate_limit():
     # Explicitly validate and truncate all inputs BEFORE using any of them in log messages.
     # Logging a failure for one input using the unvalidated, raw value of another creates a log-bombing vulnerability.
     safe_ip = raw_ip[:45] + '...[TRUNCATED]' if raw_ip and len(raw_ip) > 45 else raw_ip
-    safe_url = raw_url[:256] + '...[TRUNCATED]' if raw_url and len(raw_url) > 2048 else raw_url
+    safe_url = raw_url[:256] + '...[TRUNCATED]' if raw_url and len(raw_url) > 256 else raw_url
 
     if not raw_ip:
         app.logger.warning(f"Security Event: Blocked request with missing remote address. url: {repr(safe_url)}")
