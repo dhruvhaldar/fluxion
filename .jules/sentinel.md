@@ -12,3 +12,7 @@
 **Vulnerability:** A log-bombing vulnerability existed where the logging logic attempted to truncate large URLs using `[:256]` but the condition to trigger truncation was erroneously set to `len(raw_url) > 2048`. This allowed payloads between 257 and 2048 characters to bypass truncation entirely and be logged in full, risking a Disk DoS attack.
 **Learning:** Truncation bounds must exactly match their triggering conditions. A mismatch creates a window where massive, unsanitized inputs bypass formatting constraints.
 **Prevention:** Always ensure the condition for truncation directly matches the length of the truncation slice (e.g., `if len(val) > LIMIT: val = val[:LIMIT]`).
+## 2026-07-01 - [Log Bombing via Un-Rate-Limited Early Returns]
+**Vulnerability:** A log-bombing (Disk DoS) vulnerability existed where early request rejections (e.g., excessively long URIs, missing IPs, directory traversal attempts) logged a warning synchronously and returned a 400/414 response *before* hitting the main application rate limiter. This allowed attackers to flood the server with malformed requests to bypass the rate limiter entirely and infinitely spam the application logs.
+**Learning:** Security validations that return early and log warnings must themselves be protected by rate-limiting or log-suppression logic.
+**Prevention:** Implement a separate, dedicated rate-limiting mechanism (like an LRU tracker dictionary) specifically to suppress duplicate log entries for early-block security events.
