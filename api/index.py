@@ -143,7 +143,7 @@ def rate_limit():
                 oldest_ip = next(iter(ip_tracker))
                 del ip_tracker[oldest_ip]
 
-            ip_tracker[ip] = {'requests': deque(), 'last_logged': 0.0}
+            ip_tracker[ip] = {'requests': deque(), 'last_logged': float('-inf')}
         else:
             # Security Enhancement: Implement LRU eviction policy to prevent eviction bypass
             # By moving the accessed IP to the end of the dictionary, we ensure that
