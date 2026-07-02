@@ -5,6 +5,9 @@ import time
 @pytest.fixture
 def client():
     app.config['TESTING'] = True
+    from api.index import ip_tracker, early_block_tracker
+    ip_tracker.clear()
+    early_block_tracker.clear()
     with app.test_client() as client:
         yield client
 

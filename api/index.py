@@ -63,6 +63,26 @@ ip_tracker_lock = threading.Lock()
 early_block_tracker = {}
 early_block_lock = threading.Lock()
 
+def normalize_ip(raw_ip):
+    """
+    Normalizes an IP address. Strips scope IDs, converts IPv4-mapped IPv6,
+    and normalizes IPv6 to its /64 subnet. Returns None if invalid.
+    """
+    if not raw_ip:
+        return None
+    try:
+        clean_ip = raw_ip.split('%')[0]
+        ip_obj = ipaddress.ip_address(clean_ip)
+        if getattr(ip_obj, 'ipv4_mapped', None):
+            return ip_obj.ipv4_mapped.compressed
+        if ip_obj.version == 6:
+            net = ipaddress.ip_network(f"{ip_obj.compressed}/64", strict=False)
+            return net.network_address.compressed
+        return ip_obj.compressed
+    except ValueError:
+        return None
+
+
 def log_early_block(key, message):
     current_time = time.monotonic()
     with early_block_lock:
@@ -96,38 +116,23 @@ def rate_limit():
     # Security Enhancement: Limit the length of the remote address to mitigate DoS
     # via memory exhaustion or log bombing using extremely long spoofed IP headers.
     if len(raw_ip) > 45:
-        log_early_block(f"long_ip_{safe_ip}", f"Security Event: Blocked request due to excessively long remote address: {repr(safe_ip)}. url: {repr(safe_url)}")
+        log_early_block("long_ip_global", f"Security Event: Blocked request due to excessively long remote address: {repr(safe_ip)}. url: {repr(safe_url)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
-
-    # Security Enhancement: Restrict the maximum length of the entire URL (including query strings)
-    # to mitigate DoS (Denial of Service) attacks via memory exhaustion and buffer overflows.
-    if raw_url and len(raw_url) > 2048:
-        log_early_block(f"long_uri_{safe_ip}", f"Security Event: Blocked request from {repr(safe_ip)} due to URI length > 2048. url: {repr(safe_url)}")
-        return "URI Too Long", 414, {"Content-Type": "text/plain; charset=utf-8"}
-
-    ip = raw_ip
 
     # Security Enhancement: Normalize IP address to prevent bypass of IP-based controls
     # via multiple representations of the same IPv6 address (e.g., 2001:db8::1 vs 2001:db8:0:0:0:0:0:1).
     # Also handles IPv4-mapped IPv6 addresses (e.g. ::ffff:192.168.0.1) to prevent rate-limit bypasses
     # Groups IPv6 addresses by /64 subnet to prevent rate-limit bypasses by using different addresses in the same subnet
-    try:
-        # Strip scope ID from IPv6 addresses (e.g., fe80::1%eth0) before parsing
-        # to prevent valid requests from being incorrectly blocked as invalid formats
-        clean_ip = ip.split('%')[0]
-        ip_obj = ipaddress.ip_address(clean_ip)
-        if getattr(ip_obj, 'ipv4_mapped', None):
-            ip_obj = ip_obj.ipv4_mapped
-            ip = ip_obj.compressed
-        else:
-            if ip_obj.version == 6:
-                net = ipaddress.ip_network(f"{ip_obj.compressed}/64", strict=False)
-                ip = net.network_address.compressed
-            else:
-                ip = ip_obj.compressed
-    except ValueError:
-        log_early_block(f"invalid_ip_{safe_ip}", f"Security Event: Blocked request from {repr(request.remote_addr)} with invalid IP address format.")
+    ip = normalize_ip(raw_ip)
+    if not ip:
+        log_early_block("invalid_ip_global", f"Security Event: Blocked request from {repr(request.remote_addr)} with invalid IP address format.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
+
+    # Security Enhancement: Restrict the maximum length of the entire URL (including query strings)
+    # to mitigate DoS (Denial of Service) attacks via memory exhaustion and buffer overflows.
+    if raw_url and len(raw_url) > 2048:
+        log_early_block(f"long_uri_{ip}", f"Security Event: Blocked request from {repr(safe_ip)} due to URI length > 2048. url: {repr(safe_url)}")
+        return "URI Too Long", 414, {"Content-Type": "text/plain; charset=utf-8"}
 
     # Security Enhancement: Use monotonic time for rate limiting to prevent
     # bypasses or lockouts caused by system clock adjustments (e.g., NTP sync).
@@ -249,33 +254,34 @@ def index():
 @app.route('/assets/<path:path>', methods=['GET'])
 def send_assets(path):
     raw_ip = request.remote_addr
-    safe_ip = raw_ip[:45] + '...[TRUNCATED]' if raw_ip and len(raw_ip) > 45 else raw_ip
+    norm_ip = normalize_ip(raw_ip)
+    ip_key = norm_ip if norm_ip else "global"
 
     # Security Enhancement: Restrict input length to mitigate DoS attacks
     if len(path) > 256:
         # Security Enhancement: Truncate excessively long path payload before logging
         # to mitigate log bombing/Disk DoS.
         truncated_path = path[:256] + '...[TRUNCATED]'
-        log_early_block(f"long_asset_path_{safe_ip}", f"Security Event: Blocked request from {repr(request.remote_addr)} due to URI length > 256. path: {repr(truncated_path)}")
+        log_early_block(f"long_asset_path_{ip_key}", f"Security Event: Blocked request from {repr(request.remote_addr)} due to URI length > 256. path: {repr(truncated_path)}")
         return "URI Too Long", 414, {"Content-Type": "text/plain; charset=utf-8"}
 
     # Prevent directory traversal attacks
     # explicitly checking is good defense in depth
     if '..' in path or path.startswith('/') or '%' in path:
-        log_early_block(f"dir_traversal_{safe_ip}", f"Security Event: Blocked request from {repr(request.remote_addr)} due to potential directory traversal. path: {repr(path)}")
+        log_early_block(f"dir_traversal_{ip_key}", f"Security Event: Blocked request from {repr(request.remote_addr)} due to potential directory traversal. path: {repr(path)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
 
     # Security Enhancement: Block requests for hidden files or directories
     # to prevent accidental exposure of sensitive internal metadata (e.g., .git/, .env)
     # even if allowed_extensions is later relaxed to include generic formats.
     if path.startswith('.') or '/.' in path:
-        log_early_block(f"hidden_file_{safe_ip}", f"Security Event: Blocked request from {repr(request.remote_addr)} for hidden file/directory. path: {repr(path)}")
+        log_early_block(f"hidden_file_{ip_key}", f"Security Event: Blocked request from {repr(request.remote_addr)} for hidden file/directory. path: {repr(path)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
 
     # Security Enhancement: Strict allowed characters for file paths to prevent log injection or unexpected parser behavior
     # Using \Z and re.fullmatch to ensure trailing newlines are correctly blocked
     if not re.fullmatch(r'^[a-zA-Z0-9_./-]+\Z', path):
-        log_early_block(f"invalid_chars_{safe_ip}", f"Security Event: Blocked request from {repr(request.remote_addr)} due to invalid characters in path. path: {repr(path)}")
+        log_early_block(f"invalid_chars_{ip_key}", f"Security Event: Blocked request from {repr(request.remote_addr)} due to invalid characters in path. path: {repr(path)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
 
     # Security Enhancement: Only allow serving known safe media extensions
@@ -285,7 +291,7 @@ def send_assets(path):
     }
     _, ext = os.path.splitext(path)
     if ext.lower() not in allowed_extensions:
-        log_early_block(f"unsupported_media_{safe_ip}", f"Security Event: Blocked request from {repr(request.remote_addr)} due to unsupported media type. ext: {repr(ext)}")
+        log_early_block(f"unsupported_media_{ip_key}", f"Security Event: Blocked request from {repr(request.remote_addr)} due to unsupported media type. ext: {repr(ext)}")
         return "Unsupported Media Type", 415, {"Content-Type": "text/plain; charset=utf-8"}
 
     # Determine the absolute path to the assets directory
@@ -297,7 +303,7 @@ def send_assets(path):
     # This acts as a robust defense against any bypass of previous string checks
     requested_path = os.path.abspath(os.path.join(assets_dir, path))
     if not requested_path.startswith(assets_dir + os.sep):
-        log_early_block(f"out_of_bounds_{safe_ip}", f"Security Event: Blocked request from {repr(request.remote_addr)} due to out-of-bounds resolved path. path: {repr(path)}")
+        log_early_block(f"out_of_bounds_{ip_key}", f"Security Event: Blocked request from {repr(request.remote_addr)} due to out-of-bounds resolved path. path: {repr(path)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
 
     return send_from_directory(assets_dir, path)
