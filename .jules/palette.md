@@ -165,3 +165,6 @@
 ## 2026-06-25 - Absolute Positioning of Skip Links
 **Learning:** When hiding 'skip to content' links using absolute positioning and `transform: translateY(-100%)`, failing to explicitly define `top: 0;` causes the element to align to its natural document flow position. If the parent container (like `body`) has padding or margins, the skip link may partially peek into the viewport by default instead of being fully hidden off-screen.
 **Action:** Always explicitly set `top: 0;` when using absolute positioning and negative `translateY` transforms to reliably hide skip links at the top edge of the viewport.
+## $(date +%Y-%m-%d) - Prevent iOS Context Menu Interference on Custom Touch Tooltips
+**Learning:** When implementing custom CSS tooltips mapped to the `:active` state for touch devices, the native iOS context menu (triggered by long presses on interactive elements like links) can appear and visually overlap or block the intended custom tooltip, confusing the user.
+**Action:** Always apply `-webkit-touch-callout: none;` to interactive elements (like `<a>` or `<abbr>`) that utilize custom `:active` state tooltips or interactions to suppress the native iOS context menu and ensure a smooth, app-like experience.
