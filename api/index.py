@@ -71,7 +71,7 @@ def normalize_ip(raw_ip):
     if not raw_ip:
         return None
     try:
-        clean_ip = raw_ip.split('%')[0]
+        clean_ip = raw_ip.strip().split('%')[0]
         ip_obj = ipaddress.ip_address(clean_ip)
         if getattr(ip_obj, 'ipv4_mapped', None):
             return ip_obj.ipv4_mapped.compressed
