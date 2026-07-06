@@ -89,3 +89,14 @@ def test_rate_limiter_ipv6_scope_id(client):
     # The 101st request using the same IP should be BLOCKED
     response = client.get('/', environ_base={'REMOTE_ADDR': 'fe80::1%eth0'})
     assert response.status_code == 429
+
+def test_rate_limiter_padded_ip(client):
+    # Ensure IPv6 addresses or IPv4 addresses with padding and scope IDs are correctly tracked
+    # Make 100 requests using a padded IP with a scope ID
+    for _ in range(100):
+        response = client.get('/', environ_base={'REMOTE_ADDR': ' 192.168.1.10 %eth0 '})
+        assert response.status_code == 200
+
+    # The 101st request using the same padded IP should be BLOCKED
+    response = client.get('/', environ_base={'REMOTE_ADDR': ' 192.168.1.10 %eth0 '})
+    assert response.status_code == 429
