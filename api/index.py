@@ -217,7 +217,7 @@ def index():
 
             <h2 id="lid-driven-cavity-streamlines" tabindex="-1">Lid Driven Cavity Streamlines (<abbr title="Reynolds number" tabindex="0">Re</abbr>=100) <a href="#lid-driven-cavity-streamlines" class="heading-anchor" aria-label="Permalink to Lid Driven Cavity Streamlines (Re=100)" title="Permalink to Lid Driven Cavity Streamlines (Re=100)">#</a></h2>
             <figure>
-                <a href="/assets/lid_driven_streamlines.png" target="_blank" rel="noopener noreferrer" title="Click to view full size" aria-describedby="fig1-caption">
+                <a href="/assets/lid_driven_streamlines.png" target="_blank" rel="noopener noreferrer" title="View full size" aria-describedby="fig1-caption">
                     <img src="/assets/lid_driven_streamlines.png" width="800" height="600" alt="A color contour map showing a large primary vortex centered at coordinates (0.6, 0.5) with smaller secondary vortices in the bottom corners." loading="lazy" decoding="async" />
                     <span class="sr-only">(opens in a new tab)</span>
                 </a>
@@ -226,7 +226,7 @@ def index():
 
             <h2 id="grid-convergence-study" tabindex="-1">Grid Convergence Study <a href="#grid-convergence-study" class="heading-anchor" aria-label="Permalink to Grid Convergence Study" title="Permalink to Grid Convergence Study">#</a></h2>
             <figure>
-                <a href="/assets/grid_convergence.png" target="_blank" rel="noopener noreferrer" title="Click to view full size" aria-describedby="fig2-caption">
+                <a href="/assets/grid_convergence.png" target="_blank" rel="noopener noreferrer" title="View full size" aria-describedby="fig2-caption">
                     <img src="/assets/grid_convergence.png" width="800" height="600" alt="A log-log line graph plotting L2-Error Norm against Grid Spacing. A straight line is fitted to the data points showing a downward slope of approximately 2.0." loading="lazy" decoding="async" />
                     <span class="sr-only">(opens in a new tab)</span>
                 </a>
@@ -235,7 +235,7 @@ def index():
 
             <h2 id="convection-scheme-comparison" tabindex="-1">Convection Scheme Comparison <a href="#convection-scheme-comparison" class="heading-anchor" aria-label="Permalink to Convection Scheme Comparison" title="Permalink to Convection Scheme Comparison">#</a></h2>
             <figure>
-                <a href="/assets/scheme_comparison.png" target="_blank" rel="noopener noreferrer" title="Click to view full size" aria-describedby="fig3-caption">
+                <a href="/assets/scheme_comparison.png" target="_blank" rel="noopener noreferrer" title="View full size" aria-describedby="fig3-caption">
                     <img src="/assets/scheme_comparison.png" width="1000" height="600" alt="A line graph comparing three lines against a sharp step function. The upwind line is heavily smoothed out, while the central difference line has sharp wiggles near the step." loading="lazy" decoding="async" />
                     <span class="sr-only">(opens in a new tab)</span>
                 </a>
