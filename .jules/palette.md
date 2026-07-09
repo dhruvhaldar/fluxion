@@ -168,3 +168,11 @@
 ## $(date +%Y-%m-%d) - Prevent iOS Context Menu Interference on Custom Touch Tooltips
 **Learning:** When implementing custom CSS tooltips mapped to the `:active` state for touch devices, the native iOS context menu (triggered by long presses on interactive elements like links) can appear and visually overlap or block the intended custom tooltip, confusing the user.
 **Action:** Always apply `-webkit-touch-callout: none;` to interactive elements (like `<a>` or `<abbr>`) that utilize custom `:active` state tooltips or interactions to suppress the native iOS context menu and ensure a smooth, app-like experience.
+
+## $(date +%Y-%m-%d) - Device-Agnostic Context Terminology
+**Learning:** Hardcoding interaction terminology like "Click to view" implicitly assumes the user is operating a mouse or trackpad, which creates cognitive dissonance and excludes users relying on touchscreens (who "tap") or keyboards (who press "Enter" or "Space").
+**Action:** Always use device-agnostic terminology (e.g., "View full size" or "Select to expand") for titles, ARIA labels, and helper text to ensure the instructions are inclusive and accurate regardless of the input device.
+
+## $(date +%Y-%m-%d) - CSS Tooltip Viewport Clipping on Anchor Links
+**Learning:** When using custom CSS tooltips that display directly above an element (e.g., `bottom: 100%`), navigating to the element via an anchor link (like `#heading`) often scrolls the element flush with the top of the viewport. Consequently, the tooltip renders entirely off-screen, rendering it invisible to sighted keyboard users who trigger the focus state.
+**Action:** When implementing top-positioned custom tooltips on elements that act as anchor targets, ensure `scroll-padding-top` on the `html` or `body` element is sufficiently large (e.g., `64px`) to leave enough breathing room above the focused element for the tooltip to fully display without being clipped by the viewport edge.
