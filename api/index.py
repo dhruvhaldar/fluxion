@@ -101,6 +101,13 @@ def log_early_block(key, message):
 
 @app.before_request
 def rate_limit():
+    # Security Enhancement: Prevent resource exhaustion DoS by blocking excessively large payloads
+    # early based on Content-Length header before Werkzeug consumes the stream.
+    max_length = app.config.get('MAX_CONTENT_LENGTH')
+    if request.content_length and max_length and request.content_length > max_length:
+        app.logger.warning(f"Security Event: Blocked request due to excessively large Content-Length ({request.content_length} > {max_length}).")
+        return "Payload Too Large", 413, {"Content-Type": "text/plain; charset=utf-8"}
+
     raw_ip = request.remote_addr
     raw_url = request.url
 
