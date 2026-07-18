@@ -10,3 +10,6 @@
 ## 2026-07-16 - Math Refactoring in Hot Loops
 **Learning:** In purely eager-execution Python environments (like standard NumPy without Numba or JAX), writing mathematically equivalent but un-factored expressions (like `2*k2 + 2*k3`) forces the library to allocate separate intermediate arrays for each scalar multiplication before adding them.
 **Action:** When implementing mathematical algorithms (like RK4 integrations) in hot loops, explicitly pre-compute scalar constants (like `0.5 * dt`) and aggressively factor equations (e.g., `2.0 * (k2 + k3)`) to minimize implicit array creations. Use float constants (e.g. `2.0` instead of `2`) to prevent potential overhead from implicit integer upcasting.
+## 2026-07-18 - Avoid np.meshgrid in Hot Loops
+**Learning:** Using `np.meshgrid()` inside performance-critical, highly iterative loops (like SOR solvers) causes significant slowdowns because it allocates large intermediate 2D arrays on every iteration.
+**Action:** When generating coordinate grids or masks (like checkerboard patterns) in hot paths, utilize NumPy broadcasting (e.g., `idx = np.arange(1, nx-1)[:, None] + np.arange(1, ny-1)[None, :]`) instead. This technique computes the necessary indices virtually without allocating large intermediate mesh grid arrays, yielding substantial speedups.
