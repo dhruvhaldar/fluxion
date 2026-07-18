@@ -176,3 +176,7 @@
 ## $(date +%Y-%m-%d) - CSS Tooltip Viewport Clipping on Anchor Links
 **Learning:** When using custom CSS tooltips that display directly above an element (e.g., `bottom: 100%`), navigating to the element via an anchor link (like `#heading`) often scrolls the element flush with the top of the viewport. Consequently, the tooltip renders entirely off-screen, rendering it invisible to sighted keyboard users who trigger the focus state.
 **Action:** When implementing top-positioned custom tooltips on elements that act as anchor targets, ensure `scroll-padding-top` on the `html` or `body` element is sufficiently large (e.g., `64px`) to leave enough breathing room above the focused element for the tooltip to fully display without being clipped by the viewport edge.
+
+## 2026-07-18 - Descriptive ARIA Labels for Generic External Links
+**Learning:** Using generic link text like "GitHub Repository" alongside an external link icon lacks specific context for screen reader users when read out of context.
+**Action:** When creating external links to project repositories, always provide a descriptive `aria-label` (e.g., `aria-label="View the Fluxion CFD GitHub Repository"`) to ensure clear and inclusive navigation.
