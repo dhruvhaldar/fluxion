@@ -84,6 +84,9 @@ class NavierStokes2D:
         inv_2dy = 1.0 / (2*dy)
         inv_dx2 = 1.0 / (dx**2)
         inv_dy2 = 1.0 / (dy**2)
+        # ⚡ Bolt: Algebraically factor nu into grid constants to save full-array multiplications later
+        nu_inv_dx2 = self.nu * inv_dx2
+        nu_inv_dy2 = self.nu * inv_dy2
 
         # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
         du_dx = (u[2:, :] - u[:-2, :]) * inv_2dx
@@ -120,7 +123,7 @@ class NavierStokes2D:
         # Diffusion d2u/dx2 + d2u/dy2
         # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
         d2u_dy2 = np.empty(u_interior.shape, dtype=u_interior.dtype)
-        d2u_dy2[:, 1:-1] = (u_interior[:, 2:] - 2.0 * u_interior[:, 1:-1] + u_interior[:, :-2]) * inv_dy2
+        d2u_dy2[:, 1:-1] = (u_interior[:, 2:] - 2.0 * u_interior[:, 1:-1] + u_interior[:, :-2]) * nu_inv_dy2
 
         # Apply BCs for u derivatives near walls
         # Top Wall (Lid): u = u_lid.
@@ -130,10 +133,10 @@ class NavierStokes2D:
         # = (2*u_top - u_last - 2*u_last + u_last_minus_1) / dy^2
         # = (2*u_top - 3*u_last + u_last_minus_1) / dy^2
         u_top = self.bc_u['top']
-        d2u_dy2[:, -1] = (2*u_top - 3*u_interior[:, -1] + u_interior[:, -2]) * inv_dy2
+        d2u_dy2[:, -1] = (2*u_top - 3*u_interior[:, -1] + u_interior[:, -2]) * nu_inv_dy2
 
         u_bot = self.bc_u['bottom']
-        d2u_dy2[:, 0] = (2*u_bot - 3*u_interior[:, 0] + u_interior[:, 1]) * inv_dy2
+        d2u_dy2[:, 0] = (2*u_bot - 3*u_interior[:, 0] + u_interior[:, 1]) * nu_inv_dy2
 
         # Advection needs full du_dy?
         # du/dy at j=ny-1: (u_ghost - u_last_minus_1) / 2dy
@@ -142,9 +145,8 @@ class NavierStokes2D:
         du_dy[:, 0] = (u_interior[:, 1] - (2*u_bot - u_interior[:, 0])) * inv_2dy
 
         # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
-        rhs_u = (u[2:, :] - 2.0 * u[1:-1, :] + u[:-2, :]) * inv_dx2
+        rhs_u = (u[2:, :] - 2.0 * u[1:-1, :] + u[:-2, :]) * nu_inv_dx2
         rhs_u += d2u_dy2
-        rhs_u *= self.nu
 
         rhs_u -= u_interior * du_dx
         rhs_u -= v_interp * du_dy
@@ -169,11 +171,11 @@ class NavierStokes2D:
         # d2v/dx2 = (v[1] - 2v[0] + v_ghost) / dx^2
         # v_ghost = 2*v_left - v[0]
         # => (v[1] - 3v[0] + 2*v_left) / dx^2
-        d2v_dx2[0, :] = (v_interior[1, :] - 3*v_interior[0, :] + 2*v_left) * inv_dx2
-        d2v_dx2[-1, :] = (2*v_right - 3*v_interior[-1, :] + v_interior[-2, :]) * inv_dx2
+        d2v_dx2[0, :] = (v_interior[1, :] - 3*v_interior[0, :] + 2*v_left) * nu_inv_dx2
+        d2v_dx2[-1, :] = (2*v_right - 3*v_interior[-1, :] + v_interior[-2, :]) * nu_inv_dx2
 
         # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
-        d2v_dx2[1:-1, :] = (v_interior[2:, :] - 2.0 * v_interior[1:-1, :] + v_interior[:-2, :]) * inv_dx2
+        d2v_dx2[1:-1, :] = (v_interior[2:, :] - 2.0 * v_interior[1:-1, :] + v_interior[:-2, :]) * nu_inv_dx2
 
         dv_dx[0, :] = (v_interior[1, :] - (2*v_left - v_interior[0, :])) * inv_2dx
         dv_dx[-1, :] = ((2*v_right - v_interior[-1, :]) - v_interior[-2, :]) * inv_2dx
@@ -191,8 +193,7 @@ class NavierStokes2D:
 
         # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
         rhs_v = d2v_dx2
-        rhs_v += (v[:, 2:] - 2.0 * v[:, 1:-1] + v[:, :-2]) * inv_dy2
-        rhs_v *= self.nu
+        rhs_v += (v[:, 2:] - 2.0 * v[:, 1:-1] + v[:, :-2]) * nu_inv_dy2
 
         rhs_v -= u_interp * dv_dx
         rhs_v -= v_interior * (v[:, 2:] - v[:, :-2]) * inv_2dy
