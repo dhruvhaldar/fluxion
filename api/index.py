@@ -101,13 +101,6 @@ def log_early_block(key, message):
 
 @app.before_request
 def rate_limit():
-    # Security Enhancement: Prevent resource exhaustion DoS by blocking excessively large payloads
-    # early based on Content-Length header before Werkzeug consumes the stream.
-    max_length = app.config.get('MAX_CONTENT_LENGTH')
-    if request.content_length and max_length and request.content_length > max_length:
-        app.logger.warning(f"Security Event: Blocked request due to excessively large Content-Length ({request.content_length} > {max_length}).")
-        return "Payload Too Large", 413, {"Content-Type": "text/plain; charset=utf-8"}
-
     raw_ip = request.remote_addr
     raw_url = request.url
 
@@ -115,6 +108,17 @@ def rate_limit():
     # Logging a failure for one input using the unvalidated, raw value of another creates a log-bombing vulnerability.
     safe_ip = raw_ip[:45] + '...[TRUNCATED]' if raw_ip and len(raw_ip) > 45 else raw_ip
     safe_url = raw_url[:256] + '...[TRUNCATED]' if raw_url and len(raw_url) > 256 else raw_url
+
+    # Normalize IP address to prevent bypass of IP-based controls
+    ip = normalize_ip(raw_ip)
+
+    # Security Enhancement: Prevent resource exhaustion DoS by blocking excessively large payloads
+    # early based on Content-Length header before Werkzeug consumes the stream.
+    max_length = app.config.get('MAX_CONTENT_LENGTH')
+    if request.content_length and max_length and request.content_length > max_length:
+        ip_key = ip if ip else "missing_ip"
+        log_early_block(f"large_payload_{ip_key}", f"Security Event: Blocked request from {repr(safe_ip)} due to excessively large Content-Length ({request.content_length} > {max_length}).")
+        return "Payload Too Large", 413, {"Content-Type": "text/plain; charset=utf-8"}
 
     if not raw_ip:
         log_early_block("missing_ip", f"Security Event: Blocked request with missing remote address. url: {repr(safe_url)}")
@@ -130,7 +134,6 @@ def rate_limit():
     # via multiple representations of the same IPv6 address (e.g., 2001:db8::1 vs 2001:db8:0:0:0:0:0:1).
     # Also handles IPv4-mapped IPv6 addresses (e.g. ::ffff:192.168.0.1) to prevent rate-limit bypasses
     # Groups IPv6 addresses by /64 subnet to prevent rate-limit bypasses by using different addresses in the same subnet
-    ip = normalize_ip(raw_ip)
     if not ip:
         log_early_block("invalid_ip_global", f"Security Event: Blocked request from {repr(request.remote_addr)} with invalid IP address format.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
