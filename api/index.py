@@ -109,6 +109,16 @@ def rate_limit():
     safe_ip = raw_ip[:45] + '...[TRUNCATED]' if raw_ip and len(raw_ip) > 45 else raw_ip
     safe_url = raw_url[:256] + '...[TRUNCATED]' if raw_url and len(raw_url) > 256 else raw_url
 
+    if not raw_ip:
+        log_early_block("missing_ip", f"Security Event: Blocked request with missing remote address. url: {repr(safe_url)}")
+        return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
+
+    # Security Enhancement: Limit the length of the remote address to mitigate DoS
+    # via memory exhaustion or log bombing using extremely long spoofed IP headers.
+    if len(raw_ip) > 45:
+        log_early_block("long_ip_global", f"Security Event: Blocked request due to excessively long remote address: {repr(safe_ip)}. url: {repr(safe_url)}")
+        return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
+
     # Normalize IP address to prevent bypass of IP-based controls
     ip = normalize_ip(raw_ip)
 
@@ -119,16 +129,6 @@ def rate_limit():
         ip_key = ip if ip else "missing_ip"
         log_early_block(f"large_payload_{ip_key}", f"Security Event: Blocked request from {repr(safe_ip)} due to excessively large Content-Length ({request.content_length} > {max_length}).")
         return "Payload Too Large", 413, {"Content-Type": "text/plain; charset=utf-8"}
-
-    if not raw_ip:
-        log_early_block("missing_ip", f"Security Event: Blocked request with missing remote address. url: {repr(safe_url)}")
-        return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
-
-    # Security Enhancement: Limit the length of the remote address to mitigate DoS
-    # via memory exhaustion or log bombing using extremely long spoofed IP headers.
-    if len(raw_ip) > 45:
-        log_early_block("long_ip_global", f"Security Event: Blocked request due to excessively long remote address: {repr(safe_ip)}. url: {repr(safe_url)}")
-        return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
 
     # Security Enhancement: Normalize IP address to prevent bypass of IP-based controls
     # via multiple representations of the same IPv6 address (e.g., 2001:db8::1 vs 2001:db8:0:0:0:0:0:1).
