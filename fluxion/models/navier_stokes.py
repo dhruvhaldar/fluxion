@@ -20,6 +20,12 @@ class NavierStokes2D:
         self.v = np.zeros((grid.nx, grid.ny+1))
         self.p = np.zeros((grid.nx, grid.ny))
 
+        # Pre-allocate temporary arrays for the time-stepping loop to avoid implicit allocations
+        self._du_dy = np.empty((grid.nx - 1, grid.ny))
+        self._d2u_dy2 = np.empty((grid.nx - 1, grid.ny))
+        self._dv_dx = np.empty((grid.nx, grid.ny - 1))
+        self._d2v_dx2 = np.empty((grid.nx, grid.ny - 1))
+
         self.channel_flow = channel_flow
 
         # Boundary conditions values
@@ -115,14 +121,14 @@ class NavierStokes2D:
         # For j=0, need j=-1. For j=ny-1, need j=ny.
         # Handle boundaries later. For now assume internal j=1..ny-2.
 
-        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
-        du_dy = np.empty(u_interior.shape, dtype=u_interior.dtype)
+        # ⚡ Bolt: Reuse pre-allocated arrays to avoid memory allocation overhead on every step
+        du_dy = self._du_dy
         # Interior Y (j=1..ny-2)
         du_dy[:, 1:-1] = (u_interior[:, 2:] - u_interior[:, :-2]) * inv_2dy
 
         # Diffusion d2u/dx2 + d2u/dy2
-        # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
-        d2u_dy2 = np.empty(u_interior.shape, dtype=u_interior.dtype)
+        # ⚡ Bolt: Reuse pre-allocated arrays to avoid memory allocation overhead on every step
+        d2u_dy2 = self._d2u_dy2
         d2u_dy2[:, 1:-1] = (u_interior[:, 2:] - 2.0 * u_interior[:, 1:-1] + u_interior[:, :-2]) * nu_inv_dy2
 
         # Apply BCs for u derivatives near walls
@@ -158,10 +164,10 @@ class NavierStokes2D:
         v_interior = v[:, 1:-1] # j=1..ny-1
 
         # dv/dy
-        dv_dx = np.empty(v_interior.shape, dtype=v_interior.dtype)
+        dv_dx = self._dv_dx
 
         # d2v/dy2
-        d2v_dx2 = np.empty(v_interior.shape, dtype=v_interior.dtype)
+        d2v_dx2 = self._d2v_dx2
 
         # Boundaries for V (Left/Right)
         v_left = self.bc_v['left']
