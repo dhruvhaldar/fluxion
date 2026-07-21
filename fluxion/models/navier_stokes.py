@@ -26,6 +26,12 @@ class NavierStokes2D:
         self.bc_u = {'top': 0.0, 'bottom': 0.0, 'left': 0.0, 'right': 0.0}
         self.bc_v = {'top': 0.0, 'bottom': 0.0, 'left': 0.0, 'right': 0.0}
 
+        # Pre-allocate intermediate arrays for time stepping to avoid overhead
+        self._du_dy = np.empty((grid.nx-1, grid.ny), dtype=self.u.dtype)
+        self._d2u_dy2 = np.empty((grid.nx-1, grid.ny), dtype=self.u.dtype)
+        self._dv_dx = np.empty((grid.nx, grid.ny-1), dtype=self.v.dtype)
+        self._d2v_dx2 = np.empty((grid.nx, grid.ny-1), dtype=self.v.dtype)
+
     def set_boundary_condition(self, side, u=None, v=None):
         if u is not None: self.bc_u[side] = u
         if v is not None: self.bc_v[side] = v
@@ -116,13 +122,13 @@ class NavierStokes2D:
         # Handle boundaries later. For now assume internal j=1..ny-2.
 
         # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
-        du_dy = np.empty(u_interior.shape, dtype=u_interior.dtype)
+        du_dy = self._du_dy
         # Interior Y (j=1..ny-2)
         du_dy[:, 1:-1] = (u_interior[:, 2:] - u_interior[:, :-2]) * inv_2dy
 
         # Diffusion d2u/dx2 + d2u/dy2
         # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
-        d2u_dy2 = np.empty(u_interior.shape, dtype=u_interior.dtype)
+        d2u_dy2 = self._d2u_dy2
         d2u_dy2[:, 1:-1] = (u_interior[:, 2:] - 2.0 * u_interior[:, 1:-1] + u_interior[:, :-2]) * nu_inv_dy2
 
         # Apply BCs for u derivatives near walls
@@ -158,10 +164,10 @@ class NavierStokes2D:
         v_interior = v[:, 1:-1] # j=1..ny-1
 
         # dv/dy
-        dv_dx = np.empty(v_interior.shape, dtype=v_interior.dtype)
+        dv_dx = self._dv_dx
 
         # d2v/dy2
-        d2v_dx2 = np.empty(v_interior.shape, dtype=v_interior.dtype)
+        d2v_dx2 = self._d2v_dx2
 
         # Boundaries for V (Left/Right)
         v_left = self.bc_v['left']
