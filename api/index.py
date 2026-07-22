@@ -128,7 +128,7 @@ def rate_limit():
     if request.content_length and max_length and request.content_length > max_length:
         ip_key = ip if ip else "missing_ip"
         log_early_block(f"large_payload_{ip_key}", f"Security Event: Blocked request from {repr(safe_ip)} due to excessively large Content-Length ({request.content_length} > {max_length}).")
-        return "Payload Too Large", 413, {"Content-Type": "text/plain; charset=utf-8"}
+        return "Payload Too Large", 413, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
     # Security Enhancement: Normalize IP address to prevent bypass of IP-based controls
     # via multiple representations of the same IPv6 address (e.g., 2001:db8::1 vs 2001:db8:0:0:0:0:0:1).
