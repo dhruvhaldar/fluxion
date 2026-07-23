@@ -109,6 +109,13 @@ def rate_limit():
     safe_ip = raw_ip[:45] + '...[TRUNCATED]' if raw_ip and len(raw_ip) > 45 else raw_ip
     safe_url = raw_url[:256] + '...[TRUNCATED]' if raw_url and len(raw_url) > 256 else raw_url
 
+    # Security Enhancement: Global strict HTTP method restriction.
+    # Reject methods we don't use to prevent HTTP verb tampering and save resources.
+    allowed_methods = {"GET", "HEAD", "OPTIONS"}
+    if request.method not in allowed_methods:
+        log_early_block(f"invalid_method_global", f"Security Event: Blocked request using unsupported method {repr(request.method)}. url: {repr(safe_url)}")
+        return "Method Not Allowed", 405, {"Content-Type": "text/plain; charset=utf-8"}
+
     if not raw_ip:
         log_early_block("missing_ip", f"Security Event: Blocked request with missing remote address. url: {repr(safe_url)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
