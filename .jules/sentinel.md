@@ -20,3 +20,8 @@
 **Vulnerability:** The web server did not explicitly restrict incoming HTTP request methods, leaving it open to unexpected framework behaviors if it received unsupported HTTP methods (e.g., POST, PUT, DELETE, TRACE). This could potentially allow for verb tampering or consume unnecessary server resources on invalid requests that are not explicitly modeled in the application routes.
 **Learning:** For purely read-only or specifically scoped web applications, limiting the global accepted HTTP verbs serves as an effective defense-in-depth measure. Implementing this globally inside `@app.before_request` saves server resources (like processing rate limits) from being spent on essentially invalid traffic.
 **Prevention:** In Flask, explicitly check `request.method` against a highly restrictive set of allowed verbs (e.g., `{"GET", "HEAD", "OPTIONS"}`) very early in the request lifecycle (such as within an `app.before_request` block) and return a `405 Method Not Allowed` for any others. Use a rate-limited logging approach for blocks to avoid log-bombing.
+
+## 2026-07-24 - [Fix Insecure SECRET_KEY Configuration]
+**Vulnerability:** The application assigned `os.environ.get('SECRET_KEY')` directly to `app.config['SECRET_KEY']` before validation, setting it to `None` if unset. This could cause delayed crashes during session access or potentially trigger insecure fallbacks.
+**Learning:** Assigning `None` to sensitive configuration variables like `SECRET_KEY` before validation can be dangerous if the framework or environment behaves unexpectedly.
+**Prevention:** Extract the environment variable to a local variable, validate it, and only assign it to the application configuration if it is valid and present.
