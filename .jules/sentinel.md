@@ -25,3 +25,7 @@
 **Vulnerability:** The application assigned `os.environ.get('SECRET_KEY')` directly to `app.config['SECRET_KEY']` before validation, setting it to `None` if unset. This could cause delayed crashes during session access or potentially trigger insecure fallbacks.
 **Learning:** Assigning `None` to sensitive configuration variables like `SECRET_KEY` before validation can be dangerous if the framework or environment behaves unexpectedly.
 **Prevention:** Extract the environment variable to a local variable, validate it, and only assign it to the application configuration if it is valid and present.
+## 2026-07-25 - Prevent Log Bombing via Unvalidated HTTP Method
+**Vulnerability:** The rate limiter's HTTP method restriction logged the blocked request using the raw, unvalidated `request.method` string. An attacker could send a request with a massive HTTP method payload, which would be fully written to the application logs on every blocked request, leading to a log bombing (Disk DoS) vulnerability.
+**Learning:** Any input derived from the incoming request (such as IP address, URL, or HTTP method) can be maliciously inflated by an attacker. Always validate and truncate *all* inputs before incorporating them into log messages to prevent disk exhaustion.
+**Prevention:** Explicitly truncate request attributes (like `request.method`) to a safe, bounded length (e.g., 20 characters) and append a truncation indicator (e.g., `...[TRUNCATED]`) before logging them in security event handlers.

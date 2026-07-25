@@ -110,12 +110,13 @@ def rate_limit():
     # Logging a failure for one input using the unvalidated, raw value of another creates a log-bombing vulnerability.
     safe_ip = raw_ip[:45] + '...[TRUNCATED]' if raw_ip and len(raw_ip) > 45 else raw_ip
     safe_url = raw_url[:256] + '...[TRUNCATED]' if raw_url and len(raw_url) > 256 else raw_url
+    safe_method = request.method[:20] + '...[TRUNCATED]' if request.method and len(request.method) > 20 else request.method
 
     # Security Enhancement: Global strict HTTP method restriction.
     # Reject methods we don't use to prevent HTTP verb tampering and save resources.
     allowed_methods = {"GET", "HEAD", "OPTIONS"}
     if request.method not in allowed_methods:
-        log_early_block(f"invalid_method_global", f"Security Event: Blocked request using unsupported method {repr(request.method)}. url: {repr(safe_url)}")
+        log_early_block(f"invalid_method_global", f"Security Event: Blocked request using unsupported method {repr(safe_method)}. url: {repr(safe_url)}")
         return "Method Not Allowed", 405, {"Content-Type": "text/plain; charset=utf-8"}
 
     if not raw_ip:
