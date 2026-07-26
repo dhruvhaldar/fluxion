@@ -29,3 +29,7 @@
 **Vulnerability:** The rate limiter's HTTP method restriction logged the blocked request using the raw, unvalidated `request.method` string. An attacker could send a request with a massive HTTP method payload, which would be fully written to the application logs on every blocked request, leading to a log bombing (Disk DoS) vulnerability.
 **Learning:** Any input derived from the incoming request (such as IP address, URL, or HTTP method) can be maliciously inflated by an attacker. Always validate and truncate *all* inputs before incorporating them into log messages to prevent disk exhaustion.
 **Prevention:** Explicitly truncate request attributes (like `request.method`) to a safe, bounded length (e.g., 20 characters) and append a truncation indicator (e.g., `...[TRUNCATED]`) before logging them in security event handlers.
+## 2026-07-26 - HTTP Request Smuggling & Cache Poisoning
+**Vulnerability:** Read-only APIs not explicitly rejecting unexpected bodies in GET/HEAD/OPTIONS requests.
+**Learning:** Werkzeug's default `MAX_CONTENT_LENGTH` check isn't enough for read-only APIs as it allows bodies up to the maximum limit even on methods where bodies are undefined (GET/HEAD). This allows HTTP Request Smuggling, Cache Poisoning, and minor DoS vectors.
+**Prevention:** In read-only applications, strictly reject any request with `content_length > 0` or a `Transfer-Encoding` header.
