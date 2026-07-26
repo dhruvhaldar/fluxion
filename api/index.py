@@ -132,12 +132,11 @@ def rate_limit():
     # Normalize IP address to prevent bypass of IP-based controls
     ip = normalize_ip(raw_ip)
 
-    # Security Enhancement: Prevent resource exhaustion DoS by blocking excessively large payloads
-    # early based on Content-Length header before Werkzeug consumes the stream.
-    max_length = app.config.get('MAX_CONTENT_LENGTH')
-    if request.content_length and max_length and request.content_length > max_length:
+    # Security Enhancement: Reject bodies in read-only API to prevent HTTP Request Smuggling,
+    # Cache Poisoning, and resource exhaustion.
+    if (request.content_length is not None and request.content_length > 0) or 'Transfer-Encoding' in request.headers:
         ip_key = ip if ip else "missing_ip"
-        log_early_block(f"large_payload_{ip_key}", f"Security Event: Blocked request from {repr(safe_ip)} due to excessively large Content-Length ({request.content_length} > {max_length}).")
+        log_early_block(f"unexpected_body_{ip_key}", f"Security Event: Blocked request from {repr(safe_ip)} due to unexpected request body in read-only API.")
         return "Payload Too Large", 413, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
     # Security Enhancement: Normalize IP address to prevent bypass of IP-based controls
