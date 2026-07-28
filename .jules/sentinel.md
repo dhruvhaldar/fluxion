@@ -33,3 +33,7 @@
 **Vulnerability:** Read-only APIs not explicitly rejecting unexpected bodies in GET/HEAD/OPTIONS requests.
 **Learning:** Werkzeug's default `MAX_CONTENT_LENGTH` check isn't enough for read-only APIs as it allows bodies up to the maximum limit even on methods where bodies are undefined (GET/HEAD). This allows HTTP Request Smuggling, Cache Poisoning, and minor DoS vectors.
 **Prevention:** In read-only applications, strictly reject any request with `content_length > 0` or a `Transfer-Encoding` header.
+## 2026-07-28 - [Mitigate DoS via Keep-Alive on 413 Responses]
+**Vulnerability:** The application was vulnerable to connection-based DoS attacks because Werkzeug-generated 413 exceptions (or manually raised ones without explicit headers) were returning error responses without `Connection: close`. HTTP/1.1 keep-alive would keep the connection open, allowing malicious clients to continue streaming excessive data.
+**Learning:** Returning a 413 status code is insufficient if the connection remains open. Framework-level exception handlers must be explicitly configured to close the connection to prevent attackers from consuming server resources.
+**Prevention:** When handling exceptions globally in Flask (e.g., via `@app.errorhandler(Exception)`), explicitly check if the exception code is 413 (Payload Too Large). If it is, inject the `{'Connection': 'close'}` header into the response tuple. This ensures that even framework-generated 413 exceptions force the server to immediately drop the connection.
