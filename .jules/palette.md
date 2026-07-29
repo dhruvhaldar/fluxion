@@ -180,3 +180,7 @@
 ## 2026-07-18 - Descriptive ARIA Labels for Generic External Links
 **Learning:** Using generic link text like "GitHub Repository" alongside an external link icon lacks specific context for screen reader users when read out of context.
 **Action:** When creating external links to project repositories, always provide a descriptive `aria-label` (e.g., `aria-label="View the Fluxion CFD GitHub Repository"`) to ensure clear and inclusive navigation.
+
+## $(date +%Y-%m-%d) - Unified SVG Iconography over Unicode
+**Learning:** Using native unicode characters (like `↑` or `►`) for UI icons introduces significant cross-OS and cross-browser rendering inconsistencies. These characters often render with different glyph styles, bounding boxes, or even as colorful emojis on some platforms (e.g., iOS), which breaks design cohesion, alignment, and stroke-weight matching with existing SVG icons.
+**Action:** Always replace standalone unicode UI icons with explicit, inline SVG icons (e.g., using Feather or a unified icon library) to guarantee pixel-perfect rendering consistency, precise alignment, and cohesive stroke-weight styling across all devices and browsers.
