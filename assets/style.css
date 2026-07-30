@@ -307,6 +307,9 @@ h2:target { animation: target-pulse 2s ease-out; }
 .back-to-top-icon {
     display: inline-block;
     transition: transform 0.2s;
+    vertical-align: middle;
+    margin-right: 4px;
+    margin-bottom: 2px;
 }
 a:hover .back-to-top-icon, a:focus-visible .back-to-top-icon { transform: translateY(-2px); }
 a:active .back-to-top-icon { transform: translateY(0); transition: transform 0.1s; }
