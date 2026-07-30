@@ -56,6 +56,15 @@ if secret_key:
 # Security Enhancement: Restrict max content length to mitigate DoS (Denial of Service) via large payloads
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
 
+@app.before_request
+def check_content_length():
+    # Security Enhancement: To mitigate resource exhaustion (DoS) attacks from excessively large payloads,
+    # explicitly check request.content_length against a configured maximum (e.g., app.config['MAX_CONTENT_LENGTH'])
+    # early in the request lifecycle, such as within an @app.before_request hook. Reject oversized payloads immediately
+    # with a 413 Payload Too Large error, ensuring the connection is closed before Werkzeug consumes the stream.
+    if request.content_length is not None and request.content_length > app.config.get('MAX_CONTENT_LENGTH', float('inf')):
+        return "Payload Too Large", 413, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
+
 # Security Enhancement: Rate Limiting
 MAX_TRACKED_IPS = 10000
 RATE_LIMIT_WINDOW = 60  # seconds
