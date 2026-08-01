@@ -187,3 +187,7 @@
 ## 2026-07-31 - [Heading Permalink SVG Icon Replacement]
 **Learning:** Standalone text characters (like `#`) used as UI icons (e.g., for heading permalinks) lack professional visual polish. When replacing them with explicit SVG icons for better consistency, if custom CSS classes are not permitted and existing utilities are missing, it is necessary to use inline styles for minor alignments (like `vertical-align`). Additionally, these decorative SVGs must include `aria-hidden="true"` so that screen readers continue to rely on the parent anchor tag’s `aria-label`.
 **Action:** Replace text-based UI icons with inline SVGs featuring `aria-hidden="true"`, and use inline styling for basic alignment if CSS class additions are restricted.
+
+## 2026-08-01 - Preventing Accidental Semantic Animations from Utility Classes
+**Learning:** Reusing utility classes (like `external-link-icon`) strictly for minor layout or alignment purposes on UI components can inadvertently attach unwanted interaction semantics (such as hover/active transform animations intended only for external links) to internal navigation elements, causing a disjointed UX.
+**Action:** Ensure that utility classes used to position UI icons do not carry unintended interaction states. If restricted from creating new utility classes to fix the issue, fall back to inline styles (e.g., `style="vertical-align: middle;"`) to correct the interaction semantic mismatch while adhering to design system constraints.
