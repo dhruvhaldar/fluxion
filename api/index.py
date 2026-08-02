@@ -157,7 +157,7 @@ def rate_limit():
     # Also handles IPv4-mapped IPv6 addresses (e.g. ::ffff:192.168.0.1) to prevent rate-limit bypasses
     # Groups IPv6 addresses by /64 subnet to prevent rate-limit bypasses by using different addresses in the same subnet
     if not ip:
-        log_early_block("invalid_ip_global", f"Security Event: Blocked request from {repr(request.remote_addr)} with invalid IP address format.")
+        log_early_block("invalid_ip_global", f"Security Event: Blocked request from {repr(safe_ip)} with invalid IP address format.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8"}
 
     # Security Enhancement: Restrict the maximum length of the entire URL (including query strings)

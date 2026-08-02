@@ -41,3 +41,7 @@
 **Vulnerability:** The application was vulnerable to resource exhaustion (DoS) attacks from excessively large payloads because the `MAX_CONTENT_LENGTH` configuration was set but not actively enforced early in the request lifecycle for read-only routes or routes that didn't consume the request payload stream.
 **Learning:** Werkzeug's default `MAX_CONTENT_LENGTH` handling may only trigger when the request payload is actually consumed. For read-only applications, it's safer to explicitly check the `Content-Length` header before any route logic executes.
 **Prevention:** Implement a global `@app.before_request` hook that checks `request.content_length` against the configured maximum. If the limit is exceeded, immediately reject the request with a `413 Payload Too Large` error and close the connection.
+## 2026-08-01 - [Prevent Log Bombing via Unvalidated IP Address]
+**Vulnerability:** The rate limiter logged the `request.remote_addr` for invalid IP addresses without using the truncated `safe_ip`. If an attacker sent a massive unparseable IP address string, it would be logged in its entirety, leading to a log bombing (Disk DoS) vulnerability.
+**Learning:** Any input derived from the incoming request must be validated and truncated before incorporating them into log messages to prevent disk exhaustion. The use of the unvalidated string in logging defeated the purpose of truncation.
+**Prevention:** Always use the truncated variable (e.g., `safe_ip`) instead of the raw request attribute (e.g., `request.remote_addr`) when generating security event logs.
