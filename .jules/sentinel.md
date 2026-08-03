@@ -45,3 +45,7 @@
 **Vulnerability:** The rate limiter logged the `request.remote_addr` for invalid IP addresses without using the truncated `safe_ip`. If an attacker sent a massive unparseable IP address string, it would be logged in its entirety, leading to a log bombing (Disk DoS) vulnerability.
 **Learning:** Any input derived from the incoming request must be validated and truncated before incorporating them into log messages to prevent disk exhaustion. The use of the unvalidated string in logging defeated the purpose of truncation.
 **Prevention:** Always use the truncated variable (e.g., `safe_ip`) instead of the raw request attribute (e.g., `request.remote_addr`) when generating security event logs.
+## 2026-08-02 - [Fix Log Bombing via Unvalidated IP Address in Rate Limiting and Assets]
+**Vulnerability:** The rate limiter and assets endpoints logged the `request.remote_addr` for invalid IP addresses without using the truncated `safe_ip`. If an attacker sent a massive unparseable IP address string, it would be logged in its entirety, leading to a log bombing (Disk DoS) vulnerability.
+**Learning:** Any input derived from the incoming request must be validated and truncated before incorporating them into log messages to prevent disk exhaustion. The use of the unvalidated string in logging defeated the purpose of truncation.
+**Prevention:** Always use the truncated variable (e.g., `safe_ip`) instead of the raw request attribute (e.g., `request.remote_addr`) when generating security event logs.
