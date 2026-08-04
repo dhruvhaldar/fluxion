@@ -42,8 +42,9 @@ figure a { display: block; border-radius: 4px; cursor: zoom-in; text-decoration:
 figure a::before {
     content: "";
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 24px;
     height: 24px;
     background-color: var(--bg-color);
@@ -61,13 +62,13 @@ figure a::before {
 }
 
 figure a:hover::before, figure a:focus-visible::before {
-    transform: scale(1.2);
+    transform: translate(-50%, -50%) scale(1.2);
     opacity: 1;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%232b6cb0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>');
 }
 
 figure a:active::before {
-    transform: scale(0.95);
+    transform: translate(-50%, -50%) scale(0.95);
     transition: transform 0.1s;
 }
 

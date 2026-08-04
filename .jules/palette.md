@@ -191,3 +191,6 @@
 ## 2026-08-01 - Preventing Accidental Semantic Animations from Utility Classes
 **Learning:** Reusing utility classes (like `external-link-icon`) strictly for minor layout or alignment purposes on UI components can inadvertently attach unwanted interaction semantics (such as hover/active transform animations intended only for external links) to internal navigation elements, causing a disjointed UX.
 **Action:** Ensure that utility classes used to position UI icons do not carry unintended interaction states. If restricted from creating new utility classes to fix the issue, fall back to inline styles (e.g., `style="vertical-align: middle;"`) to correct the interaction semantic mismatch while adhering to design system constraints.
+## 2026-08-04 - CSS Transform Overrides on Centered Elements
+**Learning:** When using `transform: translate(-50%, -50%)` to center elements (like a pseudo-element zoom icon), any interaction states (`:hover`, `:active`) that apply scale or other transforms will overwrite the translate function if not explicitly included in the transform stack, causing the element to abruptly jump out of center.
+**Action:** Always ensure the full transform stack (including the translation used for positioning) is preserved when overriding transformations for interactive states.
