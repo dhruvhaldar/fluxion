@@ -49,3 +49,8 @@
 **Vulnerability:** The rate limiter and assets endpoints logged the `request.remote_addr` for invalid IP addresses without using the truncated `safe_ip`. If an attacker sent a massive unparseable IP address string, it would be logged in its entirety, leading to a log bombing (Disk DoS) vulnerability.
 **Learning:** Any input derived from the incoming request must be validated and truncated before incorporating them into log messages to prevent disk exhaustion. The use of the unvalidated string in logging defeated the purpose of truncation.
 **Prevention:** Always use the truncated variable (e.g., `safe_ip`) instead of the raw request attribute (e.g., `request.remote_addr`) when generating security event logs.
+
+## 2026-08-05 - [Mitigate Connection-based DoS on Rate Limit Exceeded]
+**Vulnerability:** The application returned a 429 Too Many Requests response on rate limit exceeded but did not explicitly close the connection. This allowed HTTP/1.1 keep-alive behavior to keep the connection open, permitting malicious clients to continue sending excessive requests over the same socket, wasting server processing resources on repeated rate-limit checks.
+**Learning:** Returning a 429 status code is insufficient if the connection remains open during a steady-rate or volumetric DoS attack.
+**Prevention:** When returning a 429 response to block an abuser, explicitly include `{"Connection": "close"}` in the response headers tuple to force the server to immediately drop the connection, imposing the TCP handshake overhead on subsequent attack attempts.
