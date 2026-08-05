@@ -26,6 +26,7 @@ def test_rate_limiter_blocks_requests(client):
     response = client.get('/', environ_base={'REMOTE_ADDR': '192.168.0.2'})
     assert response.status_code == 429
     assert response.headers['Content-Type'] == 'text/plain; charset=utf-8'
+    assert response.headers.get('Connection') == 'close'
 
 def test_rate_limiter_ipv4_mapped_ipv6(client):
     # Make 100 requests using IPv4

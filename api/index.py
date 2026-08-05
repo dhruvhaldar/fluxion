@@ -201,7 +201,10 @@ def rate_limit():
             if current_time - tracker['last_logged'] > RATE_LIMIT_WINDOW:
                 app.logger.warning(f"Security Event: Rate limit exceeded for {repr(safe_ip)} (normalized to {repr(ip)})")
                 tracker['last_logged'] = current_time
-            return "Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8", "Retry-After": str(RATE_LIMIT_WINDOW)}
+            # Security Enhancement: Explicitly close the connection on 429 Too Many Requests
+            # to drop abusive clients immediately, preventing them from pipelining
+            # hundreds of blocked requests over a single kept-alive HTTP/1.1 connection.
+            return "Too Many Requests", 429, {"Content-Type": "text/plain; charset=utf-8", "Retry-After": str(RATE_LIMIT_WINDOW), "Connection": "close"}
 
         req_queue.append(current_time)
 
