@@ -254,7 +254,7 @@ def index():
             <figure>
                 <a href="/assets/lid_driven_streamlines.png" target="_blank" rel="noopener noreferrer" title="View full size" aria-describedby="fig1-caption">
                     <img src="/assets/lid_driven_streamlines.png" width="800" height="600" alt="A color contour map showing a large primary vortex centered at coordinates (0.6, 0.5) with smaller secondary vortices in the bottom corners." loading="lazy" decoding="async" />
-                    <span class="sr-only">(opens in a new tab)</span>
+                    <span class="sr-only">View full size image (opens in a new tab)</span>
                 </a>
                 <figcaption id="fig1-caption">Figure 1: Streamlines and velocity magnitude contours for <abbr title="Reynolds number" tabindex="0">Re</abbr>=100</figcaption>
             </figure>
@@ -263,7 +263,7 @@ def index():
             <figure>
                 <a href="/assets/grid_convergence.png" target="_blank" rel="noopener noreferrer" title="View full size" aria-describedby="fig2-caption">
                     <img src="/assets/grid_convergence.png" width="800" height="600" alt="A log-log line graph plotting L2-Error Norm against Grid Spacing. A straight line is fitted to the data points showing a downward slope of approximately 2.0." loading="lazy" decoding="async" />
-                    <span class="sr-only">(opens in a new tab)</span>
+                    <span class="sr-only">View full size image (opens in a new tab)</span>
                 </a>
                 <figcaption id="fig2-caption">Figure 2: Grid Convergence Study demonstrating second-order spatial accuracy</figcaption>
             </figure>
@@ -272,7 +272,7 @@ def index():
             <figure>
                 <a href="/assets/scheme_comparison.png" target="_blank" rel="noopener noreferrer" title="View full size" aria-describedby="fig3-caption">
                     <img src="/assets/scheme_comparison.png" width="1000" height="600" alt="A line graph comparing three lines against a sharp step function. The upwind line is heavily smoothed out, while the central difference line has sharp wiggles near the step." loading="lazy" decoding="async" />
-                    <span class="sr-only">(opens in a new tab)</span>
+                    <span class="sr-only">View full size image (opens in a new tab)</span>
                 </a>
                 <figcaption id="fig3-caption">Figure 3: Comparison of Convection Schemes (Upwind, Central, <abbr title="Quadratic Upstream Interpolation for Convective Kinematics" tabindex="0">QUICK</abbr>)</figcaption>
             </figure>
