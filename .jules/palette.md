@@ -194,3 +194,6 @@
 ## 2026-08-04 - CSS Transform Overrides on Centered Elements
 **Learning:** When using `transform: translate(-50%, -50%)` to center elements (like a pseudo-element zoom icon), any interaction states (`:hover`, `:active`) that apply scale or other transforms will overwrite the translate function if not explicitly included in the transform stack, causing the element to abruptly jump out of center.
 **Action:** Always ensure the full transform stack (including the translation used for positioning) is preserved when overriding transformations for interactive states.
+## 2026-08-05 - Accessible Fallback Text for Image Anchor Links
+**Learning:** When an `<a>` tag wraps an `<img>` that contains important, descriptive `alt` text, adding an `aria-label` directly to the `<a>` tag to describe the interaction (e.g., 'View full size') is an anti-pattern. This is because the `aria-label` on the parent completely overwrites its child content in the accessibility tree, thereby hiding the image's critical descriptive `alt` text from screen readers.
+**Action:** When adding descriptive names to image anchor links, instead of using `aria-label`, inject a visually hidden helper `<span>` (e.g., `<span class="sr-only">View full size image</span>`) alongside the image. This preserves both the action description and the image's native `alt` text for assistive technologies.
