@@ -125,6 +125,12 @@ def rate_limit():
     safe_url = raw_url[:256] + '...[TRUNCATED]' if raw_url and len(raw_url) > 256 else raw_url
     safe_method = request.method[:20] + '...[TRUNCATED]' if request.method and len(request.method) > 20 else request.method
 
+    # Security Enhancement: Restrict the maximum length of the entire URL (including query strings)
+    # to mitigate DoS (Denial of Service) attacks via memory exhaustion and buffer overflows.
+    if raw_url and len(raw_url) > 2048:
+        log_early_block("long_uri_global", f"Security Event: Blocked request from {repr(safe_ip)} due to URI length > 2048. url: {repr(safe_url)}")
+        return "URI Too Long", 414, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
+
     # Security Enhancement: Global strict HTTP method restriction.
     # Reject methods we don't use to prevent HTTP verb tampering and save resources.
     allowed_methods = {"GET", "HEAD", "OPTIONS"}
@@ -159,12 +165,6 @@ def rate_limit():
     if not ip:
         log_early_block("invalid_ip_global", f"Security Event: Blocked request from {repr(safe_ip)} with invalid IP address format.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
-
-    # Security Enhancement: Restrict the maximum length of the entire URL (including query strings)
-    # to mitigate DoS (Denial of Service) attacks via memory exhaustion and buffer overflows.
-    if raw_url and len(raw_url) > 2048:
-        log_early_block(f"long_uri_{ip}", f"Security Event: Blocked request from {repr(safe_ip)} due to URI length > 2048. url: {repr(safe_url)}")
-        return "URI Too Long", 414, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
     # Security Enhancement: Use monotonic time for rate limiting to prevent
     # bypasses or lockouts caused by system clock adjustments (e.g., NTP sync).
