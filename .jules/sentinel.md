@@ -62,3 +62,7 @@
 **Vulnerability:** Attackers could bypass log rate limiting for excessively long URLs by rotating spoofed IP addresses, leading to log bombing and potential disk space exhaustion (Disk DoS).
 **Learning:** Validation checks for massive query strings or paths must be performed early in the request lifecycle (before IP normalization), and they must use a static global key (e.g., "long_uri_global") instead of a per-user IP key for rate-limiting security event logs.
 **Prevention:** Always enforce a strict length limit on the entire request.url early in the request lifecycle and track these early blocks with a global key to suppress duplicate log entries safely.
+## 2026-08-08 - [Connection Close on 404/405 Exceptions]
+**Vulnerability:** Keep-alive connections were left open on default HTTP exceptions like 404 Not Found and 405 Method Not Allowed, creating a DoS vulnerability.
+**Learning:** Returning early HTTP errors to block requests must explicitly close the connection to prevent connection pipelining over HTTP/1.1 keep-alive.
+**Prevention:** Unconditionally add `{'Connection': 'close'}` to headers in the global exception handler for HTTPExceptions.
