@@ -30,9 +30,9 @@ def handle_exception(e):
         # fingerprinting and potential XSS issues.
         body = f"{e.code} {e.name}: {e.description}"
         headers = {'Content-Type': 'text/plain; charset=utf-8'}
-        # Security Enhancement: Explicitly close connection on 413 to prevent DoS via keep-alive streaming
-        if e.code == 413:
-            headers['Connection'] = 'close'
+        # Security Enhancement: Explicitly close connection on all early HTTP exceptions (e.g. 404, 405, 413)
+        # to prevent DoS via keep-alive streaming
+        headers['Connection'] = 'close'
         return body, e.code, headers
     app.logger.error("Unexpected error", exc_info=True)
     return "Internal Server Error", 500, {"Content-Type": "text/plain; charset=utf-8"}
