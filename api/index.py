@@ -35,7 +35,7 @@ def handle_exception(e):
         headers['Connection'] = 'close'
         return body, e.code, headers
     app.logger.error("Unexpected error", exc_info=True)
-    return "Internal Server Error", 500, {"Content-Type": "text/plain; charset=utf-8"}
+    return "Internal Server Error", 500, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
 # Security Enhancement: Ensure secure defaults for sessions
 app.config.update(
