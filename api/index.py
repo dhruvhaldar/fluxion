@@ -5,6 +5,7 @@ import logging
 import time
 import threading
 import ipaddress
+import functools
 from collections import deque
 from werkzeug.exceptions import HTTPException
 
@@ -78,6 +79,8 @@ ip_tracker_lock = threading.Lock()
 early_block_tracker = {}
 early_block_lock = threading.Lock()
 
+# ⚡ Bolt: Memoize IP normalization to avoid redundant CPU overhead, as ipaddress parsing is expensive and called multiple times per request.
+@functools.lru_cache(maxsize=10000)
 def normalize_ip(raw_ip):
     """
     Normalizes an IP address. Strips scope IDs, converts IPv4-mapped IPv6,
