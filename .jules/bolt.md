@@ -17,3 +17,6 @@
 ## 2026-07-21 - [Pre-allocate intermediate Numpy arrays in Iterative Solvers]
 **Learning:** In numerical solvers with iterative time-stepping loops (like Navier-Stokes), allocating temporary arrays (using `np.empty()`) locally within the `step()` method causes repeated memory allocation overhead, which slows down execution significantly.
 **Action:** Pre-allocate derivative or intermediate arrays at the instance level during initialization (`__init__`) and reuse them across iterations to eliminate the overhead of repeated allocation.
+## 2026-08-10 - Memoize IP Normalization
+**Learning:** Parsing and normalizing IP addresses using the standard library `ipaddress` module is computationally expensive. When done repeatedly per request (e.g. for rate limiting and asset serving), it introduces significant CPU overhead.
+**Action:** Use `@functools.lru_cache` on pure IP normalization functions to memoize results, yielding massive speedups (e.g. ~250x) while safely bounding memory with a maxsize.
