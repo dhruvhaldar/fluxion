@@ -66,3 +66,7 @@
 **Vulnerability:** Keep-alive connections were left open on default HTTP exceptions like 404 Not Found and 405 Method Not Allowed, creating a DoS vulnerability.
 **Learning:** Returning early HTTP errors to block requests must explicitly close the connection to prevent connection pipelining over HTTP/1.1 keep-alive.
 **Prevention:** Unconditionally add `{'Connection': 'close'}` to headers in the global exception handler for HTTPExceptions.
+## 2026-08-09 - [Connection Close on 500 Exceptions]
+**Vulnerability:** Keep-alive connections were left open on unexpected 500 Internal Server Errors, creating a DoS vulnerability.
+**Learning:** Returning early HTTP errors (even 500s) to block requests or handle failures must explicitly close the connection to prevent connection pipelining over HTTP/1.1 keep-alive.
+**Prevention:** Unconditionally add `{'Connection': 'close'}` to headers in the global exception handler for general exceptions returning a 500 status.
