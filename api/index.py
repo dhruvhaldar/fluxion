@@ -293,6 +293,17 @@ def index():
 def send_assets(path):
     raw_ip = request.remote_addr
     safe_ip = raw_ip[:45] + '...[TRUNCATED]' if raw_ip and len(raw_ip) > 45 else raw_ip
+
+    # Security Enhancement: Limit the length of the remote address to mitigate DoS
+    # via memory exhaustion, CPU exhaustion during parsing, or log bombing.
+    if not raw_ip:
+        log_early_block("missing_ip", "Security Event: Blocked request with missing remote address.")
+        return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
+
+    if len(raw_ip) > 45:
+        log_early_block("long_ip_global", f"Security Event: Blocked request due to excessively long remote address: {repr(safe_ip)}.")
+        return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
+
     norm_ip = normalize_ip(raw_ip)
     ip_key = norm_ip if norm_ip else "global"
 
