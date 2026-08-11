@@ -70,3 +70,7 @@
 **Vulnerability:** Keep-alive connections were left open on unexpected 500 Internal Server Errors, creating a DoS vulnerability.
 **Learning:** Returning early HTTP errors (even 500s) to block requests or handle failures must explicitly close the connection to prevent connection pipelining over HTTP/1.1 keep-alive.
 **Prevention:** Unconditionally add `{'Connection': 'close'}` to headers in the global exception handler for general exceptions returning a 500 status.
+## 2026-08-11 - [Prevent CPU Exhaustion DoS in IP Parsing for Assets]
+**Vulnerability:** The `/assets/<path:path>` endpoint parsed `request.remote_addr` using `normalize_ip()` before checking the length of the raw IP string. An attacker could send a massive string in the `REMOTE_ADDR` header, causing algorithmic complexity CPU exhaustion (DoS) during the parsing step.
+**Learning:** To prevent CPU exhaustion Denial of Service (DoS) attacks via algorithmic complexity, always enforce strict length limits on raw, unvalidated user inputs (like IP headers) *before* passing them to standard library parsers or complex string manipulation functions.
+**Prevention:** Implement strict length checks (e.g., `len(raw_ip) > 45`) on unvalidated user input early in the request lifecycle, explicitly *before* any normalization or parsing logic occurs.
