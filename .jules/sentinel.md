@@ -74,3 +74,7 @@
 **Vulnerability:** The `/assets/<path:path>` endpoint parsed `request.remote_addr` using `normalize_ip()` before checking the length of the raw IP string. An attacker could send a massive string in the `REMOTE_ADDR` header, causing algorithmic complexity CPU exhaustion (DoS) during the parsing step.
 **Learning:** To prevent CPU exhaustion Denial of Service (DoS) attacks via algorithmic complexity, always enforce strict length limits on raw, unvalidated user inputs (like IP headers) *before* passing them to standard library parsers or complex string manipulation functions.
 **Prevention:** Implement strict length checks (e.g., `len(raw_ip) > 45`) on unvalidated user input early in the request lifecycle, explicitly *before* any normalization or parsing logic occurs.
+## 2026-08-13 - Prevent Log Bombing via Long Asset Path
+**Vulnerability:** The `/assets/<path:path>` endpoint logged early blocks for excessively long paths using a per-user IP key (`long_asset_path_{ip_key}`). Attackers could bypass log rate limiting by rotating IPs, leading to log bombing and potential disk space exhaustion (Disk DoS).
+**Learning:** Validation checks for massive payloads (like URLs or file paths) must use a static global key instead of a per-user IP key for rate-limiting security event logs.
+**Prevention:** Always use a global key (e.g., `long_asset_path_global`) when logging early blocks for inputs that could be arbitrarily large and bypass limits via IP rotation.

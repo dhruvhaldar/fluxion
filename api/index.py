@@ -312,7 +312,7 @@ def send_assets(path):
         # Security Enhancement: Truncate excessively long path payload before logging
         # to mitigate log bombing/Disk DoS.
         truncated_path = path[:256] + '...[TRUNCATED]'
-        log_early_block(f"long_asset_path_{ip_key}", f"Security Event: Blocked request from {repr(safe_ip)} due to URI length > 256. path: {repr(truncated_path)}")
+        log_early_block("long_asset_path_global", f"Security Event: Blocked request from {repr(safe_ip)} due to URI length > 256. path: {repr(truncated_path)}")
         return "URI Too Long", 414, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
     # Prevent directory traversal attacks
