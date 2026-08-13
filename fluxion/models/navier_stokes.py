@@ -32,6 +32,9 @@ class NavierStokes2D:
         self._dv_dx = np.empty((grid.nx, grid.ny-1), dtype=self.v.dtype)
         self._d2v_dx2 = np.empty((grid.nx, grid.ny-1), dtype=self.v.dtype)
 
+        self.u_star = np.empty_like(self.u)
+        self.v_star = np.empty_like(self.v)
+
     def set_boundary_condition(self, side, u=None, v=None):
         if u is not None: self.bc_u[side] = u
         if v is not None: self.bc_v[side] = v
@@ -74,7 +77,8 @@ class NavierStokes2D:
         # Compute derivatives for u (defined at i+1/2, j)
         # We loop over internal u-points: i=1..nx-1, j=0..ny-1
 
-        u_star = u.copy()
+        u_star = self.u_star
+        np.copyto(u_star, u)
 
         # Advection u * du/dx
         # Central difference
@@ -160,7 +164,8 @@ class NavierStokes2D:
         u_star[1:-1, :] = u_interior + rhs_u * dt
 
         # --- V-Momentum ---
-        v_star = v.copy()
+        v_star = self.v_star
+        np.copyto(v_star, v)
         v_interior = v[:, 1:-1] # j=1..ny-1
 
         # dv/dy
@@ -228,8 +233,8 @@ class NavierStokes2D:
         grad_p_x, grad_p_y = discretization.compute_gradient(self.p, grid)
 
         # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
-        self.u = u_star - grad_p_x * dt
-        self.v = v_star - grad_p_y * dt
+        np.copyto(self.u, u_star - grad_p_x * dt)
+        np.copyto(self.v, v_star - grad_p_y * dt)
 
         # Enforce BCs again?
         # Projection method naturally enforces div(u)=0.
