@@ -20,3 +20,6 @@
 ## 2026-08-10 - Memoize IP Normalization
 **Learning:** Parsing and normalizing IP addresses using the standard library `ipaddress` module is computationally expensive. When done repeatedly per request (e.g. for rate limiting and asset serving), it introduces significant CPU overhead.
 **Action:** Use `@functools.lru_cache` on pure IP normalization functions to memoize results, yielding massive speedups (e.g. ~250x) while safely bounding memory with a maxsize.
+## 2026-08-14 - Optimize Velocity Correction in Navier-Stokes
+**Learning:** In the Navier-Stokes pressure correction step (`u = u* - dt * grad(p)`), using eager evaluation `np.copyto(self.u, u_star - grad_p_x * dt)` implicitly allocates intermediate arrays for the multiplication and subtraction.
+**Action:** Replace `np.copyto` and eager evaluation with sequential in-place operators (`np.multiply` with `out`, followed by `+=`) to avoid temporary allocations and reduce execution time for that block by an order of magnitude.
