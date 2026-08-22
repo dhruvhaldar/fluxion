@@ -130,13 +130,6 @@ class LinearSolver:
         p_new = p.copy()
         nx, ny = grid.nx, grid.ny
 
-        # Checkerboard masks for interior (1:-1, 1:-1)
-        # ⚡ Bolt: Replace np.meshgrid with numpy broadcasting to avoid large array allocations
-        # inside the frequently called solve_sor method, reducing time by >60%
-        idx = np.arange(1, nx-1)[:, None] + np.arange(1, ny-1)[None, :]
-        mask_red = idx % 2 == 0
-        mask_black = ~mask_red
-
         # Pre-calculate factors for inside loop
         mult_x = omega / (dx2 * denom)
         mult_y = omega / (dy2 * denom)
@@ -146,156 +139,35 @@ class LinearSolver:
         mult_y_over_x = mult_y / mult_x
         rhs_eff = rhs_scaled / mult_x
 
-        p_slice = p_new[1:-1, 1:-1]
-
         check_interval = 200
         p_old = p_new.copy()
-
-        # Pre-allocate temporary arrays to avoid implicit array creations in the loop
-        # We need an array for the entire right-hand-side expression of the SOR update
-        # p_gs_red and p_gs_black can share the same buffer since they are updated sequentially
-        p_gs = np.empty(p_slice.shape)
-        tmp_y = np.empty(p_slice.shape)
         tmp_full = np.empty(p.shape)
-
-        # Pre-compute slice views to avoid overhead inside the loop.
-        # These are views into p_new, which is updated in place, so they
-        # stay valid as long as p_new's reference remains unchanged.
-        p_up = p_new[2:, 1:-1]
-        p_down = p_new[:-2, 1:-1]
-        p_right = p_new[1:-1, 2:]
-        p_left = p_new[1:-1, :-2]
 
         # ⚡ Bolt: Pre-calculate 1 - omega outside the loop
         one_minus_omega = 1.0 - omega
 
-        # ⚡ Bolt: Hoist invariant branch conditions outside the loop to avoid Python overhead
-        if mult_y_over_x == 1.0 and omega == 1.0:
-            for it in range(max_iter):
-                if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
+        # ⚡ Bolt: Replace np.putmask with standard NumPy strided slicing and inline vector math
+        # to cleanly evaluate and assign updates only on required sub-grids, avoiding masked assignment overhead.
+        for it in range(max_iter):
+            if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
 
-                # ⚡ Bolt: Replace inline math with in-place operations to avoid implicit memory allocations in the hot loop
-                np.add(p_right, p_left, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.putmask(p_slice, mask_red, p_gs)
+            # Red update
+            p_new[1:-1:2, 1:-1:2] = mult_x * ((p_new[1:-1:2, 2::2] + p_new[1:-1:2, :-2:2]) * mult_y_over_x + p_new[2::2, 1:-1:2] + p_new[:-2:2, 1:-1:2] - rhs_eff[0::2, 0::2]) + one_minus_omega * p_new[1:-1:2, 1:-1:2]
+            p_new[2:-1:2, 2:-1:2] = mult_x * ((p_new[2:-1:2, 3::2] + p_new[2:-1:2, 1:-2:2]) * mult_y_over_x + p_new[3::2, 2:-1:2] + p_new[1:-2:2, 2:-1:2] - rhs_eff[1::2, 1::2]) + one_minus_omega * p_new[2:-1:2, 2:-1:2]
 
-                np.add(p_right, p_left, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.putmask(p_slice, mask_black, p_gs)
+            # Black update
+            p_new[1:-1:2, 2:-1:2] = mult_x * ((p_new[1:-1:2, 3::2] + p_new[1:-1:2, 1:-2:2]) * mult_y_over_x + p_new[2::2, 2:-1:2] + p_new[:-2:2, 2:-1:2] - rhs_eff[0::2, 1::2]) + one_minus_omega * p_new[1:-1:2, 2:-1:2]
+            p_new[2:-1:2, 1:-1:2] = mult_x * ((p_new[2:-1:2, 2::2] + p_new[2:-1:2, :-2:2]) * mult_y_over_x + p_new[3::2, 1:-1:2] + p_new[1:-2:2, 1:-1:2] - rhs_eff[1::2, 0::2]) + one_minus_omega * p_new[2:-1:2, 1:-1:2]
 
-                p_new[0] = p_new[1]
-                p_new[-1] = p_new[-2]
-                p_new[:, 0] = p_new[:, 1]
-                p_new[:, -1] = p_new[:, -2]
+            p_new[0] = p_new[1]
+            p_new[-1] = p_new[-2]
+            p_new[:, 0] = p_new[:, 1]
+            p_new[:, -1] = p_new[:, -2]
 
-                if it > 0 and it % check_interval == 0:
-                    np.subtract(p_new, p_old, out=tmp_full)
-                    np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol: return p_new, it
-
-        elif mult_y_over_x == 1.0 and omega != 1.0:
-            for it in range(max_iter):
-                if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
-
-                # ⚡ Bolt: Use in-place numpy ufuncs on p_gs to avoid implicit array allocations
-                # which significantly reduces memory bandwidth requirements in the hot loop.
-                np.add(p_right, p_left, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.multiply(p_slice, one_minus_omega, out=tmp_y)
-                np.add(p_gs, tmp_y, out=p_gs)
-                np.putmask(p_slice, mask_red, p_gs)
-
-                np.add(p_right, p_left, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.multiply(p_slice, one_minus_omega, out=tmp_y)
-                np.add(p_gs, tmp_y, out=p_gs)
-                np.putmask(p_slice, mask_black, p_gs)
-
-                p_new[0] = p_new[1]
-                p_new[-1] = p_new[-2]
-                p_new[:, 0] = p_new[:, 1]
-                p_new[:, -1] = p_new[:, -2]
-
-                if it > 0 and it % check_interval == 0:
-                    np.subtract(p_new, p_old, out=tmp_full)
-                    np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol: return p_new, it
-
-        elif mult_y_over_x != 1.0 and omega == 1.0:
-            for it in range(max_iter):
-                if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
-
-                np.add(p_right, p_left, out=p_gs)
-                np.multiply(p_gs, mult_y_over_x, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.putmask(p_slice, mask_red, p_gs)
-
-                np.add(p_right, p_left, out=p_gs)
-                np.multiply(p_gs, mult_y_over_x, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.putmask(p_slice, mask_black, p_gs)
-
-                p_new[0] = p_new[1]
-                p_new[-1] = p_new[-2]
-                p_new[:, 0] = p_new[:, 1]
-                p_new[:, -1] = p_new[:, -2]
-
-                if it > 0 and it % check_interval == 0:
-                    np.subtract(p_new, p_old, out=tmp_full)
-                    np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol: return p_new, it
-
-        else:
-            for it in range(max_iter):
-                if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
-
-                np.add(p_right, p_left, out=p_gs)
-                np.multiply(p_gs, mult_y_over_x, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.multiply(p_slice, one_minus_omega, out=tmp_y)
-                np.add(p_gs, tmp_y, out=p_gs)
-                np.putmask(p_slice, mask_red, p_gs)
-
-                np.add(p_right, p_left, out=p_gs)
-                np.multiply(p_gs, mult_y_over_x, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.multiply(p_slice, one_minus_omega, out=tmp_y)
-                np.add(p_gs, tmp_y, out=p_gs)
-                np.putmask(p_slice, mask_black, p_gs)
-
-                p_new[0] = p_new[1]
-                p_new[-1] = p_new[-2]
-                p_new[:, 0] = p_new[:, 1]
-                p_new[:, -1] = p_new[:, -2]
-
-                if it > 0 and it % check_interval == 0:
-                    np.subtract(p_new, p_old, out=tmp_full)
-                    np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol: return p_new, it
+            if it > 0 and it % check_interval == 0:
+                np.subtract(p_new, p_old, out=tmp_full)
+                np.abs(tmp_full, out=tmp_full)
+                if np.max(tmp_full) < tol: return p_new, it
 
         # Final check if loop finishes
         # Check against previous iteration which wasn't saved, so we just return.
