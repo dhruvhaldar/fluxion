@@ -133,9 +133,11 @@ class LinearSolver:
         # Checkerboard masks for interior (1:-1, 1:-1)
         # ⚡ Bolt: Replace np.meshgrid with numpy broadcasting to avoid large array allocations
         # inside the frequently called solve_sor method, reducing time by >60%
-        idx = np.arange(1, nx-1)[:, None] + np.arange(1, ny-1)[None, :]
-        mask_red = idx % 2 == 0
-        mask_black = ~mask_red
+        # ⚡ Bolt: Removed mask_red and mask_black in favor of strided slicing to avoid full-grid evaluation
+        s1 = np.s_[0::2, 0::2]
+        s2 = np.s_[1::2, 1::2]
+        s3 = np.s_[0::2, 1::2]
+        s4 = np.s_[1::2, 0::2]
 
         # Pre-calculate factors for inside loop
         mult_x = omega / (dx2 * denom)
@@ -175,19 +177,12 @@ class LinearSolver:
                 if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
 
                 # ⚡ Bolt: Replace inline math with in-place operations to avoid implicit memory allocations in the hot loop
-                np.add(p_right, p_left, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.putmask(p_slice, mask_red, p_gs)
+                # ⚡ Bolt: Replace full-grid putmask with sub-grid strided slicing to avoid implicit memory allocations
+                p_slice[s1] = (p_right[s1] + p_left[s1] + p_up[s1] + p_down[s1] - rhs_eff[s1]) * mult_x
+                p_slice[s2] = (p_right[s2] + p_left[s2] + p_up[s2] + p_down[s2] - rhs_eff[s2]) * mult_x
 
-                np.add(p_right, p_left, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.putmask(p_slice, mask_black, p_gs)
+                p_slice[s3] = (p_right[s3] + p_left[s3] + p_up[s3] + p_down[s3] - rhs_eff[s3]) * mult_x
+                p_slice[s4] = (p_right[s4] + p_left[s4] + p_up[s4] + p_down[s4] - rhs_eff[s4]) * mult_x
 
                 p_new[0] = p_new[1]
                 p_new[-1] = p_new[-2]
@@ -205,23 +200,12 @@ class LinearSolver:
 
                 # ⚡ Bolt: Use in-place numpy ufuncs on p_gs to avoid implicit array allocations
                 # which significantly reduces memory bandwidth requirements in the hot loop.
-                np.add(p_right, p_left, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.multiply(p_slice, one_minus_omega, out=tmp_y)
-                np.add(p_gs, tmp_y, out=p_gs)
-                np.putmask(p_slice, mask_red, p_gs)
+                # ⚡ Bolt: Replace full-grid putmask with sub-grid strided slicing to avoid implicit memory allocations
+                p_slice[s1] = (p_right[s1] + p_left[s1] + p_up[s1] + p_down[s1] - rhs_eff[s1]) * mult_x + p_slice[s1] * one_minus_omega
+                p_slice[s2] = (p_right[s2] + p_left[s2] + p_up[s2] + p_down[s2] - rhs_eff[s2]) * mult_x + p_slice[s2] * one_minus_omega
 
-                np.add(p_right, p_left, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.multiply(p_slice, one_minus_omega, out=tmp_y)
-                np.add(p_gs, tmp_y, out=p_gs)
-                np.putmask(p_slice, mask_black, p_gs)
+                p_slice[s3] = (p_right[s3] + p_left[s3] + p_up[s3] + p_down[s3] - rhs_eff[s3]) * mult_x + p_slice[s3] * one_minus_omega
+                p_slice[s4] = (p_right[s4] + p_left[s4] + p_up[s4] + p_down[s4] - rhs_eff[s4]) * mult_x + p_slice[s4] * one_minus_omega
 
                 p_new[0] = p_new[1]
                 p_new[-1] = p_new[-2]
@@ -237,21 +221,12 @@ class LinearSolver:
             for it in range(max_iter):
                 if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
 
-                np.add(p_right, p_left, out=p_gs)
-                np.multiply(p_gs, mult_y_over_x, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.putmask(p_slice, mask_red, p_gs)
+                # ⚡ Bolt: Replace full-grid putmask with sub-grid strided slicing to avoid implicit memory allocations
+                p_slice[s1] = ((p_right[s1] + p_left[s1]) * mult_y_over_x + p_up[s1] + p_down[s1] - rhs_eff[s1]) * mult_x
+                p_slice[s2] = ((p_right[s2] + p_left[s2]) * mult_y_over_x + p_up[s2] + p_down[s2] - rhs_eff[s2]) * mult_x
 
-                np.add(p_right, p_left, out=p_gs)
-                np.multiply(p_gs, mult_y_over_x, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.putmask(p_slice, mask_black, p_gs)
+                p_slice[s3] = ((p_right[s3] + p_left[s3]) * mult_y_over_x + p_up[s3] + p_down[s3] - rhs_eff[s3]) * mult_x
+                p_slice[s4] = ((p_right[s4] + p_left[s4]) * mult_y_over_x + p_up[s4] + p_down[s4] - rhs_eff[s4]) * mult_x
 
                 p_new[0] = p_new[1]
                 p_new[-1] = p_new[-2]
@@ -267,25 +242,12 @@ class LinearSolver:
             for it in range(max_iter):
                 if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
 
-                np.add(p_right, p_left, out=p_gs)
-                np.multiply(p_gs, mult_y_over_x, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.multiply(p_slice, one_minus_omega, out=tmp_y)
-                np.add(p_gs, tmp_y, out=p_gs)
-                np.putmask(p_slice, mask_red, p_gs)
+                # ⚡ Bolt: Replace full-grid putmask with sub-grid strided slicing to avoid implicit memory allocations
+                p_slice[s1] = ((p_right[s1] + p_left[s1]) * mult_y_over_x + p_up[s1] + p_down[s1] - rhs_eff[s1]) * mult_x + p_slice[s1] * one_minus_omega
+                p_slice[s2] = ((p_right[s2] + p_left[s2]) * mult_y_over_x + p_up[s2] + p_down[s2] - rhs_eff[s2]) * mult_x + p_slice[s2] * one_minus_omega
 
-                np.add(p_right, p_left, out=p_gs)
-                np.multiply(p_gs, mult_y_over_x, out=p_gs)
-                np.add(p_gs, p_up, out=p_gs)
-                np.add(p_gs, p_down, out=p_gs)
-                np.subtract(p_gs, rhs_eff, out=p_gs)
-                np.multiply(p_gs, mult_x, out=p_gs)
-                np.multiply(p_slice, one_minus_omega, out=tmp_y)
-                np.add(p_gs, tmp_y, out=p_gs)
-                np.putmask(p_slice, mask_black, p_gs)
+                p_slice[s3] = ((p_right[s3] + p_left[s3]) * mult_y_over_x + p_up[s3] + p_down[s3] - rhs_eff[s3]) * mult_x + p_slice[s3] * one_minus_omega
+                p_slice[s4] = ((p_right[s4] + p_left[s4]) * mult_y_over_x + p_up[s4] + p_down[s4] - rhs_eff[s4]) * mult_x + p_slice[s4] * one_minus_omega
 
                 p_new[0] = p_new[1]
                 p_new[-1] = p_new[-2]

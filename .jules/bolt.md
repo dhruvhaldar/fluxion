@@ -23,3 +23,6 @@
 ## 2026-08-14 - Optimize Velocity Correction in Navier-Stokes
 **Learning:** In the Navier-Stokes pressure correction step (`u = u* - dt * grad(p)`), using eager evaluation `np.copyto(self.u, u_star - grad_p_x * dt)` implicitly allocates intermediate arrays for the multiplication and subtraction.
 **Action:** Replace `np.copyto` and eager evaluation with sequential in-place operators (`np.multiply` with `out`, followed by `+=`) to avoid temporary allocations and reduce execution time for that block by an order of magnitude.
+## $(date +%Y-%m-%d) - Replaced `np.putmask` with Strided Slicing in SOR Solvers
+**Learning:** Using `np.putmask` with boolean masking arrays (e.g., for checkerboard patterns in Red-Black SOR solvers) is inefficient because it implicitly requires evaluating mathematical expressions over the *entire* grid into a full-sized temporary array, only to selectively copy half of the values via the mask.
+**Action:** Replace `np.putmask` with standard NumPy strided slices (e.g., `[0::2, 0::2]`). Assigning updates directly to strided slice views avoids full-grid array allocations and strictly bounds math evaluations to only the required sub-grids, effectively halving the required math and significantly improving memory bandwidth and iteration speed.
