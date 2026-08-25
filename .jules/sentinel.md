@@ -82,3 +82,8 @@
 **Vulnerability:** The application logged early security blocks (such as unexpected bodies, directory traversal, hidden files, invalid chars, unsupported media, and out-of-bounds paths) using a per-user IP key (`unexpected_body_{ip_key}`, `dir_traversal_{ip_key}`, etc.). Attackers could easily bypass log rate limiting by rotating spoofed IPs while sending invalid payloads, leading to log bombing and potential disk space exhaustion (Disk DoS).
 **Learning:** Any early request validation block that depends on the incoming request payload (such as headers, body, or path) can be exploited to bypass log limits if tracked using per-user IPs.
 **Prevention:** Always use a static global key (e.g., `unexpected_body_global`, `dir_traversal_global`) instead of a per-user IP key when rate-limiting security event logs for early payload blocks to suppress duplicate entries safely across all users.
+
+## 2026-08-15 - [Log Bombing via Validation Sequencing]
+**Vulnerability:** Global rate-limiting keys used for payload/path validation checks before IP normalization allow attackers to bypass rate limits and exhaust disk space.
+**Learning:** Validation checks that use rate-limited logging must be sequenced after input extraction and normalization to safely use per-user tracking keys without log-bombing risks.
+**Prevention:** Sequence all rate-limited logging validations after IP normalization and use normalized, per-user tracking keys (e.g., `f"event_{ip}"`) instead of global ones.
