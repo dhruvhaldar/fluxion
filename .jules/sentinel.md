@@ -87,3 +87,7 @@
 **Vulnerability:** Global rate-limiting keys used for payload/path validation checks before IP normalization allow attackers to bypass rate limits and exhaust disk space.
 **Learning:** Validation checks that use rate-limited logging must be sequenced after input extraction and normalization to safely use per-user tracking keys without log-bombing risks.
 **Prevention:** Sequence all rate-limited logging validations after IP normalization and use normalized, per-user tracking keys (e.g., `f"event_{ip}"`) instead of global ones.
+## $(date +%Y-%m-%d) - [Log Bombing via Validation Sequencing]
+**Vulnerability:** Global rate-limiting keys used for payload/path validation checks before IP normalization allow attackers to bypass rate limits and exhaust disk space.
+**Learning:** When fixing log-bombing (Disk DoS) vulnerabilities in early request validation blocks (e.g., URL length or HTTP method checks), do not move the validation logic *after* computationally expensive operations (like IP address parsing) to access normalized variables. Doing so introduces a CPU Denial of Service (DoS) regression because malicious requests are no longer dropped cheaply.
+**Prevention:** Keep early validation checks where they are and replace dynamic per-user logging keys with static global keys (e.g., `"invalid_method_global"`) to suppress logs globally during an attack.
