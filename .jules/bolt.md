@@ -26,3 +26,6 @@
 ## $(date +%Y-%m-%d) - Replaced `np.putmask` with Strided Slicing in SOR Solvers
 **Learning:** Using `np.putmask` with boolean masking arrays (e.g., for checkerboard patterns in Red-Black SOR solvers) is inefficient because it implicitly requires evaluating mathematical expressions over the *entire* grid into a full-sized temporary array, only to selectively copy half of the values via the mask.
 **Action:** Replace `np.putmask` with standard NumPy strided slices (e.g., `[0::2, 0::2]`). Assigning updates directly to strided slice views avoids full-grid array allocations and strictly bounds math evaluations to only the required sub-grids, effectively halving the required math and significantly improving memory bandwidth and iteration speed.
+## 2026-09-01 - Optimize strided slicing with contiguous buffers
+**Learning:** Using inline multi-operation statements (e.g. A + B + C) on strided, non-contiguous slices inside hot iterative loops causes NumPy to allocate multiple non-contiguous intermediate arrays, which severely limits memory bandwidth and slows down performance.
+**Action:** When working with strided sub-grids in hot loops, explicitly pre-allocate contiguous buffers (e.g. `np.empty(slice.shape)`) and use sequential, chained in-place operations (`np.add(..., out=buf)`) to completely eliminate implicit non-contiguous array allocations.
