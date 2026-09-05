@@ -151,6 +151,12 @@ def rate_limit():
         log_early_block("long_ip_global", f"Security Event: Blocked request due to excessively long remote address: {repr(safe_ip)}. url: {repr(safe_url)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
+    # Security Enhancement: Reject bodies in read-only API to prevent HTTP Request Smuggling,
+    # Cache Poisoning, and resource exhaustion.
+    if (request.content_length is not None and request.content_length > 0) or 'Transfer-Encoding' in request.headers:
+        log_early_block("unexpected_body_global", f"Security Event: Blocked request from {repr(safe_ip)} due to unexpected request body in read-only API.")
+        return "Payload Too Large", 413, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
+
     # Normalize IP address to prevent bypass of IP-based controls
     # via multiple representations of the same IPv6 address (e.g., 2001:db8::1 vs 2001:db8:0:0:0:0:0:1).
     # Also handles IPv4-mapped IPv6 addresses (e.g. ::ffff:192.168.0.1) to prevent rate-limit bypasses
@@ -160,12 +166,6 @@ def rate_limit():
     if not ip:
         log_early_block("invalid_ip_global", f"Security Event: Blocked request from {repr(safe_ip)} with invalid IP address format.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
-
-    # Security Enhancement: Reject bodies in read-only API to prevent HTTP Request Smuggling,
-    # Cache Poisoning, and resource exhaustion.
-    if (request.content_length is not None and request.content_length > 0) or 'Transfer-Encoding' in request.headers:
-        log_early_block("unexpected_body_global", f"Security Event: Blocked request from {repr(safe_ip)} due to unexpected request body in read-only API.")
-        return "Payload Too Large", 413, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
     # Security Enhancement: Use monotonic time for rate limiting to prevent
     # bypasses or lockouts caused by system clock adjustments (e.g., NTP sync).
@@ -302,9 +302,6 @@ def send_assets(path):
         log_early_block("long_ip_global", f"Security Event: Blocked request due to excessively long remote address: {repr(safe_ip)}.")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
-    norm_ip = normalize_ip(raw_ip)
-    ip_key = norm_ip if norm_ip else "global"
-
     # Security Enhancement: Restrict input length to mitigate DoS attacks
     if len(path) > 256:
         # Security Enhancement: Truncate excessively long path payload before logging
@@ -353,6 +350,9 @@ def send_assets(path):
     if not requested_path.startswith(assets_dir + os.sep):
         log_early_block("out_of_bounds_global", f"Security Event: Blocked request from {repr(safe_ip)} due to out-of-bounds resolved path. path: {repr(path)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
+
+    norm_ip = normalize_ip(raw_ip)
+    ip_key = norm_ip if norm_ip else "global"
 
     return send_from_directory(assets_dir, path)
 
