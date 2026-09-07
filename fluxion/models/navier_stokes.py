@@ -223,7 +223,7 @@ class NavierStokes2D:
         div_u_star = discretization.compute_divergence(u_star, v_star, grid)
 
         # ⚡ Bolt: Use standard vectorized math for better readability and to avoid Python wrapper overhead in cold paths
-        div_u_star = div_u_star / dt
+        div_u_star *= (1.0 / dt)
 
         # Solve PPE
         self.p, _ = solvers.LinearSolver.solve_jacobi(self.p, div_u_star, grid, max_iter=2000, tol=1e-5)
