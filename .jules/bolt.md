@@ -35,3 +35,6 @@
 ## $(date +%Y-%m-%d) - Replaced array division with in-place inverse multiplication
 **Learning:** Array division `array / scalar` implicitly allocates a new full-sized intermediate array and is bottlenecked by memory bandwidth. Pre-computing the inverse and multiplying in-place `array *= (1.0 / scalar)` avoids the memory allocation and executes significantly faster (e.g., ~6.5x speedup for 1000x1000 arrays).
 **Action:** Use in-place multiplication by the inverse (`*= (1.0 / scalar)`) instead of out-of-place division (`/ scalar`) when scaling arrays to save memory bandwidth and drastically improve performance.
+## 2026-09-08 - Memoize IP Normalization
+**Learning:** Parsing and normalizing IP addresses using the standard library `ipaddress` module is computationally expensive. When executed repeatedly per request (e.g., for rate limit tracking or logging), it introduces massive CPU overhead.
+**Action:** Apply `@functools.lru_cache` (with an appropriate maxsize) to pure normalization functions to memoize results and significantly reduce CPU overhead.
