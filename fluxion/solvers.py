@@ -17,13 +17,13 @@ class LinearSolver:
         # Pre-calculate factors to avoid repeated division in the loop
         mult_x = 1.0 / (dx2 * denom)
         mult_y = 1.0 / (dy2 * denom)
-        rhs_scaled = rhs[1:-1, 1:-1] / denom
+        rhs_scaled = rhs[1:-1, 1:-1] * (1.0 / denom)
 
         # ⚡ Bolt: Factor out mult_x to reduce total array operations in the loop.
         # p_new = mult_x * (p_up + p_down) + mult_y * (p_right + p_left) - rhs_scaled
         # becomes: p_new = mult_x * [ (p_up + p_down) + (mult_y/mult_x) * (p_right + p_left) - (rhs_scaled/mult_x) ]
         mult_y_over_x = mult_y / mult_x
-        rhs_eff = rhs_scaled / mult_x
+        rhs_eff = rhs_scaled * (1.0 / mult_x)
 
         # ⚡ Bolt: Pre-compute slice views outside loops to eliminate slicing overhead.
         # These views remain valid as the arrays are updated in place.
@@ -142,11 +142,11 @@ class LinearSolver:
         # Pre-calculate factors for inside loop
         mult_x = omega / (dx2 * denom)
         mult_y = omega / (dy2 * denom)
-        rhs_scaled = omega * rhs[1:-1, 1:-1] / denom
+        rhs_scaled = rhs[1:-1, 1:-1] * (omega / denom)
 
         # ⚡ Bolt: Factor out mult_x to reduce total array operations in the SOR loop.
         mult_y_over_x = mult_y / mult_x
-        rhs_eff = rhs_scaled / mult_x
+        rhs_eff = rhs_scaled * (1.0 / mult_x)
 
         p_slice = p_new[1:-1, 1:-1]
 
