@@ -291,6 +291,7 @@ def index():
 def send_assets(path):
     raw_ip = request.remote_addr
     safe_ip = raw_ip[:45] + '...[TRUNCATED]' if raw_ip and len(raw_ip) > 45 else raw_ip
+    safe_path = path[:64] + '...[TRUNCATED]' if path and len(path) > 64 else path
 
     # Security Enhancement: Limit the length of the remote address to mitigate DoS
     # via memory exhaustion, CPU exhaustion during parsing, or log bombing.
@@ -304,29 +305,26 @@ def send_assets(path):
 
     # Security Enhancement: Restrict input length to mitigate DoS attacks
     if len(path) > 256:
-        # Security Enhancement: Truncate excessively long path payload before logging
-        # to mitigate log bombing/Disk DoS.
-        truncated_path = path[:256] + '...[TRUNCATED]'
-        log_early_block("long_asset_path_global", f"Security Event: Blocked request from {repr(safe_ip)} due to URI length > 256. path: {repr(truncated_path)}")
+        log_early_block("long_asset_path_global", f"Security Event: Blocked request from {repr(safe_ip)} due to URI length > 256. path: {repr(safe_path)}")
         return "URI Too Long", 414, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
     # Prevent directory traversal attacks
     # explicitly checking is good defense in depth
     if '..' in path or path.startswith('/') or '%' in path:
-        log_early_block("dir_traversal_global", f"Security Event: Blocked request from {repr(safe_ip)} due to potential directory traversal. path: {repr(path)}")
+        log_early_block("dir_traversal_global", f"Security Event: Blocked request from {repr(safe_ip)} due to potential directory traversal. path: {repr(safe_path)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
     # Security Enhancement: Block requests for hidden files or directories
     # to prevent accidental exposure of sensitive internal metadata (e.g., .git/, .env)
     # even if allowed_extensions is later relaxed to include generic formats.
     if path.startswith('.') or '/.' in path:
-        log_early_block("hidden_file_global", f"Security Event: Blocked request from {repr(safe_ip)} for hidden file/directory. path: {repr(path)}")
+        log_early_block("hidden_file_global", f"Security Event: Blocked request from {repr(safe_ip)} for hidden file/directory. path: {repr(safe_path)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
     # Security Enhancement: Strict allowed characters for file paths to prevent log injection or unexpected parser behavior
     # Using \Z and re.fullmatch to ensure trailing newlines are correctly blocked
     if not re.fullmatch(r'^[a-zA-Z0-9_./-]+\Z', path):
-        log_early_block("invalid_chars_global", f"Security Event: Blocked request from {repr(safe_ip)} due to invalid characters in path. path: {repr(path)}")
+        log_early_block("invalid_chars_global", f"Security Event: Blocked request from {repr(safe_ip)} due to invalid characters in path. path: {repr(safe_path)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
     # Security Enhancement: Only allow serving known safe media extensions
@@ -348,7 +346,7 @@ def send_assets(path):
     # This acts as a robust defense against any bypass of previous string checks
     requested_path = os.path.abspath(os.path.join(assets_dir, path))
     if not requested_path.startswith(assets_dir + os.sep):
-        log_early_block("out_of_bounds_global", f"Security Event: Blocked request from {repr(safe_ip)} due to out-of-bounds resolved path. path: {repr(path)}")
+        log_early_block("out_of_bounds_global", f"Security Event: Blocked request from {repr(safe_ip)} due to out-of-bounds resolved path. path: {repr(safe_path)}")
         return "Bad Request", 400, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
     norm_ip = normalize_ip(raw_ip)
