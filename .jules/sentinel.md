@@ -87,12 +87,16 @@
 **Vulnerability:** Global rate-limiting keys used for payload/path validation checks before IP normalization allow attackers to bypass rate limits and exhaust disk space.
 **Learning:** Validation checks that use rate-limited logging must be sequenced after input extraction and normalization to safely use per-user tracking keys without log-bombing risks.
 **Prevention:** Sequence all rate-limited logging validations after IP normalization and use normalized, per-user tracking keys (e.g., `f"event_{ip}"`) instead of global ones.
-## $(date +%Y-%m-%d) - [Log Bombing via Validation Sequencing]
+## 2026-09-11 - [Log Bombing via Validation Sequencing]
 **Vulnerability:** Global rate-limiting keys used for payload/path validation checks before IP normalization allow attackers to bypass rate limits and exhaust disk space.
 **Learning:** When fixing log-bombing (Disk DoS) vulnerabilities in early request validation blocks (e.g., URL length or HTTP method checks), do not move the validation logic *after* computationally expensive operations (like IP address parsing) to access normalized variables. Doing so introduces a CPU Denial of Service (DoS) regression because malicious requests are no longer dropped cheaply.
 **Prevention:** Keep early validation checks where they are and replace dynamic per-user logging keys with static global keys (e.g., `"invalid_method_global"`) to suppress logs globally during an attack.
 
-## $(date +%Y-%m-%d) - [Fix CPU DoS via Validation Sequencing]
+## 2026-09-11 - [Fix CPU DoS via Validation Sequencing]
 **Vulnerability:** The application executed a computationally expensive IP normalization step `normalize_ip()` before performing cheap validation checks (like checking payload lengths and HTTP methods) in both `rate_limit` and `send_assets`. An attacker could send malformed requests (e.g. extremely long URIs or bodies) that would still trigger the expensive IP parsing before being rejected, leading to a CPU Exhaustion Denial of Service.
 **Learning:** When organizing request validation pipelines, always perform lightweight, O(1) validations (such as checking `request.content_length`, `request.method`, or string lengths) explicitly *before* triggering any computationally expensive parsing or normalization functions.
 **Prevention:** Sequence all cheap validation checks as the very first operations in a request lifecycle block, delaying expensive normalizations until absolutely necessary.
+## 2026-09-11 - Fix Log-Bombing in Asset Path Validation
+**Vulnerability:** The /assets/<path> route logged un-truncated path inputs during directory traversal and invalid character checks, allowing a malicious user to cause Disk DoS by sending long invalid paths that bypassed the initial path length check.
+**Learning:** When validating multiple conditions on an input, always truncate the input *before* referencing it in *any* log messages, not just the length check itself.
+**Prevention:** Apply a global truncation variable (e.g., safe_path) early in the route and strictly use it for all subsequent error logging.
