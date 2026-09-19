@@ -100,3 +100,7 @@
 **Vulnerability:** The /assets/<path> route logged un-truncated path inputs during directory traversal and invalid character checks, allowing a malicious user to cause Disk DoS by sending long invalid paths that bypassed the initial path length check.
 **Learning:** When validating multiple conditions on an input, always truncate the input *before* referencing it in *any* log messages, not just the length check itself.
 **Prevention:** Apply a global truncation variable (e.g., safe_path) early in the route and strictly use it for all subsequent error logging.
+## $(date +%Y-%m-%d) - Log-Bombing Vulnerability from Ext
+**Vulnerability:** A route parsed untrusted inputs (`ext`) and logged the exact payload when throwing a validation error, enabling log-bombing via oversized extensions.
+**Learning:** Always truncate or sanitize untrusted dynamic inputs before interpolating them into log records, even within early bounds checking.
+**Prevention:** Construct a `safe_*` variable containing a truncated version of the raw input to log instead of raw payloads to strictly cap disk growth and string processing overhead.

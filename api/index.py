@@ -333,8 +333,9 @@ def send_assets(path):
         '.css', '.js', '.woff', '.woff2', '.ttf', '.eot'
     }
     _, ext = os.path.splitext(path)
+    safe_ext = ext[:16] + '...[TRUNCATED]' if ext and len(ext) > 16 else ext
     if ext.lower() not in allowed_extensions:
-        log_early_block("unsupported_media_global", f"Security Event: Blocked request from {repr(safe_ip)} due to unsupported media type. ext: {repr(ext)}")
+        log_early_block("unsupported_media_global", f"Security Event: Blocked request from {repr(safe_ip)} due to unsupported media type. ext: {repr(safe_ext)}")
         return "Unsupported Media Type", 415, {"Content-Type": "text/plain; charset=utf-8", "Connection": "close"}
 
     # Determine the absolute path to the assets directory
