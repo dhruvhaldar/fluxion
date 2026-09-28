@@ -104,3 +104,8 @@
 **Vulnerability:** A route parsed untrusted inputs (`ext`) and logged the exact payload when throwing a validation error, enabling log-bombing via oversized extensions.
 **Learning:** Always truncate or sanitize untrusted dynamic inputs before interpolating them into log records, even within early bounds checking.
 **Prevention:** Construct a `safe_*` variable containing a truncated version of the raw input to log instead of raw payloads to strictly cap disk growth and string processing overhead.
+
+## 2026-09-28 - [Fix CSP Violation via Inline Style Removal]
+**Vulnerability:** Inline styles like `style="vertical-align: middle;"` violate the strict `style-src 'self'` Content Security Policy directive, generating console errors and potentially bypassing strict CSP enforcement.
+**Learning:** Relying on inline styles when a strict CSP is enforced creates unnecessary console noise and weakens the security posture.
+**Prevention:** Always externalize inline styles to CSS files when enforcing a strict `style-src 'self'` CSP directive.

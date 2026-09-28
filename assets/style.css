@@ -105,6 +105,8 @@ h2:focus { outline: none; }
 h2:hover .heading-anchor, .heading-anchor:focus-visible { opacity: 1; }
 .heading-anchor:hover, .heading-anchor:focus-visible { color: var(--link-hover-color); text-decoration: none; }
 
+.heading-anchor svg { vertical-align: middle; }
+
 .heading-anchor::before {
     content: "";
     position: absolute;
