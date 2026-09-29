@@ -104,3 +104,7 @@
 **Vulnerability:** A route parsed untrusted inputs (`ext`) and logged the exact payload when throwing a validation error, enabling log-bombing via oversized extensions.
 **Learning:** Always truncate or sanitize untrusted dynamic inputs before interpolating them into log records, even within early bounds checking.
 **Prevention:** Construct a `safe_*` variable containing a truncated version of the raw input to log instead of raw payloads to strictly cap disk growth and string processing overhead.
+## $(date +%Y-%m-%d) - [Fix CSP Violation with Inline Styles]
+**Vulnerability:** Inline styles (`style="..."`) were used in HTML tags, which violates the strict `style-src 'self'` Content-Security-Policy.
+**Learning:** Even minor styling details (like vertical alignment) must adhere to the CSP. Relying on inline styles weakens the security posture or results in broken rendering when CSP is strictly enforced.
+**Prevention:** Always externalize styling by defining custom classes in CSS files instead of using inline `style` attributes.

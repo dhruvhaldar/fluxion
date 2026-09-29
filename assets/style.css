@@ -176,6 +176,10 @@ main:focus { outline: none; }
     margin-bottom: 2px;
     transition: transform 0.2s;
 }
+
+.icon-vertical-align {
+    vertical-align: middle;
+}
 a:hover .external-link-icon, a:focus-visible .external-link-icon { transform: translate(2px, -2px); }
 a:active .external-link-icon { transform: translate(0, 0); transition: transform 0.1s; }
 
