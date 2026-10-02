@@ -153,17 +153,7 @@ class LinearSolver:
         check_interval = 200
         p_old = p_new.copy()
 
-        # Pre-allocate temporary arrays to avoid implicit array creations in the loop
-        # We need an array for the entire right-hand-side expression of the SOR update
-        # p_gs_red and p_gs_black can share the same buffer since they are updated sequentially
-        p_gs = np.empty(p_slice.shape)
         tmp_full = np.empty(p.shape)
-
-        # ⚡ Bolt: Pre-allocate contiguous buffers for strided slices to avoid implicit non-contiguous allocations
-        buf1 = np.empty(p_slice[s1].shape)
-        buf2 = np.empty(p_slice[s2].shape)
-        buf3 = np.empty(p_slice[s3].shape)
-        buf4 = np.empty(p_slice[s4].shape)
 
         # Pre-compute slice views to avoid overhead inside the loop.
         # These are views into p_new, which is updated in place, so they
@@ -176,192 +166,22 @@ class LinearSolver:
         # ⚡ Bolt: Pre-calculate 1 - omega outside the loop
         one_minus_omega = 1.0 - omega
 
-        # ⚡ Bolt: Hoist invariant branch conditions outside the loop to avoid Python overhead
-        if mult_y_over_x == 1.0 and omega == 1.0:
-            for it in range(max_iter):
-                if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
+        for it in range(max_iter):
+            if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
 
-                # ⚡ Bolt: Use contiguous pre-allocated buffers and chained in-place operations
-                # to eliminate non-contiguous implicit intermediate arrays during strided slicing.
-                np.add(p_right[s1], p_left[s1], out=buf1)
-                np.add(buf1, p_up[s1], out=buf1)
-                np.add(buf1, p_down[s1], out=buf1)
-                np.subtract(buf1, rhs_eff[s1], out=buf1)
-                np.multiply(buf1, mult_x, out=p_slice[s1])
+            p_slice[s1] = p_slice[s1] * one_minus_omega + mult_x * (p_up[s1] + p_down[s1] + mult_y_over_x * (p_right[s1] + p_left[s1]) - rhs_eff[s1])
+            p_slice[s2] = p_slice[s2] * one_minus_omega + mult_x * (p_up[s2] + p_down[s2] + mult_y_over_x * (p_right[s2] + p_left[s2]) - rhs_eff[s2])
+            p_slice[s3] = p_slice[s3] * one_minus_omega + mult_x * (p_up[s3] + p_down[s3] + mult_y_over_x * (p_right[s3] + p_left[s3]) - rhs_eff[s3])
+            p_slice[s4] = p_slice[s4] * one_minus_omega + mult_x * (p_up[s4] + p_down[s4] + mult_y_over_x * (p_right[s4] + p_left[s4]) - rhs_eff[s4])
 
-                np.add(p_right[s2], p_left[s2], out=buf2)
-                np.add(buf2, p_up[s2], out=buf2)
-                np.add(buf2, p_down[s2], out=buf2)
-                np.subtract(buf2, rhs_eff[s2], out=buf2)
-                np.multiply(buf2, mult_x, out=p_slice[s2])
+            p_new[0] = p_new[1]
+            p_new[-1] = p_new[-2]
+            p_new[:, 0] = p_new[:, 1]
+            p_new[:, -1] = p_new[:, -2]
 
-                np.add(p_right[s3], p_left[s3], out=buf3)
-                np.add(buf3, p_up[s3], out=buf3)
-                np.add(buf3, p_down[s3], out=buf3)
-                np.subtract(buf3, rhs_eff[s3], out=buf3)
-                np.multiply(buf3, mult_x, out=p_slice[s3])
+            if it > 0 and it % check_interval == 0:
+                np.subtract(p_new, p_old, out=tmp_full)
+                np.abs(tmp_full, out=tmp_full)
+                if np.max(tmp_full) < tol: return p_new, it
 
-                np.add(p_right[s4], p_left[s4], out=buf4)
-                np.add(buf4, p_up[s4], out=buf4)
-                np.add(buf4, p_down[s4], out=buf4)
-                np.subtract(buf4, rhs_eff[s4], out=buf4)
-                np.multiply(buf4, mult_x, out=p_slice[s4])
-
-                p_new[0] = p_new[1]
-                p_new[-1] = p_new[-2]
-                p_new[:, 0] = p_new[:, 1]
-                p_new[:, -1] = p_new[:, -2]
-
-                if it > 0 and it % check_interval == 0:
-                    np.subtract(p_new, p_old, out=tmp_full)
-                    np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol: return p_new, it
-
-        elif mult_y_over_x == 1.0 and omega != 1.0:
-            for it in range(max_iter):
-                if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
-
-                # ⚡ Bolt: Use contiguous pre-allocated buffers and chained in-place operations
-                # to eliminate non-contiguous implicit intermediate arrays during strided slicing.
-                np.add(p_right[s1], p_left[s1], out=buf1)
-                np.add(buf1, p_up[s1], out=buf1)
-                np.add(buf1, p_down[s1], out=buf1)
-                np.subtract(buf1, rhs_eff[s1], out=buf1)
-                np.multiply(buf1, mult_x, out=buf1)
-                np.multiply(p_slice[s1], one_minus_omega, out=p_slice[s1])
-                np.add(p_slice[s1], buf1, out=p_slice[s1])
-
-                np.add(p_right[s2], p_left[s2], out=buf2)
-                np.add(buf2, p_up[s2], out=buf2)
-                np.add(buf2, p_down[s2], out=buf2)
-                np.subtract(buf2, rhs_eff[s2], out=buf2)
-                np.multiply(buf2, mult_x, out=buf2)
-                np.multiply(p_slice[s2], one_minus_omega, out=p_slice[s2])
-                np.add(p_slice[s2], buf2, out=p_slice[s2])
-
-                np.add(p_right[s3], p_left[s3], out=buf3)
-                np.add(buf3, p_up[s3], out=buf3)
-                np.add(buf3, p_down[s3], out=buf3)
-                np.subtract(buf3, rhs_eff[s3], out=buf3)
-                np.multiply(buf3, mult_x, out=buf3)
-                np.multiply(p_slice[s3], one_minus_omega, out=p_slice[s3])
-                np.add(p_slice[s3], buf3, out=p_slice[s3])
-
-                np.add(p_right[s4], p_left[s4], out=buf4)
-                np.add(buf4, p_up[s4], out=buf4)
-                np.add(buf4, p_down[s4], out=buf4)
-                np.subtract(buf4, rhs_eff[s4], out=buf4)
-                np.multiply(buf4, mult_x, out=buf4)
-                np.multiply(p_slice[s4], one_minus_omega, out=p_slice[s4])
-                np.add(p_slice[s4], buf4, out=p_slice[s4])
-
-                p_new[0] = p_new[1]
-                p_new[-1] = p_new[-2]
-                p_new[:, 0] = p_new[:, 1]
-                p_new[:, -1] = p_new[:, -2]
-
-                if it > 0 and it % check_interval == 0:
-                    np.subtract(p_new, p_old, out=tmp_full)
-                    np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol: return p_new, it
-
-        elif mult_y_over_x != 1.0 and omega == 1.0:
-            for it in range(max_iter):
-                if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
-
-                # ⚡ Bolt: Use contiguous pre-allocated buffers and chained in-place operations
-                # to eliminate non-contiguous implicit intermediate arrays during strided slicing.
-                np.add(p_right[s1], p_left[s1], out=buf1)
-                np.multiply(buf1, mult_y_over_x, out=buf1)
-                np.add(buf1, p_up[s1], out=buf1)
-                np.add(buf1, p_down[s1], out=buf1)
-                np.subtract(buf1, rhs_eff[s1], out=buf1)
-                np.multiply(buf1, mult_x, out=p_slice[s1])
-
-                np.add(p_right[s2], p_left[s2], out=buf2)
-                np.multiply(buf2, mult_y_over_x, out=buf2)
-                np.add(buf2, p_up[s2], out=buf2)
-                np.add(buf2, p_down[s2], out=buf2)
-                np.subtract(buf2, rhs_eff[s2], out=buf2)
-                np.multiply(buf2, mult_x, out=p_slice[s2])
-
-                np.add(p_right[s3], p_left[s3], out=buf3)
-                np.multiply(buf3, mult_y_over_x, out=buf3)
-                np.add(buf3, p_up[s3], out=buf3)
-                np.add(buf3, p_down[s3], out=buf3)
-                np.subtract(buf3, rhs_eff[s3], out=buf3)
-                np.multiply(buf3, mult_x, out=p_slice[s3])
-
-                np.add(p_right[s4], p_left[s4], out=buf4)
-                np.multiply(buf4, mult_y_over_x, out=buf4)
-                np.add(buf4, p_up[s4], out=buf4)
-                np.add(buf4, p_down[s4], out=buf4)
-                np.subtract(buf4, rhs_eff[s4], out=buf4)
-                np.multiply(buf4, mult_x, out=p_slice[s4])
-
-                p_new[0] = p_new[1]
-                p_new[-1] = p_new[-2]
-                p_new[:, 0] = p_new[:, 1]
-                p_new[:, -1] = p_new[:, -2]
-
-                if it > 0 and it % check_interval == 0:
-                    np.subtract(p_new, p_old, out=tmp_full)
-                    np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol: return p_new, it
-
-        else:
-            for it in range(max_iter):
-                if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
-
-                # ⚡ Bolt: Use contiguous pre-allocated buffers and chained in-place operations
-                # to eliminate non-contiguous implicit intermediate arrays during strided slicing.
-                np.add(p_right[s1], p_left[s1], out=buf1)
-                np.multiply(buf1, mult_y_over_x, out=buf1)
-                np.add(buf1, p_up[s1], out=buf1)
-                np.add(buf1, p_down[s1], out=buf1)
-                np.subtract(buf1, rhs_eff[s1], out=buf1)
-                np.multiply(buf1, mult_x, out=buf1)
-                np.multiply(p_slice[s1], one_minus_omega, out=p_slice[s1])
-                np.add(p_slice[s1], buf1, out=p_slice[s1])
-
-                np.add(p_right[s2], p_left[s2], out=buf2)
-                np.multiply(buf2, mult_y_over_x, out=buf2)
-                np.add(buf2, p_up[s2], out=buf2)
-                np.add(buf2, p_down[s2], out=buf2)
-                np.subtract(buf2, rhs_eff[s2], out=buf2)
-                np.multiply(buf2, mult_x, out=buf2)
-                np.multiply(p_slice[s2], one_minus_omega, out=p_slice[s2])
-                np.add(p_slice[s2], buf2, out=p_slice[s2])
-
-                np.add(p_right[s3], p_left[s3], out=buf3)
-                np.multiply(buf3, mult_y_over_x, out=buf3)
-                np.add(buf3, p_up[s3], out=buf3)
-                np.add(buf3, p_down[s3], out=buf3)
-                np.subtract(buf3, rhs_eff[s3], out=buf3)
-                np.multiply(buf3, mult_x, out=buf3)
-                np.multiply(p_slice[s3], one_minus_omega, out=p_slice[s3])
-                np.add(p_slice[s3], buf3, out=p_slice[s3])
-
-                np.add(p_right[s4], p_left[s4], out=buf4)
-                np.multiply(buf4, mult_y_over_x, out=buf4)
-                np.add(buf4, p_up[s4], out=buf4)
-                np.add(buf4, p_down[s4], out=buf4)
-                np.subtract(buf4, rhs_eff[s4], out=buf4)
-                np.multiply(buf4, mult_x, out=buf4)
-                np.multiply(p_slice[s4], one_minus_omega, out=p_slice[s4])
-                np.add(p_slice[s4], buf4, out=p_slice[s4])
-
-                p_new[0] = p_new[1]
-                p_new[-1] = p_new[-2]
-                p_new[:, 0] = p_new[:, 1]
-                p_new[:, -1] = p_new[:, -2]
-
-                if it > 0 and it % check_interval == 0:
-                    np.subtract(p_new, p_old, out=tmp_full)
-                    np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol: return p_new, it
-
-        # Final check if loop finishes
-        # Check against previous iteration which wasn't saved, so we just return.
-        # It's an edge case, we can assume it hit max_iter without converging.
         return p_new, max_iter
