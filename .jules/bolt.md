@@ -38,3 +38,6 @@
 ## 2026-09-08 - Memoize IP Normalization
 **Learning:** Parsing and normalizing IP addresses using the standard library `ipaddress` module is computationally expensive. When executed repeatedly per request (e.g., for rate limit tracking or logging), it introduces massive CPU overhead.
 **Action:** Apply `@functools.lru_cache` (with an appropriate maxsize) to pure normalization functions to memoize results and significantly reduce CPU overhead.
+## 2026-10-03 - Strided Sub-Grid Optimization
+**Learning:** Chained in-place NumPy operations (e.g., `np.add(..., out=buf)`) are an anti-pattern when used on non-contiguous strided sub-grids (like checkerboard slices). The Python wrapper overhead exceeds memory allocation costs, making them slower than standard readable vectorized expressions.
+**Action:** Revert to standard vectorized mathematical expressions when updating non-contiguous slices if benchmarks confirm the speedup.

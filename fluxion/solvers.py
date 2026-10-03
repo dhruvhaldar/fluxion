@@ -159,11 +159,7 @@ class LinearSolver:
         p_gs = np.empty(p_slice.shape)
         tmp_full = np.empty(p.shape)
 
-        # ⚡ Bolt: Pre-allocate contiguous buffers for strided slices to avoid implicit non-contiguous allocations
-        buf1 = np.empty(p_slice[s1].shape)
-        buf2 = np.empty(p_slice[s2].shape)
-        buf3 = np.empty(p_slice[s3].shape)
-        buf4 = np.empty(p_slice[s4].shape)
+
 
         # Pre-compute slice views to avoid overhead inside the loop.
         # These are views into p_new, which is updated in place, so they
@@ -181,31 +177,16 @@ class LinearSolver:
             for it in range(max_iter):
                 if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
 
-                # ⚡ Bolt: Use contiguous pre-allocated buffers and chained in-place operations
-                # to eliminate non-contiguous implicit intermediate arrays during strided slicing.
-                np.add(p_right[s1], p_left[s1], out=buf1)
-                np.add(buf1, p_up[s1], out=buf1)
-                np.add(buf1, p_down[s1], out=buf1)
-                np.subtract(buf1, rhs_eff[s1], out=buf1)
-                np.multiply(buf1, mult_x, out=p_slice[s1])
+                # ⚡ Bolt: Evaluate standard vectorized expressions for strided sub-grids.
+                # Python wrapper overhead from chained in-place operations (e.g. np.add(..., out=buf))
+                # is slower than implicit non-contiguous array allocations in this context.
+                p_slice[s1] = (p_right[s1] + p_left[s1] + p_up[s1] + p_down[s1] - rhs_eff[s1]) * mult_x
 
-                np.add(p_right[s2], p_left[s2], out=buf2)
-                np.add(buf2, p_up[s2], out=buf2)
-                np.add(buf2, p_down[s2], out=buf2)
-                np.subtract(buf2, rhs_eff[s2], out=buf2)
-                np.multiply(buf2, mult_x, out=p_slice[s2])
+                p_slice[s2] = (p_right[s2] + p_left[s2] + p_up[s2] + p_down[s2] - rhs_eff[s2]) * mult_x
 
-                np.add(p_right[s3], p_left[s3], out=buf3)
-                np.add(buf3, p_up[s3], out=buf3)
-                np.add(buf3, p_down[s3], out=buf3)
-                np.subtract(buf3, rhs_eff[s3], out=buf3)
-                np.multiply(buf3, mult_x, out=p_slice[s3])
+                p_slice[s3] = (p_right[s3] + p_left[s3] + p_up[s3] + p_down[s3] - rhs_eff[s3]) * mult_x
 
-                np.add(p_right[s4], p_left[s4], out=buf4)
-                np.add(buf4, p_up[s4], out=buf4)
-                np.add(buf4, p_down[s4], out=buf4)
-                np.subtract(buf4, rhs_eff[s4], out=buf4)
-                np.multiply(buf4, mult_x, out=p_slice[s4])
+                p_slice[s4] = (p_right[s4] + p_left[s4] + p_up[s4] + p_down[s4] - rhs_eff[s4]) * mult_x
 
                 p_new[0] = p_new[1]
                 p_new[-1] = p_new[-2]
@@ -221,39 +202,16 @@ class LinearSolver:
             for it in range(max_iter):
                 if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
 
-                # ⚡ Bolt: Use contiguous pre-allocated buffers and chained in-place operations
-                # to eliminate non-contiguous implicit intermediate arrays during strided slicing.
-                np.add(p_right[s1], p_left[s1], out=buf1)
-                np.add(buf1, p_up[s1], out=buf1)
-                np.add(buf1, p_down[s1], out=buf1)
-                np.subtract(buf1, rhs_eff[s1], out=buf1)
-                np.multiply(buf1, mult_x, out=buf1)
-                np.multiply(p_slice[s1], one_minus_omega, out=p_slice[s1])
-                np.add(p_slice[s1], buf1, out=p_slice[s1])
+                # ⚡ Bolt: Evaluate standard vectorized expressions for strided sub-grids.
+                # Python wrapper overhead from chained in-place operations (e.g. np.add(..., out=buf))
+                # is slower than implicit non-contiguous array allocations in this context.
+                p_slice[s1] = p_slice[s1] * one_minus_omega + (p_right[s1] + p_left[s1] + p_up[s1] + p_down[s1] - rhs_eff[s1]) * mult_x
 
-                np.add(p_right[s2], p_left[s2], out=buf2)
-                np.add(buf2, p_up[s2], out=buf2)
-                np.add(buf2, p_down[s2], out=buf2)
-                np.subtract(buf2, rhs_eff[s2], out=buf2)
-                np.multiply(buf2, mult_x, out=buf2)
-                np.multiply(p_slice[s2], one_minus_omega, out=p_slice[s2])
-                np.add(p_slice[s2], buf2, out=p_slice[s2])
+                p_slice[s2] = p_slice[s2] * one_minus_omega + (p_right[s2] + p_left[s2] + p_up[s2] + p_down[s2] - rhs_eff[s2]) * mult_x
 
-                np.add(p_right[s3], p_left[s3], out=buf3)
-                np.add(buf3, p_up[s3], out=buf3)
-                np.add(buf3, p_down[s3], out=buf3)
-                np.subtract(buf3, rhs_eff[s3], out=buf3)
-                np.multiply(buf3, mult_x, out=buf3)
-                np.multiply(p_slice[s3], one_minus_omega, out=p_slice[s3])
-                np.add(p_slice[s3], buf3, out=p_slice[s3])
+                p_slice[s3] = p_slice[s3] * one_minus_omega + (p_right[s3] + p_left[s3] + p_up[s3] + p_down[s3] - rhs_eff[s3]) * mult_x
 
-                np.add(p_right[s4], p_left[s4], out=buf4)
-                np.add(buf4, p_up[s4], out=buf4)
-                np.add(buf4, p_down[s4], out=buf4)
-                np.subtract(buf4, rhs_eff[s4], out=buf4)
-                np.multiply(buf4, mult_x, out=buf4)
-                np.multiply(p_slice[s4], one_minus_omega, out=p_slice[s4])
-                np.add(p_slice[s4], buf4, out=p_slice[s4])
+                p_slice[s4] = p_slice[s4] * one_minus_omega + (p_right[s4] + p_left[s4] + p_up[s4] + p_down[s4] - rhs_eff[s4]) * mult_x
 
                 p_new[0] = p_new[1]
                 p_new[-1] = p_new[-2]
@@ -269,35 +227,16 @@ class LinearSolver:
             for it in range(max_iter):
                 if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
 
-                # ⚡ Bolt: Use contiguous pre-allocated buffers and chained in-place operations
-                # to eliminate non-contiguous implicit intermediate arrays during strided slicing.
-                np.add(p_right[s1], p_left[s1], out=buf1)
-                np.multiply(buf1, mult_y_over_x, out=buf1)
-                np.add(buf1, p_up[s1], out=buf1)
-                np.add(buf1, p_down[s1], out=buf1)
-                np.subtract(buf1, rhs_eff[s1], out=buf1)
-                np.multiply(buf1, mult_x, out=p_slice[s1])
+                # ⚡ Bolt: Evaluate standard vectorized expressions for strided sub-grids.
+                # Python wrapper overhead from chained in-place operations (e.g. np.add(..., out=buf))
+                # is slower than implicit non-contiguous array allocations in this context.
+                p_slice[s1] = ((p_right[s1] + p_left[s1]) * mult_y_over_x + p_up[s1] + p_down[s1] - rhs_eff[s1]) * mult_x
 
-                np.add(p_right[s2], p_left[s2], out=buf2)
-                np.multiply(buf2, mult_y_over_x, out=buf2)
-                np.add(buf2, p_up[s2], out=buf2)
-                np.add(buf2, p_down[s2], out=buf2)
-                np.subtract(buf2, rhs_eff[s2], out=buf2)
-                np.multiply(buf2, mult_x, out=p_slice[s2])
+                p_slice[s2] = ((p_right[s2] + p_left[s2]) * mult_y_over_x + p_up[s2] + p_down[s2] - rhs_eff[s2]) * mult_x
 
-                np.add(p_right[s3], p_left[s3], out=buf3)
-                np.multiply(buf3, mult_y_over_x, out=buf3)
-                np.add(buf3, p_up[s3], out=buf3)
-                np.add(buf3, p_down[s3], out=buf3)
-                np.subtract(buf3, rhs_eff[s3], out=buf3)
-                np.multiply(buf3, mult_x, out=p_slice[s3])
+                p_slice[s3] = ((p_right[s3] + p_left[s3]) * mult_y_over_x + p_up[s3] + p_down[s3] - rhs_eff[s3]) * mult_x
 
-                np.add(p_right[s4], p_left[s4], out=buf4)
-                np.multiply(buf4, mult_y_over_x, out=buf4)
-                np.add(buf4, p_up[s4], out=buf4)
-                np.add(buf4, p_down[s4], out=buf4)
-                np.subtract(buf4, rhs_eff[s4], out=buf4)
-                np.multiply(buf4, mult_x, out=p_slice[s4])
+                p_slice[s4] = ((p_right[s4] + p_left[s4]) * mult_y_over_x + p_up[s4] + p_down[s4] - rhs_eff[s4]) * mult_x
 
                 p_new[0] = p_new[1]
                 p_new[-1] = p_new[-2]
@@ -313,43 +252,16 @@ class LinearSolver:
             for it in range(max_iter):
                 if it > 0 and it % check_interval == 0: np.copyto(p_old, p_new)
 
-                # ⚡ Bolt: Use contiguous pre-allocated buffers and chained in-place operations
-                # to eliminate non-contiguous implicit intermediate arrays during strided slicing.
-                np.add(p_right[s1], p_left[s1], out=buf1)
-                np.multiply(buf1, mult_y_over_x, out=buf1)
-                np.add(buf1, p_up[s1], out=buf1)
-                np.add(buf1, p_down[s1], out=buf1)
-                np.subtract(buf1, rhs_eff[s1], out=buf1)
-                np.multiply(buf1, mult_x, out=buf1)
-                np.multiply(p_slice[s1], one_minus_omega, out=p_slice[s1])
-                np.add(p_slice[s1], buf1, out=p_slice[s1])
+                # ⚡ Bolt: Evaluate standard vectorized expressions for strided sub-grids.
+                # Python wrapper overhead from chained in-place operations (e.g. np.add(..., out=buf))
+                # is slower than implicit non-contiguous array allocations in this context.
+                p_slice[s1] = p_slice[s1] * one_minus_omega + ((p_right[s1] + p_left[s1]) * mult_y_over_x + p_up[s1] + p_down[s1] - rhs_eff[s1]) * mult_x
 
-                np.add(p_right[s2], p_left[s2], out=buf2)
-                np.multiply(buf2, mult_y_over_x, out=buf2)
-                np.add(buf2, p_up[s2], out=buf2)
-                np.add(buf2, p_down[s2], out=buf2)
-                np.subtract(buf2, rhs_eff[s2], out=buf2)
-                np.multiply(buf2, mult_x, out=buf2)
-                np.multiply(p_slice[s2], one_minus_omega, out=p_slice[s2])
-                np.add(p_slice[s2], buf2, out=p_slice[s2])
+                p_slice[s2] = p_slice[s2] * one_minus_omega + ((p_right[s2] + p_left[s2]) * mult_y_over_x + p_up[s2] + p_down[s2] - rhs_eff[s2]) * mult_x
 
-                np.add(p_right[s3], p_left[s3], out=buf3)
-                np.multiply(buf3, mult_y_over_x, out=buf3)
-                np.add(buf3, p_up[s3], out=buf3)
-                np.add(buf3, p_down[s3], out=buf3)
-                np.subtract(buf3, rhs_eff[s3], out=buf3)
-                np.multiply(buf3, mult_x, out=buf3)
-                np.multiply(p_slice[s3], one_minus_omega, out=p_slice[s3])
-                np.add(p_slice[s3], buf3, out=p_slice[s3])
+                p_slice[s3] = p_slice[s3] * one_minus_omega + ((p_right[s3] + p_left[s3]) * mult_y_over_x + p_up[s3] + p_down[s3] - rhs_eff[s3]) * mult_x
 
-                np.add(p_right[s4], p_left[s4], out=buf4)
-                np.multiply(buf4, mult_y_over_x, out=buf4)
-                np.add(buf4, p_up[s4], out=buf4)
-                np.add(buf4, p_down[s4], out=buf4)
-                np.subtract(buf4, rhs_eff[s4], out=buf4)
-                np.multiply(buf4, mult_x, out=buf4)
-                np.multiply(p_slice[s4], one_minus_omega, out=p_slice[s4])
-                np.add(p_slice[s4], buf4, out=p_slice[s4])
+                p_slice[s4] = p_slice[s4] * one_minus_omega + ((p_right[s4] + p_left[s4]) * mult_y_over_x + p_up[s4] + p_down[s4] - rhs_eff[s4]) * mult_x
 
                 p_new[0] = p_new[1]
                 p_new[-1] = p_new[-2]
