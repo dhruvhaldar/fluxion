@@ -23,16 +23,16 @@
 ## 2026-08-14 - Optimize Velocity Correction in Navier-Stokes
 **Learning:** In the Navier-Stokes pressure correction step (`u = u* - dt * grad(p)`), using eager evaluation `np.copyto(self.u, u_star - grad_p_x * dt)` implicitly allocates intermediate arrays for the multiplication and subtraction.
 **Action:** Replace `np.copyto` and eager evaluation with sequential in-place operators (`np.multiply` with `out`, followed by `+=`) to avoid temporary allocations and reduce execution time for that block by an order of magnitude.
-## $(date +%Y-%m-%d) - Replaced `np.putmask` with Strided Slicing in SOR Solvers
+## 2026-10-09 - Replaced `np.putmask` with Strided Slicing in SOR Solvers
 **Learning:** Using `np.putmask` with boolean masking arrays (e.g., for checkerboard patterns in Red-Black SOR solvers) is inefficient because it implicitly requires evaluating mathematical expressions over the *entire* grid into a full-sized temporary array, only to selectively copy half of the values via the mask.
 **Action:** Replace `np.putmask` with standard NumPy strided slices (e.g., `[0::2, 0::2]`). Assigning updates directly to strided slice views avoids full-grid array allocations and strictly bounds math evaluations to only the required sub-grids, effectively halving the required math and significantly improving memory bandwidth and iteration speed.
 ## 2026-09-01 - Optimize strided slicing with contiguous buffers
 **Learning:** Using inline multi-operation statements (e.g. A + B + C) on strided, non-contiguous slices inside hot iterative loops causes NumPy to allocate multiple non-contiguous intermediate arrays, which severely limits memory bandwidth and slows down performance.
 **Action:** When working with strided sub-grids in hot loops, explicitly pre-allocate contiguous buffers (e.g. `np.empty(slice.shape)`) and use sequential, chained in-place operations (`np.add(..., out=buf)`) to completely eliminate implicit non-contiguous array allocations.
-## $(date +%Y-%m-%d) - Do not replace readable numpy math with chained in-place functions
+## 2026-10-09 - Do not replace readable numpy math with chained in-place functions
 **Learning:** Replacing readable, single-line NumPy mathematical expressions with verbose, multi-line chained in-place functions (e.g., `np.add(..., out=buf)`, `np.multiply(...)`) simply to micro-optimize memory allocations is an unacceptable sacrifice of code readability. The performance gain is not worth the loss of clarity, and this approach is explicitly forbidden by the project boundaries.
 **Action:** When optimizing numerical code, preserve the readability of mathematical expressions. Do not rewrite single-line formulas into chained ufuncs. If performance is a concern, focus on avoiding full-grid evaluations using strided slicing, but keep the math within the slice readable.
-## $(date +%Y-%m-%d) - Replaced array division with in-place inverse multiplication
+## 2026-10-09 - Replaced array division with in-place inverse multiplication
 **Learning:** Array division `array / scalar` implicitly allocates a new full-sized intermediate array and is bottlenecked by memory bandwidth. Pre-computing the inverse and multiplying in-place `array *= (1.0 / scalar)` avoids the memory allocation and executes significantly faster (e.g., ~6.5x speedup for 1000x1000 arrays).
 **Action:** Use in-place multiplication by the inverse (`*= (1.0 / scalar)`) instead of out-of-place division (`/ scalar`) when scaling arrays to save memory bandwidth and drastically improve performance.
 ## 2026-09-08 - Memoize IP Normalization
@@ -41,3 +41,6 @@
 ## 2026-10-03 - Strided Sub-Grid Optimization
 **Learning:** Chained in-place NumPy operations (e.g., `np.add(..., out=buf)`) are an anti-pattern when used on non-contiguous strided sub-grids (like checkerboard slices). The Python wrapper overhead exceeds memory allocation costs, making them slower than standard readable vectorized expressions.
 **Action:** Revert to standard vectorized mathematical expressions when updating non-contiguous slices if benchmarks confirm the speedup.
+## 2026-10-09 - [Performance Anti-Pattern: Chained in-place operations in Jacobi Solver]
+**Learning:** Using chained in-place operations (e.g., `np.add(..., out=buf)`) to avoid implicit memory allocations in the Jacobi iterative solver loop sacrifices code readability. The Python wrapper overhead for these multiple sequential functions outweighs the memory allocation overhead of standard vectorized expressions, leading to slower execution times.
+**Action:** Replace the verbose chained in-place operations with readable, standard mathematical expressions (e.g., `p2_center[:] = (p1_right + p1_left + p1_up + p1_down - rhs_eff) * mult_x`). This restores readability and slightly improves performance by natively computing on the C backend.
