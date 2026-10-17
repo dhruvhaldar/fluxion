@@ -44,3 +44,7 @@
 ## 2026-10-09 - [Performance Anti-Pattern: Chained in-place operations in Jacobi Solver]
 **Learning:** Using chained in-place operations (e.g., `np.add(..., out=buf)`) to avoid implicit memory allocations in the Jacobi iterative solver loop sacrifices code readability. The Python wrapper overhead for these multiple sequential functions outweighs the memory allocation overhead of standard vectorized expressions, leading to slower execution times.
 **Action:** Replace the verbose chained in-place operations with readable, standard mathematical expressions (e.g., `p2_center[:] = (p1_right + p1_left + p1_up + p1_down - rhs_eff) * mult_x`). This restores readability and slightly improves performance by natively computing on the C backend.
+
+## $(date +%Y-%m-%d) - Abandoned: Micro-optimizing Vectorized Math with Chained In-Place Operations
+**Learning:** Profiling revealed that attempting to micro-optimize readable, vectorized NumPy mathematical expressions (e.g., `(A + B) * C`) by replacing them with chained in-place operations (e.g., `np.add(A, B, out=buf); np.multiply(buf, C, out=buf)`) degrades performance in both hot loops and cold paths in this codebase. The Python wrapper overhead per function call significantly exceeds the cost of implicit memory allocations.
+**Action:** Retain standard, readable vectorized mathematical expressions instead of employing multi-line chained in-place functions to micro-optimize memory allocations, as it sacrifices readability and directly violates project boundaries without measurable performance gains.
