@@ -197,3 +197,6 @@
 ## 2026-08-05 - Accessible Fallback Text for Image Anchor Links
 **Learning:** When an `<a>` tag wraps an `<img>` that contains important, descriptive `alt` text, adding an `aria-label` directly to the `<a>` tag to describe the interaction (e.g., 'View full size') is an anti-pattern. This is because the `aria-label` on the parent completely overwrites its child content in the accessibility tree, thereby hiding the image's critical descriptive `alt` text from screen readers.
 **Action:** When adding descriptive names to image anchor links, instead of using `aria-label`, inject a visually hidden helper `<span>` (e.g., `<span class="sr-only">View full size image</span>`) alongside the image. This preserves both the action description and the image's native `alt` text for assistive technologies.
+## 2026-10-19 - Improve text contrast for secondary text
+**Learning:** The default contrast ratios for secondary text (`--text-muted`) were slightly below the WCAG AAA minimum requirement of 7:1 on light mode, leading to poor legibility for some users.
+**Action:** Updated `--text-muted` in light mode from `#595959` to `#545454` and in dark mode from `#a0aec0` to `#cbd5e0` to ensure passing contrast scores (7.57 and 10.98 respectively).

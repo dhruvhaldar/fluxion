@@ -2,7 +2,7 @@
     color-scheme: light dark;
     --bg-color: #ffffff;
     --text-color: #333333;
-    --text-muted: #595959;
+    --text-muted: #545454;
     --heading-color: #1a202c;
     --link-color: #2b6cb0;
     --link-hover-color: #1e40af;
@@ -14,7 +14,7 @@
     :root {
         --bg-color: #1a202c;
         --text-color: #e2e8f0;
-        --text-muted: #a0aec0;
+        --text-muted: #cbd5e0;
         --heading-color: #f7fafc;
         --link-color: #63b3ed;
         --link-hover-color: #90cdf4;
