@@ -197,3 +197,6 @@
 ## 2026-08-05 - Accessible Fallback Text for Image Anchor Links
 **Learning:** When an `<a>` tag wraps an `<img>` that contains important, descriptive `alt` text, adding an `aria-label` directly to the `<a>` tag to describe the interaction (e.g., 'View full size') is an anti-pattern. This is because the `aria-label` on the parent completely overwrites its child content in the accessibility tree, thereby hiding the image's critical descriptive `alt` text from screen readers.
 **Action:** When adding descriptive names to image anchor links, instead of using `aria-label`, inject a visually hidden helper `<span>` (e.g., `<span class="sr-only">View full size image</span>`) alongside the image. This preserves both the action description and the image's native `alt` text for assistive technologies.
+## 2026-10-21 - Relocate Zoom Affordance for Scientific Figures
+**Learning:** Centering visual overlays (like zoom icons) directly over scientific artifacts (like contour plots) obnoxiously obscures the most critical data in the center of the figure.
+**Action:** Position persistent or interactive visual affordances in the less obtrusive corners (e.g., top-right) of scientific or dense visual media to preserve data visibility.
