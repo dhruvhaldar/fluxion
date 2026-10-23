@@ -48,3 +48,7 @@
 ## $(date +%Y-%m-%d) - Abandoned: Micro-optimizing Vectorized Math with Chained In-Place Operations
 **Learning:** Profiling revealed that attempting to micro-optimize readable, vectorized NumPy mathematical expressions (e.g., `(A + B) * C`) by replacing them with chained in-place operations (e.g., `np.add(A, B, out=buf); np.multiply(buf, C, out=buf)`) degrades performance in both hot loops and cold paths in this codebase. The Python wrapper overhead per function call significantly exceeds the cost of implicit memory allocations.
 **Action:** Retain standard, readable vectorized mathematical expressions instead of employing multi-line chained in-place functions to micro-optimize memory allocations, as it sacrifices readability and directly violates project boundaries without measurable performance gains.
+
+## 2026-10-23 - Replace np.max with .max() in Hot Loops
+**Learning:** Calling the method `.max()` directly on a NumPy array (e.g., `array.max()`) is measurably faster than using the module-level function `np.max(array)` in hot loops. The module-level function introduces slight type-checking and Python dispatch overhead, which accumulates when checking convergence thousands of times in iterative solvers.
+**Action:** Always prefer `array.max()` or `array.min()` over `np.max(array)` and `np.min(array)` inside highly frequent iteration blocks to minimize Python wrapper overhead.

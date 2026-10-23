@@ -65,7 +65,7 @@ class LinearSolver:
                 if it > 0 and it % check_interval == 0:
                     np.subtract(p1, p2, out=tmp_full)
                     np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol:
+                    if tmp_full.max() < tol:
                         return p1, it + 1
         else:
             for it in range(0, max_iter, 2):
@@ -86,11 +86,11 @@ class LinearSolver:
                 if it > 0 and it % check_interval == 0:
                     np.subtract(p1, p2, out=tmp_full)
                     np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol:
+                    if tmp_full.max() < tol:
                         return p1, it + 1
 
         # Final check if loop finishes
-        if np.max(np.abs(p1 - p2)) < tol:
+        if np.abs(p1 - p2).max() < tol:
             return p1, max_iter - 1
 
         return p1, max_iter
@@ -173,7 +173,7 @@ class LinearSolver:
                 if it > 0 and it % check_interval == 0:
                     np.subtract(p_new, p_old, out=tmp_full)
                     np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol: return p_new, it
+                    if tmp_full.max() < tol: return p_new, it
 
         elif mult_y_over_x == 1.0 and omega != 1.0:
             for it in range(max_iter):
@@ -198,7 +198,7 @@ class LinearSolver:
                 if it > 0 and it % check_interval == 0:
                     np.subtract(p_new, p_old, out=tmp_full)
                     np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol: return p_new, it
+                    if tmp_full.max() < tol: return p_new, it
 
         elif mult_y_over_x != 1.0 and omega == 1.0:
             for it in range(max_iter):
@@ -223,7 +223,7 @@ class LinearSolver:
                 if it > 0 and it % check_interval == 0:
                     np.subtract(p_new, p_old, out=tmp_full)
                     np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol: return p_new, it
+                    if tmp_full.max() < tol: return p_new, it
 
         else:
             for it in range(max_iter):
@@ -248,7 +248,7 @@ class LinearSolver:
                 if it > 0 and it % check_interval == 0:
                     np.subtract(p_new, p_old, out=tmp_full)
                     np.abs(tmp_full, out=tmp_full)
-                    if np.max(tmp_full) < tol: return p_new, it
+                    if tmp_full.max() < tol: return p_new, it
 
         # Final check if loop finishes
         # Check against previous iteration which wasn't saved, so we just return.
