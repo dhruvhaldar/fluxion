@@ -53,7 +53,7 @@ class NavierStokes2D:
         for step in range(max_steps):
             u_old = self.u.copy()
             self.step()
-            diff = np.max(np.abs(self.u - u_old))
+            diff = np.abs(self.u - u_old).max()
             if diff < tol:
                 print(f"Converged in {step} steps.")
                 break
