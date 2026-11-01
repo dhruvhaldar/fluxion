@@ -28,4 +28,4 @@ def test_poiseuille_moving_wall():
     solver.solve(steps=10)
 
     # Top velocity should have propagated into the domain slightly
-    assert np.max(np.abs(solver.u)) > 0.0
+    assert np.abs(solver.u).max() > 0.0
