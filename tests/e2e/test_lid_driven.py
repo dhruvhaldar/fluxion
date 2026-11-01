@@ -27,7 +27,7 @@ def test_lid_driven_conservation():
     div_inner = div[2:-2, 2:-2]
 
     print(f"Mean Divergence (Inner): {np.mean(np.abs(div_inner))}")
-    print(f"Max Divergence (Inner): {np.max(np.abs(div_inner))}")
+    print(f"Max Divergence (Inner): {np.abs(div_inner).max()}")
 
     assert np.mean(np.abs(div_inner)) < 1e-3
-    assert np.max(np.abs(div_inner)) < 1e-2
+    assert np.abs(div_inner).max() < 1e-2
