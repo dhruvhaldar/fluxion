@@ -52,3 +52,7 @@
 ## 2026-10-23 - Replace np.max with .max() in Hot Loops
 **Learning:** Calling the method `.max()` directly on a NumPy array (e.g., `array.max()`) is measurably faster than using the module-level function `np.max(array)` in hot loops. The module-level function introduces slight type-checking and Python dispatch overhead, which accumulates when checking convergence thousands of times in iterative solvers.
 **Action:** Always prefer `array.max()` or `array.min()` over `np.max(array)` and `np.min(array)` inside highly frequent iteration blocks to minimize Python wrapper overhead.
+
+## 2026-11-03 - [Pre-allocate memory in solve_steady_state]
+**Learning:** Allocating new memory inside a `for` or `while` loop, such as calling `.copy()` on an array on every step of `solve_steady_state`, introduces a significant performance bottleneck. The cost of repeatedly allocating memory in a hot loop dwarfs other micro-optimizations.
+**Action:** Always pre-allocate memory outside the loop (e.g., using `np.empty_like()`) and use `np.copyto()` or in-place assignment inside the loop to avoid repeated memory allocations.

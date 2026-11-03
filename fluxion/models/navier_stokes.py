@@ -50,10 +50,13 @@ class NavierStokes2D:
         """
         Run until convergence.
         """
+        # ⚡ Bolt: Pre-allocate u_old outside the loop to avoid repeated memory allocations
+        u_old = np.empty_like(self.u)
         for step in range(max_steps):
-            u_old = self.u.copy()
+            np.copyto(u_old, self.u)
             self.step()
-            diff = np.max(np.abs(self.u - u_old))
+            # ⚡ Bolt: Using .max() method avoids python wrapper overhead of np.max()
+            diff = np.abs(self.u - u_old).max()
             if diff < tol:
                 print(f"Converged in {step} steps.")
                 break
