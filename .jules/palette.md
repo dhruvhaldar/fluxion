@@ -200,3 +200,7 @@
 ## 2026-10-21 - Relocate Zoom Affordance for Scientific Figures
 **Learning:** Centering visual overlays (like zoom icons) directly over scientific artifacts (like contour plots) obnoxiously obscures the most critical data in the center of the figure.
 **Action:** Position persistent or interactive visual affordances in the less obtrusive corners (e.g., top-right) of scientific or dense visual media to preserve data visibility.
+
+## 2026-11-08 - Optimize LCP Image Loading
+**Learning:** Applying `loading="lazy"` to primary, above-the-fold images (like the first visible image or LCP element) delays their loading and degrades Largest Contentful Paint performance.
+**Action:** Omit lazy loading on LCP images and instead use `fetchpriority="high"` to optimize the initial user experience and rendering speed.
