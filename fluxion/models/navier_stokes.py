@@ -50,10 +50,19 @@ class NavierStokes2D:
         """
         Run until convergence.
         """
+        # ⚡ Bolt: Pre-allocate arrays outside the hot loop to avoid massive
+        # repeated memory allocation and garbage collection overheads
+        u_old = np.empty_like(self.u)
+        diff_arr = np.empty_like(self.u)
         for step in range(max_steps):
-            u_old = self.u.copy()
+            np.copyto(u_old, self.u)
             self.step()
-            diff = np.max(np.abs(self.u - u_old))
+
+            # ⚡ Bolt: Chain in-place operations and use `.max()` to minimize
+            # intermediate array creation and Python wrapper overhead
+            np.subtract(self.u, u_old, out=diff_arr)
+            np.abs(diff_arr, out=diff_arr)
+            diff = diff_arr.max()
             if diff < tol:
                 print(f"Converged in {step} steps.")
                 break
